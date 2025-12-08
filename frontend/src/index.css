@@ -1,0 +1,101 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@layer base {
+  :root {
+    --background: 40 20% 96%;
+    --foreground: 90 20% 20%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 90 20% 20%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 90 20% 20%;
+
+    --primary: 90 25% 28%;
+    --primary-foreground: 40 20% 96%;
+
+    --secondary: 40 20% 94%;
+    --secondary-foreground: 90 20% 20%;
+
+    --muted: 40 10% 90%;
+    --muted-foreground: 90 10% 45%;
+
+    --accent: 25 55% 53%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 40 15% 85%;
+    --input: 40 15% 85%;
+    --ring: 90 25% 28%;
+
+    --radius: 0.25rem;
+
+    --kama-olive: 90 25% 28%;
+    --kama-olive-light: 90 20% 35%;
+    --kama-cream: 40 20% 96%;
+    --kama-orange: 25 55% 53%;
+    --kama-gold: 40 40% 50%;
+  }
+
+  .dark {
+    --background: 90 25% 15%;
+    --foreground: 40 20% 96%;
+
+    --card: 90 25% 18%;
+    --card-foreground: 40 20% 96%;
+
+    --popover: 90 25% 18%;
+    --popover-foreground: 40 20% 96%;
+
+    --primary: 40 20% 96%;
+    --primary-foreground: 90 25% 15%;
+
+    --secondary: 90 20% 22%;
+    --secondary-foreground: 40 20% 96%;
+
+    --muted: 90 15% 25%;
+    --muted-foreground: 40 10% 70%;
+
+    --accent: 25 55% 53%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 90 15% 25%;
+    --input: 90 15% 25%;
+    --ring: 40 20% 96%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Cormorant Garamond', serif;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: 'Cormorant Garamond', serif;
+  }
+  
+  .font-sans {
+    font-family: 'Inter', sans-serif;
+  }
+}

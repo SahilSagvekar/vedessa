@@ -1,0 +1,170 @@
+// Prisma Schema for Ayurveda Essentials
+// Database: Neon (Serverless PostgreSQL)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  fullName     String?   @map("full_name")
+  avatarUrl    String?   @map("avatar_url")
+  role         UserRole  @default(CUSTOMER)
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  cartItems    CartItem[]
+  wishlist     Wishlist[]
+  orders       Order[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  CUSTOMER
+  ADMIN
+}
+
+// Category model
+model Category {
+  id        String    @id @default(uuid())
+  name      String
+  slug      String    @unique
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  products  Product[]
+
+  @@map("categories")
+}
+
+// Collection model
+model Collection {
+  id        String    @id @default(uuid())
+  name      String
+  slug      String    @unique
+  image     String?
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  products  Product[]
+
+  @@map("collections")
+}
+
+// Product model
+model Product {
+  id            String      @id @default(uuid())
+  name          String
+  description   String?
+  price         Decimal     @db.Decimal(10, 2)
+  image         String?
+  categoryId    String?     @map("category_id")
+  collectionId  String?     @map("collection_id")
+  rating        Decimal     @default(4.5) @db.Decimal(2, 1)
+  reviews       Int         @default(0)
+  isNew         Boolean     @default(false) @map("is_new")
+  isBestseller  Boolean     @default(false) @map("is_bestseller")
+  stock         Int         @default(100)
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+
+  category      Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  collection    Collection? @relation(fields: [collectionId], references: [id], onDelete: SetNull)
+  cartItems     CartItem[]
+  wishlist      Wishlist[]
+  orderItems    OrderItem[]
+
+  @@index([categoryId])
+  @@index([collectionId])
+  @@index([isNew])
+  @@index([isBestseller])
+  @@map("products")
+}
+
+// Cart Item model
+model CartItem {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  productId String   @map("product_id")
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@map("cart_items")
+}
+
+// Wishlist model
+model Wishlist {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  productId String   @map("product_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@map("wishlists")
+}
+
+// Order model
+model Order {
+  id              String      @id @default(uuid())
+  orderNumber     String      @unique @map("order_number")
+  userId          String?     @map("user_id")
+  status          OrderStatus @default(PENDING)
+  totalAmount     Decimal     @map("total_amount") @db.Decimal(10, 2)
+  subtotal        Decimal     @db.Decimal(10, 2)
+  taxAmount       Decimal     @default(0) @map("tax_amount") @db.Decimal(10, 2)
+  shippingCost    Decimal     @default(0) @map("shipping_cost") @db.Decimal(10, 2)
+  shippingAddress Json?       @map("shipping_address")
+  paymentMethod   String?     @map("payment_method")
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+
+  user            User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  items           OrderItem[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("orders")
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+// Order Item model
+model OrderItem {
+  id           String   @id @default(uuid())
+  orderId      String   @map("order_id")
+  productId    String?  @map("product_id")
+  productName  String   @map("product_name")
+  productImage String?  @map("product_image")
+  quantity     Int
+  price        Decimal  @db.Decimal(10, 2)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product      Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@map("order_items")
+}
