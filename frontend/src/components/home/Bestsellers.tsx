@@ -36,20 +36,29 @@ const Bestsellers = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-3xl font-display text-foreground">Bestsellers</h2>
+            <h2 className="text-3xl font-display text-foreground">
+              Bestsellers
+            </h2>
             <p className="text-muted-foreground mt-1">Customer favorites</p>
           </div>
           <Link to="/products?filter=bestseller">
-            <Button variant="outline" className="border-foreground text-foreground hover:bg-foreground hover:text-background">
+            <Button
+              variant="outline"
+              className="border-foreground text-foreground hover:bg-foreground hover:text-background"
+            >
               View All <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </Link>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {products.map((product) => (
+          {/* {products.map((product) => (
             <ProductCard key={product.id} product={product} />
-          ))}
+          ))} */}
+          {Array.isArray(products) &&
+            products.map((item) => (
+              <ProductCard key={item.id} product={item} />
+            ))}
         </div>
       </div>
     </section>

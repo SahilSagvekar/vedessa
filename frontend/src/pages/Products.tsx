@@ -45,7 +45,9 @@ const Products = () => {
     <Layout>
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-4xl font-display text-foreground mb-2">All Products</h1>
+          <h1 className="text-4xl font-display text-foreground mb-2">
+            All Products
+          </h1>
           <p className="text-muted-foreground">
             Explore our complete range of Ayurvedic beauty and wellness products
           </p>
@@ -53,8 +55,10 @@ const Products = () => {
 
         {/* Filters */}
         <div className="flex flex-wrap gap-4 mb-8 items-center">
-          <span className="text-sm font-medium text-muted-foreground">FILTERS:</span>
-          
+          <span className="text-sm font-medium text-muted-foreground">
+            FILTERS:
+          </span>
+
           <Select value={category} onValueChange={setCategory}>
             <SelectTrigger className="w-[160px] bg-card">
               <SelectValue placeholder="All Categories" />
@@ -118,17 +122,25 @@ const Products = () => {
         {/* Products Grid */}
         {!loading && !error && (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {products.map((product) => (
+            {/* {products.map((product) => (
               <ProductCard key={product.id} product={product} />
-            ))}
+            ))} */}
+            {Array.isArray(products) &&
+              products.map((item) => (
+                <ProductCard key={item.id} product={item} />
+              ))}
           </div>
         )}
 
         {/* Empty State */}
         {!loading && !error && products.length === 0 && (
           <div className="text-center py-20">
-            <p className="text-xl text-muted-foreground mb-2">No products found</p>
-            <p className="text-sm text-muted-foreground">Try adjusting your filters</p>
+            <p className="text-xl text-muted-foreground mb-2">
+              No products found
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Try adjusting your filters
+            </p>
           </div>
         )}
       </div>
