@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 // API Base URL - change this in production
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = 'vedessa-production.up.railway.app/api';
 
 // Create axios 
 const api = axios.create({
