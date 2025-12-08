@@ -17,7 +17,7 @@ app.use(cors({
   // origin: 'http://localhost:8080',
   origin: [
       "http://localhost:8080",              // local dev
-      "https://vedessa-kk7u.vercel.app",    // your Vercel frontend
+      "https://vedessa.vercel.app",    // your Vercel frontend
     ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
