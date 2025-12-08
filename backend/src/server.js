@@ -14,7 +14,11 @@ const PORT = process.env.PORT || 5000;
 
 // CORS configuration
 app.use(cors({
-  origin: 'http://localhost:8080',
+  // origin: 'http://localhost:8080',
+  origin: [
+      "http://localhost:8080",              // local dev
+      "https://vedessa-kk7u.vercel.app",    // your Vercel frontend
+    ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
