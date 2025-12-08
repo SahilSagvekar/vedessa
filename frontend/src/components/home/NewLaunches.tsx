@@ -8,13 +8,11 @@ const NewLaunches = () => {
   const [newProducts, setNewProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const API_BASE_URL = 'vedessa-production.up.railway.app/api';
-
   useEffect(() => {
     const fetchNewProducts = async () => {
       try {
         const res = await fetch(
-          `${API_BASE_URL}/products?filter=new&limit=4 `
+          `${import.meta.env.VITE_API_URL}/products?filter=new&limit=4`
         );
 
         if (!res.ok) throw new Error("Failed to fetch products");
