@@ -13,10 +13,20 @@ export const useProducts = (filters = {}) => {
 
     try {
       const response = await productsService.getProducts({ ...filters, ...params });
-      setProducts(response.data.products);
-      setPagination(response.data.pagination);
+      
+      // DEBUG: Log the response structure
+      console.log('API Response:', response);
+      console.log('Response.data:', response?.data);
+      console.log('Products:', response?.data?.products);
+      
+      // Ensure products is always an array
+      const productList = response?.data?.products || [];
+      setProducts(Array.isArray(productList) ? productList : []);
+      setPagination(response?.data?.pagination || null);
     } catch (err) {
+      console.error('Error details:', err);
       setError(err);
+      setProducts([]); // Reset to empty array on error
       console.error('Failed to fetch products:', err);
     } finally {
       setLoading(false);
