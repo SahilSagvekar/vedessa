@@ -7,7 +7,7 @@ const Footer = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
             <div>
-              <h3 className="font-serif text-xl mb-4 tracking-wider">KAMA AYURVEDA</h3>
+              <h3 className="font-serif text-xl mb-4 tracking-wider">VEDESSA</h3>
               <p className="text-sm text-gray-300 leading-relaxed">
                 Experience authentic Ayurvedic beauty and wellness products crafted with the finest natural ingredients.
               </p>
@@ -42,7 +42,7 @@ const Footer = () => {
           </div>
           <div className="border-t border-green-700 mt-12 pt-8 text-center">
             <p className="text-sm text-gray-400">
-              © 2024 Kama Ayurveda. All rights reserved.
+              © 2026 VEDESSA. All rights reserved.
             </p>
           </div>
         </div>
