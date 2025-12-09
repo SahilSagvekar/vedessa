@@ -1,33 +1,44 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
-import ProductCard from "@/components/products/ProductCard";
-import { Button } from "@/components/ui/button";
+import { Link } from 'react-router-dom';
+import { ArrowRight, Loader2 } from 'lucide-react';
+import { useProducts } from '@/hooks/useProducts';
+import ProductCard from '@/components/products/ProductCard';
+import { Button } from '@/components/ui/button';
 
 const NewLaunches = () => {
-  const [newProducts, setNewProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Fetch new products from backend using the hook
+  const { products, loading, error } = useProducts({ 
+    isNew: true,
+    limit: 4 
+  });
 
-  useEffect(() => {
-    const fetchNewProducts = async () => {
-      try {
-        const res = await fetch(
-          `${import.meta.env.VITE_API_URL}/products?filter=new&limit=4`
-        );
+  // SAFETY: Always ensure we have an array
+  const safeProducts = Array.isArray(products) ? products : [];
 
-        if (!res.ok) throw new Error("Failed to fetch products");
+  console.log('NewLaunches - products:', products);
+  console.log('NewLaunches - safeProducts:', safeProducts);
+  console.log('NewLaunches - loading:', loading);
+  console.log('NewLaunches - error:', error);
 
-        const data = await res.json();
-        setNewProducts(data);
-      } catch (err) {
-        console.error("Error fetching new products:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  if (loading) {
+    return (
+      <section className="py-12 bg-background">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-center items-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          </div>
+        </div>
+      </section>
+    );
+  }
 
-    fetchNewProducts();
-  }, []);
+  if (error) {
+    console.error('NewLaunches error:', error);
+    return null; // Silently fail - don't break the page
+  }
+
+  if (safeProducts.length === 0) {
+    return null; // Don't show section if no new products
+  }
 
   return (
     <section className="py-12 bg-background">
@@ -50,15 +61,11 @@ const NewLaunches = () => {
           </Link>
         </div>
 
-        {loading ? (
-          <p className="text-muted-foreground">Loading...</p>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {newProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        )}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {safeProducts.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
       </div>
     </section>
   );
