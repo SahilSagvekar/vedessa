@@ -11,6 +11,10 @@ const Bestsellers = () => {
     limit: 4 
   });
 
+  const productListt = Array.isArray(products) ? products : [];
+  
+  if (productListt.length === 0) return null;
+
   if (loading) {
     return (
       <section className="py-12 bg-background">
@@ -50,7 +54,7 @@ const Bestsellers = () => {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {productList.map((product) => (
+          {productListt.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))} 
         </div>

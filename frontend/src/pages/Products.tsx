@@ -35,6 +35,8 @@ const Products = () => {
   // Fetch products from backend API
   const { products, loading, error } = useProducts(apiFilters);
 
+  const productList = Array.isArray(products) ? products : [];
+
   // Update filters when URL params change
   useEffect(() => {
     if (categoryParam) setCategory(categoryParam);
@@ -126,7 +128,7 @@ const Products = () => {
               <ProductCard key={product.id} product={product} />
             ))} */}
             {Array.isArray(products) &&
-              products.map((item) => (
+              productList.map((item) => (
                 <ProductCard key={item.id} product={item} />
               ))}
           </div>
