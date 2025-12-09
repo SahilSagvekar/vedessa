@@ -11,9 +11,13 @@ const Bestsellers = () => {
     limit: 4 
   });
 
-  const productListt = Array.isArray(products) ? products : [];
-  
-  if (productListt.length === 0) return null;
+  // SAFETY: Always ensure we have an array
+  const safeProducts = Array.isArray(products) ? products : [];
+
+  console.log('Bestsellers - products:', products);
+  console.log('Bestsellers - safeProducts:', safeProducts);
+  console.log('Bestsellers - loading:', loading);
+  console.log('Bestsellers - error:', error);
 
   if (loading) {
     return (
@@ -28,13 +32,11 @@ const Bestsellers = () => {
   }
 
   if (error) {
+    console.error('Bestsellers error:', error);
     return null; // Silently fail - don't break the page
   }
 
-  // Ensure products is an array
-  const productList = Array.isArray(products) ? products : [];
-
-  if (productList.length === 0) {
+  if (safeProducts.length === 0) {
     return null; // Don't show section if no bestsellers
   }
 
@@ -54,9 +56,9 @@ const Bestsellers = () => {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {productListt.map((product) => (
+          {safeProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
-          ))} 
+          ))}
         </div>
       </div>
     </section>
