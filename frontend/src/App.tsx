@@ -13,6 +13,10 @@ import Admin from "./pages/Admin";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import Dashboard from '@/pages/Dashboard';
+import Checkout from '@/pages/Checkout';
+import Terms from '@/pages/Terms';
+import Privacy from '@/pages/Privacy';
+import Refund from '@/pages/Refund';
 
 const queryClient = new QueryClient();
 
@@ -33,6 +37,10 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="*" element={<NotFound />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/refund" element={<Refund />} />
             </Routes>
           </BrowserRouter>
         </CartProvider>

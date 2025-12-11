@@ -8,6 +8,7 @@ const authRouter = require('./routes/auth');
 const cartRouter = require('./routes/cart');
 const wishlistRouter = require('./routes/wishlist');
 const ordersRouter = require('./routes/orders');
+const paymentRoutes = require('./routes/payment.routes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -108,6 +109,8 @@ app.get('/', (req, res) => {
   });
 });
 
+app.use('/api/payments', paymentRoutes);
+
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({
@@ -125,6 +128,8 @@ app.use((error, req, res, next) => {
     error: process.env.NODE_ENV === 'development' ? error.message : undefined
   });
 });
+
+
 
 // Start server
 app.listen(PORT, () => {

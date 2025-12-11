@@ -10,11 +10,11 @@ const Index = () => {
   return (
     <Layout>
       <HeroSection />
-      <CollectionsGrid />
+       <CollectionsGrid />
       <NewLaunches />
       <ArtOfAyurveda />
       <CollectionBanner />
-      <Bestsellers />
+      <Bestsellers /> 
     </Layout>
   );
 };
