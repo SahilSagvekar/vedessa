@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 const slides = [
   {
     type: "video",
-    video: "https://cdn.coverr.co/videos/coverr-woman-applying-face-cream-5237/1080p.mp4",
+    video: "video/1.mp4",
     title: "Discover Authentic Ayurveda",
     subtitle: "Pure botanicals, ancient wisdom",
     cta: "SHOP NOW",
@@ -40,12 +40,19 @@ const slides = [
 ];
 
 export default function HeroSection() {
+  // const [currentSlide, setCurrentSlide] = useState(0);
   const [currentSlide, setCurrentSlide] = useState(0);
+const [isInitialized, setIsInitialized] = useState(false);
+
+useEffect(() => {
+  // Ensure we start on first slide
+  setIsInitialized(true);
+}, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 6000);
+    }, 5000);
     return () => clearInterval(timer);
   }, []);
 
