@@ -1,154 +1,130 @@
-import { Star, Heart } from 'lucide-react';
-import { useCart } from '@/hooks/useCart';
-import { useWishlist } from '@/hooks/useWishlist';
-import { useAuth } from '@/components/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
-
-// Backend product type (matches API response)
-interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  image: string;
-  rating: number;
-  reviews: number;
-  is_new: boolean;
-  is_bestseller: boolean;
-  stock: number;
-  category_name?: string;
-  category_slug?: string;
-  collection_name?: string;
-  collection_slug?: string;
-}
+// components/products/ProductCard.tsx
+import React, { useState } from 'react';
+import { Heart, Star, Eye } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import ProductQuickView from './ProductQuickView';
 
 interface ProductCardProps {
-  product: Product;
+  product: any;
 }
 
-const ProductCard = ({ product }: ProductCardProps) => {
-  const { addToCart } = useCart();
-  const { isInWishlist, toggleWishlist } = useWishlist();
-  const { isAuthenticated } = useAuth();
-  const { toast } = useToast();
-  const navigate = useNavigate();
-  
-  const inWishlist = isInWishlist(product.id);
+export default function ProductCard({ product }: ProductCardProps) {
+  const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
+  const [isWishlisted, setIsWishlisted] = useState(false);
 
-  const handleAddToCart = async () => {
-    // Check if user is logged in
-    if (!isAuthenticated) {
-      toast({
-        title: "Login required",
-        description: "Please login to add items to your bag.",
-        variant: "destructive",
-      });
-      navigate('/login');
-      return;
-    }
-
-    // Check stock
-    if (product.stock === 0) {
-      toast({
-        title: "Out of stock",
-        description: `${product.name} is currently out of stock.`,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      await addToCart(product.id, 1);
-      // Success toast is shown by the hook
-    } catch (error) {
-      // Error toast is shown by the hook
-      console.error('Add to cart failed:', error);
-    }
-  };
-
-  const handleWishlistToggle = async () => {
-    // Check if user is logged in
-    if (!isAuthenticated) {
-      toast({
-        title: "Login required",
-        description: "Please login to save items to your wishlist.",
-        variant: "destructive",
-      });
-      navigate('/login');
-      return;
-    }
-
-    try {
-      await toggleWishlist(product.id);
-      // Success toast is shown by the hook
-    } catch (error) {
-      // Error toast is shown by the hook
-      console.error('Wishlist toggle failed:', error);
-    }
-  };
+  const discount = product.comparePrice
+    ? Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100)
+    : 0;
 
   return (
-    <div className="bg-card rounded-lg overflow-hidden group">
-      {/* Image */}
-      <div className="relative aspect-[4/5] overflow-hidden bg-secondary">
-        {product.is_new && (
-          <span className="absolute top-3 left-3 bg-kama-orange text-accent-foreground text-xs px-2 py-1 rounded z-10">
-            New
-          </span>
-        )}
-        {product.stock === 0 && (
-          <span className="absolute top-3 left-3 bg-red-500 text-white text-xs px-2 py-1 rounded z-10">
-            Out of Stock
-          </span>
-        )}
-        <button
-          onClick={handleWishlistToggle}
-          className="absolute top-3 right-3 p-2 bg-card/80 rounded-full hover:bg-card transition-colors z-10"
-        >
-          <Heart
-            className={`w-4 h-4 ${inWishlist ? 'fill-kama-orange text-kama-orange' : 'text-foreground'}`}
-          />
-        </button>
-        <img
-          src={product.image}
-          alt={product.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-        />
-      </div>
+    <>
+      <div className="group relative bg-white rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+        {/* Product Image */}
+        <div className="relative aspect-square overflow-hidden bg-gray-100">
+          <Link to={`/products/${product.slug}`}>
+            <img
+              src={product.images?.[0]?.url}
+              alt={product.name}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+          </Link>
 
-      {/* Content */}
-      <div className="p-4">
-        {/* Rating */}
-        <div className="flex items-center gap-1 mb-2">
-          <Star className="w-4 h-4 fill-kama-orange text-kama-orange" />
-          <span className="text-sm font-medium text-foreground">{product.rating}</span>
-          <span className="text-sm text-muted-foreground">({product.reviews})</span>
+          {/* Badges */}
+          <div className="absolute top-2 left-2 flex flex-col gap-1">
+            {discount > 0 && (
+              <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+                -{discount}%
+              </span>
+            )}
+            {product.isBestseller && (
+              <span className="bg-yellow-400 text-gray-900 text-xs font-bold px-2 py-1 rounded">
+                BESTSELLER
+              </span>
+            )}
+            {product.stock === 0 && (
+              <span className="bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded">
+                OUT OF STOCK
+              </span>
+            )}
+          </div>
+
+          {/* Quick Actions - Show on hover */}
+          <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              onClick={() => setIsWishlisted(!isWishlisted)}
+              className="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors"
+              aria-label="Add to wishlist"
+            >
+              <Heart
+                className={`w-4 h-4 ${isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-600'}`}
+              />
+            </button>
+            
+            <button
+              onClick={() => setIsQuickViewOpen(true)}
+              className="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors"
+              aria-label="Quick view"
+            >
+              <Eye className="w-4 h-4 text-gray-600" />
+            </button>
+          </div>
         </div>
 
-        {/* Name */}
-        <h3 className="font-medium text-foreground mb-1 line-clamp-2">{product.name}</h3>
-        
-        {/* Description */}
-        <p className="text-sm text-muted-foreground mb-3 line-clamp-1">{product.description}</p>
+        {/* Product Info */}
+        <div className="p-4">
+          {/* Brand/Vendor */}
+          {product.brand && (
+            <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
+              {product.brand}
+            </p>
+          )}
 
-        {/* Price & Button */}
-        <div className="flex items-center justify-between">
-          <span className="text-lg font-semibold text-foreground">₹{product.price.toFixed(2)}</span>
-          <Button
-            onClick={handleAddToCart}
-            variant="outline"
-            size="sm"
-            className="text-xs border-foreground text-foreground hover:bg-foreground hover:text-background"
-            disabled={product.stock === 0}
-          >
-            {product.stock === 0 ? 'Out of Stock' : 'Add to Bag'}
-          </Button>
+          {/* Product Name */}
+          <Link to={`/products/${product.slug}`}>
+            <h3 className="text-sm sm:text-base font-medium text-gray-900 mb-2 line-clamp-2 hover:text-green-700 transition-colors">
+              {product.name}
+            </h3>
+          </Link>
+
+          {/* Rating */}
+          {product.rating && (
+            <div className="flex items-center gap-1 mb-2">
+              <div className="flex">
+                {[...Array(5)].map((_, i) => (
+                  <Star
+                    key={i}
+                    className={`w-3 h-3 ${
+                      i < Math.floor(product.rating)
+                        ? 'fill-yellow-400 text-yellow-400'
+                        : 'text-gray-300'
+                    }`}
+                  />
+                ))}
+              </div>
+              <span className="text-xs text-gray-500">({product.reviewCount || 0})</span>
+            </div>
+          )}
+
+          {/* Price */}
+          <div className="flex items-baseline gap-2">
+            <span className="text-lg font-serif text-gray-900">
+              ₹{product.price.toFixed(2)}
+            </span>
+            {product.comparePrice && product.comparePrice > product.price && (
+              <span className="text-sm text-gray-400 line-through">
+                ₹{product.comparePrice.toFixed(2)}
+              </span>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Quick View Modal */}
+      <ProductQuickView
+        product={product}
+        open={isQuickViewOpen}
+        onClose={() => setIsQuickViewOpen(false)}
+      />
+    </>
   );
-};
-
-export default ProductCard;
+}

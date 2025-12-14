@@ -5,6 +5,8 @@ import NewLaunches from '@/components/home/NewLaunches';
 import ArtOfAyurveda from '@/components/home/ArtOfAyurveda';
 import CollectionBanner from '@/components/home/CollectionBanner';
 import Bestsellers from '@/components/home/Bestsellers';
+import SupportCollaborations from '@/components/SupportCollaborations'
+import Testimonials from '@/components/Testimonials';
 
 const Index = () => {
   return (
@@ -14,7 +16,9 @@ const Index = () => {
       <NewLaunches />
       <ArtOfAyurveda />
       <CollectionBanner />
-      <Bestsellers /> 
+      <Bestsellers />
+      <Testimonials />
+      <SupportCollaborations />
     </Layout>
   );
 };

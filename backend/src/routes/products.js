@@ -13,6 +13,43 @@ const { auth, isAdmin } = require('../middleware/auth');
 // GET /api/products - Get all products with filters
 router.get('/', getAllProducts);
 
+// routes/products.js
+router.get('/products/:slug', async (req, res) => {
+  try {
+    const { slug } = req.params;
+
+    const product = await prisma.product.findUnique({
+      where: { slug },
+      include: {
+        collection: true,
+        category: true,
+        images: {
+          orderBy: { order: 'asc' }
+        }
+      }
+    });
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: product
+    });
+
+  } catch (error) {
+    console.error('Error fetching product:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch product'
+    });
+  }
+});
+
 // GET /api/products/:id - Get single product
 router.get('/:id', getProductById);
 
