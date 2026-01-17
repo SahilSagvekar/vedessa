@@ -3,8 +3,12 @@
   "version": "1.0.0",
   "description": "Backend API for Ayurveda Essentials e-commerce with Neon DB + Prisma ORM",
   "main": "src/server.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "start": "node src/server.js",
+    "build": "prisma generate",
     "dev": "nodemon src/server.js",
     "db:setup": "prisma db push && node src/database/setup.js",
     "db:seed": "node src/database/seed.js",
@@ -28,11 +32,11 @@
     "express": "^4.18.2",
     "express-validator": "^7.0.1",
     "jsonwebtoken": "^9.0.2",
+    "prisma": "^5.7.1",
     "razorpay": "^2.9.6"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",
-    "nodemon": "^3.0.2",
-    "prisma": "^5.7.1"
+    "nodemon": "^3.0.2"
   }
 }

@@ -1,58 +1,10 @@
-// src/routes/payment.routes.js
-
 const express = require('express');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
-const jwt = require('jsonwebtoken');
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../config/database');
+const { auth: protect } = require('../middleware/auth');
 
 const router = express.Router();
-const prisma = new PrismaClient();
-
-// Auth middleware inline
-const protect = async (req, res, next) => {
-  try {
-    let token;
-
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-      token = req.headers.authorization.split(' ')[1];
-    }
-
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: 'Not authorized, no token',
-      });
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    req.user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
-      select: {
-        id: true,
-        email: true,
-        fullName: true,
-        role: true,
-      },
-    });
-
-    if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        message: 'User not found',
-      });
-    }
-
-    next();
-  } catch (error) {
-    console.error('Auth middleware error:', error);
-    return res.status(401).json({
-      success: false,
-      message: 'Not authorized, token failed',
-    });
-  }
-};
 
 // Initialize Razorpay instance
 const razorpay = new Razorpay({
@@ -131,27 +83,36 @@ router.post('/verify-payment', protect, async (req, res) => {
       });
     }
 
-    // Create order in database
+    // Generate order number
+    const timestamp = Date.now().toString();
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    const orderNumber = `ORD-${timestamp}-${random}`;
+
+    // Calculate values
+    const subtotal = orderData.subtotal || 0;
+    const taxAmount = orderData.tax || 0;
+    const shippingCost = orderData.shipping || 0;
+    const totalAmount = orderData.total || (subtotal + taxAmount + shippingCost);
+
+    // Create order in database with correct schema field names
     const order = await prisma.order.create({
       data: {
-        user_id: req.user.id,
-        total: orderData.total,
-        subtotal: orderData.subtotal,
-        tax: orderData.tax,
-        shipping: orderData.shipping || 0,
+        orderNumber,
+        userId: req.user.id,
+        totalAmount,
+        subtotal,
+        taxAmount,
+        shippingCost,
         status: 'PROCESSING',
-        payment_status: 'PAID',
-        payment_method: 'RAZORPAY',
-        razorpay_order_id,
-        razorpay_payment_id,
-        razorpay_signature,
-        shipping_address: orderData.shippingAddress,
+        paymentMethod: 'RAZORPAY',
+        shippingAddress: orderData.shippingAddress,
         items: {
           create: orderData.items.map((item) => ({
-            product_id: item.product_id,
+            productId: item.productId || item.product_id,
+            productName: item.productName || item.name || 'Unknown Product',
+            productImage: item.productImage || item.image || null,
             quantity: item.quantity,
             price: item.price,
-            total: item.quantity * item.price,
           })),
         },
       },
@@ -166,19 +127,22 @@ router.post('/verify-payment', protect, async (req, res) => {
 
     // Clear user's cart
     await prisma.cartItem.deleteMany({
-      where: { user_id: req.user.id },
+      where: { userId: req.user.id },
     });
 
     // Update product stock
     for (const item of orderData.items) {
-      await prisma.product.update({
-        where: { id: item.product_id },
-        data: {
-          stock: {
-            decrement: item.quantity,
+      const productId = item.productId || item.product_id;
+      if (productId) {
+        await prisma.product.update({
+          where: { id: productId },
+          data: {
+            stock: {
+              decrement: item.quantity,
+            },
           },
-        },
-      });
+        });
+      }
     }
 
     res.json({
@@ -186,6 +150,7 @@ router.post('/verify-payment', protect, async (req, res) => {
       message: 'Payment verified and order created successfully',
       data: {
         order,
+        razorpay_payment_id,
       },
     });
   } catch (error) {
