@@ -17,12 +17,6 @@ const Checkout = () => {
   const { initiatePayment, loading: paymentLoading } = useRazorpay();
   const { toast } = useToast();
 
-  // Debug logs
-  console.log('Checkout - cart:', cart);
-  console.log('Checkout - cartLoading:', cartLoading);
-  console.log('Checkout - cart items:', cart?.items);
-  console.log('Checkout - items length:', cart?.items?.length);
-
   const [shippingAddress, setShippingAddress] = useState({
     fullName: user?.fullName || '',
     email: user?.email || '',
@@ -61,7 +55,7 @@ const Checkout = () => {
 
   const validateForm = () => {
     const required = ['fullName', 'email', 'phone', 'address', 'city', 'state', 'pincode'];
-    
+
     for (const field of required) {
       if (!shippingAddress[field]?.trim()) {
         toast({
@@ -123,7 +117,9 @@ const Checkout = () => {
       shippingAddress,
       userEmail: user.email,
       items: cart.items.map(item => ({
-        product_id: item.product_id,
+        productId: item.product_id,
+        productName: item.product_name,
+        productImage: item.product_image,
         quantity: item.quantity,
         price: item.product_price,
       })),

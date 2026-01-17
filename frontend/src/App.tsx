@@ -33,17 +33,17 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/products" element={<Products />} />
+              <Route path="/products/:slug" element={<ProductDetail />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/wishlist" element={<Wishlist />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/auth" element={<Auth />} />
-              <Route path="*" element={<NotFound />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/refund" element={<Refund />} />
-              <Route path="/products/:slug" element={<ProductDetail />} />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
         </CartProvider>
