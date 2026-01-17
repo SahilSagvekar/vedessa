@@ -14,14 +14,35 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // CORS configuration
+const allowedOrigins = [
+  "http://localhost:8080",
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "https://vedessa.vercel.app",
+  "https://www.vedessa.in",
+  "https://vedessa.in",
+];
+
+// Add any additional origins from environment variable
+if (process.env.CORS_ORIGINS) {
+  const extraOrigins = process.env.CORS_ORIGINS.split(',').map(o => o.trim());
+  allowedOrigins.push(...extraOrigins);
+}
+
 app.use(cors({
-  // origin: 'http://localhost:8080',
-  origin: [
-      "http://localhost:8080",              // local dev
-      "https://vedessa.vercel.app",    // your Vercel frontend
-    ],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, Postman)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   exposedHeaders: ['Content-Type', 'Authorization']
 }));
