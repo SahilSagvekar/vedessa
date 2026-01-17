@@ -11,7 +11,7 @@ const slides = [
     title: "Discover Authentic Ayurveda",
     subtitle: "Pure botanicals, ancient wisdom",
     cta: "SHOP NOW",
-    // link: createPageUrl("Products")
+    link: "/products"
   },
   {
     type: "image",
@@ -19,7 +19,7 @@ const slides = [
     title: "Eladhi Collection",
     subtitle: "Hydrating formulas for radiant skin",
     cta: "EXPLORE",
-    // link: createPageUrl("Products", "collection=eladhi")
+    link: "/products?collection=eladhi"
   },
   {
     type: "image",
@@ -27,7 +27,7 @@ const slides = [
     title: "Bringaras Hair Care",
     subtitle: "For healthy, lustrous hair",
     cta: "DISCOVER",
-    // link: createPageUrl("Products", "collection=bringaras")
+    link: "/products?collection=bringaras"
   },
   {
     type: "image",
@@ -35,19 +35,19 @@ const slides = [
     title: "Weekend Offer",
     subtitle: "Complimentary minis worth up to ₹5640",
     cta: "SHOP THE OFFER",
-    // link: createPageUrl("Products")
+    link: "/products"
   }
 ];
 
 export default function HeroSection() {
   // const [currentSlide, setCurrentSlide] = useState(0);
   const [currentSlide, setCurrentSlide] = useState(0);
-const [isInitialized, setIsInitialized] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-useEffect(() => {
-  // Ensure we start on first slide
-  setIsInitialized(true);
-}, []);
+  useEffect(() => {
+    // Ensure we start on first slide
+    setIsInitialized(true);
+  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -88,7 +88,7 @@ useEffect(() => {
             />
           )}
           <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent" />
-          
+
           <div className="absolute inset-0 flex items-center">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
               <motion.div
@@ -134,9 +134,8 @@ useEffect(() => {
           <button
             key={index}
             onClick={() => setCurrentSlide(index)}
-            className={`w-2 h-2 rounded-full transition-all ${
-              index === currentSlide ? "bg-white w-8" : "bg-white/50"
-            }`}
+            className={`w-2 h-2 rounded-full transition-all ${index === currentSlide ? "bg-white w-8" : "bg-white/50"
+              }`}
           />
         ))}
       </div>

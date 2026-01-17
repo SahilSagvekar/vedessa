@@ -21,11 +21,14 @@ export default function ProductCard({ product }: ProductCardProps) {
       <div className="group relative bg-white rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
         {/* Product Image */}
         <div className="relative aspect-square overflow-hidden bg-gray-100">
-          <Link to={`/products/${product.slug}`}>
+          <Link to={`/products/${product.id}`}>
             <img
-              src={product.images?.[0]?.url}
+              src={product.image || '/placeholder.svg'}
               alt={product.name}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = '/placeholder.svg';
+              }}
             />
           </Link>
 
@@ -59,7 +62,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                 className={`w-4 h-4 ${isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-600'}`}
               />
             </button>
-            
+
             <button
               onClick={() => setIsQuickViewOpen(true)}
               className="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors"
@@ -80,7 +83,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           )}
 
           {/* Product Name */}
-          <Link to={`/products/${product.slug}`}>
+          <Link to={`/products/${product.id}`}>
             <h3 className="text-sm sm:text-base font-medium text-gray-900 mb-2 line-clamp-2 hover:text-green-700 transition-colors">
               {product.name}
             </h3>
@@ -93,11 +96,10 @@ export default function ProductCard({ product }: ProductCardProps) {
                 {[...Array(5)].map((_, i) => (
                   <Star
                     key={i}
-                    className={`w-3 h-3 ${
-                      i < Math.floor(product.rating)
-                        ? 'fill-yellow-400 text-yellow-400'
-                        : 'text-gray-300'
-                    }`}
+                    className={`w-3 h-3 ${i < Math.floor(product.rating)
+                      ? 'fill-yellow-400 text-yellow-400'
+                      : 'text-gray-300'
+                      }`}
                   />
                 ))}
               </div>

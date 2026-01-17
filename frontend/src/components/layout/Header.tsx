@@ -87,7 +87,11 @@ const Header = () => {
               <SheetContent side="left" className="w-[300px] sm:w-[400px]">
                 <SheetHeader>
                   <SheetTitle className="text-left">
-                    <span className="text-xl tracking-[0.3em] font-display font-medium text-foreground">VEDESSA</span>
+                    <img
+                      src="/logo/Gemini_Generated_Image_rpc7qhrpc7qhrpc7.png"
+                      alt="Vedessa"
+                      className="h-12 w-auto"
+                    />
                   </SheetTitle>
                 </SheetHeader>
                 <div className="mt-8 flex flex-col space-y-1">
@@ -160,9 +164,12 @@ const Header = () => {
             </Sheet>
 
             {/* Center: Logo */}
-            <Link to="/" className="flex flex-col flex-shrink-0">
-              <span className="text-xl tracking-[0.3em] font-display font-medium text-foreground">VEDESSA</span>
-              <span className="text-[10px] tracking-[0.2em] text-muted-foreground">AUTHENTIC AYURVEDA</span>
+            <Link to="/" className="flex-shrink-0">
+              <img
+                src="/logo/Gemini_Generated_Image_rpc7qhrpc7qhrpc7.png"
+                alt="Vedessa - Authentic Ayurveda"
+                className="h-14 md:h-16 w-auto"
+              />
             </Link>
 
             {/* Center-Right: Navigation Links (Hidden on small screens) */}
@@ -176,7 +183,7 @@ const Header = () => {
               <Link to="/products?category=bath_body" className="text-sm font-medium text-foreground hover:text-kama-olive transition-colors">
                 BATH & BODY
               </Link>
-              
+
               {/* Collections Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center space-x-1 text-sm font-medium text-foreground hover:text-kama-olive transition-colors">

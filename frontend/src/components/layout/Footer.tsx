@@ -8,26 +8,30 @@ const Footer = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 md:gap-12">
           {/* About Our Store */}
           <div className="lg:col-span-1">
-            <h4 className="text-white font-semibold mb-4 text-sm uppercase tracking-wide">
-              About Our Store
-            </h4>
+            <Link to="/" className="block mb-4">
+              <img
+                src="/logo/2.png"
+                alt="Vedessa"
+                className="h-16 w-auto brightness-0 invert"
+              />
+            </Link>
             <p className="text-sm leading-relaxed mb-4">
-              Vedessa is built on the pride of making an exceptional products and experiences that 
+              Vedessa is built on the pride of making an exceptional products and experiences that
               celebrate India's rich Ayurvedic traditions. Premium quality, style, and innovation.
             </p>
             {/* App Download Badges */}
             <div className="flex gap-2 mt-4">
               <a href="#" className="block">
-                <img 
-                  src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Download_on_the_App_Store_Badge.svg/320px-Download_on_the_App_Store_Badge.svg.png" 
-                  alt="App Store" 
+                <img
+                  src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Download_on_the_App_Store_Badge.svg/320px-Download_on_the_App_Store_Badge.svg.png"
+                  alt="App Store"
                   className="h-10 w-auto"
                 />
               </a>
               <a href="#" className="block">
-                <img 
-                  src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Google_Play_Store_badge_EN.svg/320px-Google_Play_Store_badge_EN.svg.png" 
-                  alt="Google Play" 
+                <img
+                  src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Google_Play_Store_badge_EN.svg/320px-Google_Play_Store_badge_EN.svg.png"
+                  alt="Google Play"
                   className="h-10 w-auto"
                 />
               </a>
@@ -171,29 +175,29 @@ const Footer = () => {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             {/* Social Icons */}
             <div className="flex items-center gap-4">
-              <a 
-                href="#" 
+              <a
+                href="#"
                 className="w-8 h-8 rounded-full bg-gray-800 hover:bg-green-600 flex items-center justify-center transition-colors"
                 aria-label="Facebook"
               >
                 <Facebook className="w-4 h-4" />
               </a>
-              <a 
-                href="#" 
+              <a
+                href="#"
                 className="w-8 h-8 rounded-full bg-gray-800 hover:bg-green-600 flex items-center justify-center transition-colors"
                 aria-label="Twitter"
               >
                 <Twitter className="w-4 h-4" />
               </a>
-              <a 
-                href="#" 
+              <a
+                href="#"
                 className="w-8 h-8 rounded-full bg-gray-800 hover:bg-green-600 flex items-center justify-center transition-colors"
                 aria-label="Instagram"
               >
                 <Instagram className="w-4 h-4" />
               </a>
-              <a 
-                href="#" 
+              <a
+                href="#"
                 className="w-8 h-8 rounded-full bg-gray-800 hover:bg-green-600 flex items-center justify-center transition-colors"
                 aria-label="YouTube"
               >
