@@ -166,7 +166,7 @@ const Header = () => {
             {/* Center: Logo */}
             <Link to="/" className="flex-shrink-0">
               <img
-                src="/logo/Gemini_Generated_Image_rpc7qhrpc7qhrpc7.png"
+                src="/logo/1.png"
                 alt="Vedessa - Authentic Ayurveda"
                 className="h-14 md:h-16 w-auto"
               />

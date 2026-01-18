@@ -7,52 +7,52 @@ const categories = [
   {
     name: "Skincare",
     image: "https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=600&q=80",
-    // link: createPageUrl("Products", "category=skincare")
+    link: "/products?category=skincare"
   },
   {
     name: "HairCare",
     image: "https://images.unsplash.com/photo-1522338140262-f46f5913618a?w=600&q=80",
-    // link: createPageUrl("Products", "category=haircare")
+    link: "/products?category=haircare"
   },
   {
     name: "Bringaras Collection",
     image: "https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?w=600&q=80",
-    // link: createPageUrl("Products", "collection=bringaras")
+    link: "/products?collection=bringaras"
   },
   {
     name: "Eladhi Collection",
     image: "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=600&q=80",
-    // link: createPageUrl("Products", "collection=eladhi")
+    link: "/products?collection=eladhi"
   },
   {
     name: "Ashwaras Collection",
     image: "https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=600&q=80",
-    // link: createPageUrl("Products", "collection=ashwaras")
+    link: "/products?collection=ashwaras"
   },
   {
     name: "Kumkumadi Collection",
     image: "https://images.unsplash.com/photo-1570554886111-e80fcca6a029?w=600&q=80",
-    // link: createPageUrl("Products", "collection=kumkumadi")
+    link: "/products?collection=kumkumadi"
   },
   {
     name: "Gifting",
     image: "https://images.unsplash.com/photo-1513885535751-8b9238bd345a?w=600&q=80",
-    // link: createPageUrl("Products", "category=gifting")
+    link: "/products?category=gifting"
   },
   {
     name: "Bath and Body",
     image: "https://images.unsplash.com/photo-1556228578-dd94e498de1f?w=600&q=80",
-    // link: createPageUrl("Products", "category=bath_body")
+    link: "/products?category=bath_body"
   },
   {
     name: "Bestsellers",
     image: "https://images.unsplash.com/photo-1596755389378-c31d21fd1273?w=600&q=80",
-    // link: createPageUrl("Products", "category=bestseller")
+    link: "/products?filter=bestseller"
   },
   {
-    name: "Shop",
+    name: "Shop All",
     image: "https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=600&q=80",
-    // link: createPageUrl("Products")
+    link: "/products"
   }
 ];
 

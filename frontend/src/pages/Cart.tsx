@@ -10,16 +10,16 @@ import { useEffect } from 'react';
 const Cart = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
-  const { 
-    cart, 
-    loading, 
+  const {
+    cart,
+    loading,
     error,
-    updateCartItem, 
+    updateCartItem,
     removeFromCart,
     subtotal,
     tax,
     total,
-    itemCount 
+    itemCount
   } = useCart();
 
   // Redirect to login if not authenticated
@@ -85,7 +85,7 @@ const Cart = () => {
   const handleUpdateQuantity = async (itemId: string, currentQuantity: number, change: number) => {
     const newQuantity = currentQuantity + change;
     if (newQuantity < 1) return;
-    
+
     try {
       await updateCartItem(itemId, newQuantity);
     } catch (error) {
@@ -120,11 +120,11 @@ const Cart = () => {
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4">
             {cart.items.map((item) => (
-              <div key={item.id} className="flex gap-4 bg-card p-4 rounded-lg">
+              <div key={item.id} className="flex flex-col sm:flex-row gap-4 bg-card p-4 rounded-lg">
                 <img
-                  src={item.product_image}
+                  src={item.product_image || '/placeholder.svg'}
                   alt={item.product_name}
-                  className="w-24 h-24 object-cover rounded"
+                  className="w-full sm:w-24 h-32 sm:h-24 object-cover rounded"
                 />
                 <div className="flex-1">
                   <h3 className="font-medium text-foreground">
@@ -147,15 +147,8 @@ const Cart = () => {
                     <p className="text-xs text-red-600 mt-1">Out of stock</p>
                   )}
                 </div>
-                <div className="flex flex-col items-end justify-between">
-                  <button
-                    onClick={() => handleRemove(item.id)}
-                    className="p-2 text-muted-foreground hover:text-destructive transition-colors"
-                    title="Remove from cart"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
-                  <div className="flex items-center gap-2 border border-border rounded">
+                <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-between">
+                  <div className="flex items-center gap-2 border border-border rounded order-2 sm:order-1">
                     <button
                       onClick={() =>
                         handleUpdateQuantity(item.id, item.quantity, -1)
@@ -182,9 +175,18 @@ const Cart = () => {
                       <Plus className="w-4 h-4" />
                     </button>
                   </div>
-                  <p className="text-sm font-medium text-foreground mt-2">
-                    ₹{item.item_total.toFixed(2)}
-                  </p>
+                  <div className="flex items-center gap-4 order-1 sm:order-2">
+                    <p className="text-sm font-medium text-foreground">
+                      ₹{item.item_total.toFixed(2)}
+                    </p>
+                    <button
+                      onClick={() => handleRemove(item.id)}
+                      className="p-2 text-muted-foreground hover:text-destructive transition-colors"
+                      title="Remove from cart"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

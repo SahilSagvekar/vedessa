@@ -6,18 +6,13 @@ import { Button } from '@/components/ui/button';
 
 const Bestsellers = () => {
   // Fetch bestseller products from backend
-  const { products, loading, error } = useProducts({ 
+  const { products, loading, error } = useProducts({
     isBestseller: true,
-    limit: 4 
+    limit: 4
   });
 
   // SAFETY: Always ensure we have an array
   const safeProducts = Array.isArray(products) ? products : [];
-
-  console.log('Bestsellers - products:', products);
-  console.log('Bestsellers - safeProducts:', safeProducts);
-  console.log('Bestsellers - loading:', loading);
-  console.log('Bestsellers - error:', error);
 
   if (loading) {
     return (
@@ -43,13 +38,13 @@ const Bestsellers = () => {
   return (
     <section className="py-12 bg-background">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
-            <h2 className="text-3xl font-display text-foreground">Bestsellers</h2>
-            <p className="text-muted-foreground mt-1">Customer favorites</p>
+            <h2 className="text-2xl sm:text-3xl font-display text-foreground">Bestsellers</h2>
+            <p className="text-muted-foreground mt-1 text-sm sm:text-base">Customer favorites</p>
           </div>
           <Link to="/products?filter=bestseller">
-            <Button variant="outline" className="border-foreground text-foreground hover:bg-foreground hover:text-background">
+            <Button variant="outline" className="border-foreground text-foreground hover:bg-foreground hover:text-background w-full sm:w-auto">
               View All <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </Link>
