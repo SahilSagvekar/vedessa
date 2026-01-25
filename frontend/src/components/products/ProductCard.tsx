@@ -1,7 +1,6 @@
 // components/products/ProductCard.tsx
 import React, { useState } from 'react';
 import { Heart, Star, Eye } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import ProductQuickView from './ProductQuickView';
 
 interface ProductCardProps {
@@ -16,21 +15,30 @@ export default function ProductCard({ product }: ProductCardProps) {
     ? Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100)
     : 0;
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Prevent opening modal when clicking on action buttons
+    if ((e.target as HTMLElement).closest('button')) {
+      return;
+    }
+    setIsQuickViewOpen(true);
+  };
+
   return (
     <>
-      <div className="group relative bg-white rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+      <div
+        className="group relative bg-white rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+        onClick={handleCardClick}
+      >
         {/* Product Image */}
         <div className="relative aspect-square overflow-hidden bg-gray-100">
-          <Link to={`/products/${product.id}`}>
-            <img
-              src={product.image || '/placeholder.svg'}
-              alt={product.name}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = '/placeholder.svg';
-              }}
-            />
-          </Link>
+          <img
+            src={product.image || '/placeholder.svg'}
+            alt={product.name}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = '/placeholder.svg';
+            }}
+          />
 
           {/* Badges */}
           <div className="absolute top-2 left-2 flex flex-col gap-1">
@@ -54,7 +62,10 @@ export default function ProductCard({ product }: ProductCardProps) {
           {/* Quick Actions - Show on hover */}
           <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
-              onClick={() => setIsWishlisted(!isWishlisted)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsWishlisted(!isWishlisted);
+              }}
               className="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors"
               aria-label="Add to wishlist"
             >
@@ -64,7 +75,10 @@ export default function ProductCard({ product }: ProductCardProps) {
             </button>
 
             <button
-              onClick={() => setIsQuickViewOpen(true)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsQuickViewOpen(true);
+              }}
               className="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors"
               aria-label="Quick view"
             >
@@ -83,11 +97,9 @@ export default function ProductCard({ product }: ProductCardProps) {
           )}
 
           {/* Product Name */}
-          <Link to={`/products/${product.id}`}>
-            <h3 className="text-sm sm:text-base font-medium text-gray-900 mb-2 line-clamp-2 hover:text-green-700 transition-colors">
-              {product.name}
-            </h3>
-          </Link>
+          <h3 className="text-sm sm:text-base font-medium text-gray-900 mb-2 line-clamp-2 hover:text-green-700 transition-colors">
+            {product.name}
+          </h3>
 
           {/* Rating */}
           {product.rating && (

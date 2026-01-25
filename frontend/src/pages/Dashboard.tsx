@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 import CustomerDashboard from './CustomerDashboard';
+import VendorDashboard from './VendorDashboard';
 import Admin from './Admin';
 
 /**
@@ -15,15 +16,16 @@ import Admin from './Admin';
  * - Not logged in → Redirect to login
  */
 const Dashboard = () => {
-  const { user, isAdmin, isAuthenticated, loading } = useAuth();
+  const { user, isAdmin, isVendor, isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
 
-  // useEffect(() => {
-  //   // Redirect to login if not authenticated
-  //   if (!loading && !isAuthenticated) {
-  //     navigate('/login');
-  //   }
-  // }, [isAuthenticated, loading, navigate]);
+  useEffect(() => {
+    // Redirect to login if not authenticated
+    if (!loading && !isAuthenticated) {
+      navigate('/auth');
+    }
+  }, [isAuthenticated, loading, navigate]);
+
 
   // Show loading while checking auth
   if (loading) {
@@ -36,12 +38,21 @@ const Dashboard = () => {
 
   // Show nothing if not authenticated (will redirect)
   if (!isAuthenticated) {
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
   }
+
 
   // Route to appropriate dashboard based on role
   if (isAdmin) {
     return <Admin />;
+  }
+
+  if (isVendor) {
+    return <VendorDashboard />;
   }
 
   return <CustomerDashboard />;

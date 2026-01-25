@@ -1,11 +1,16 @@
 // components/products/ProductQuickView.tsx
 import React, { useState } from 'react';
-import { X, Plus, Minus, Heart, Share2, Star, Check } from 'lucide-react';
+import { X, Plus, Minus, Heart, Share2, Star, Check, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
 } from '@/components/ui/dialog';
+import { useCart } from '@/hooks/useCart';
+import { useWishlist } from '@/hooks/useWishlist';
+import { useAuth } from '@/components/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 interface ProductQuickViewProps {
   product: any;
@@ -14,23 +19,137 @@ interface ProductQuickViewProps {
 }
 
 export default function ProductQuickView({ product, open, onClose }: ProductQuickViewProps) {
-  const [selectedImage, setSelectedImage] = useState(0);
-  const [selectedColor, setSelectedColor] = useState(product.colors?.[0] || null);
-  const [selectedSize, setSelectedSize] = useState(product.sizes?.[0] || null);
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  const { addToCart } = useCart();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const { toast } = useToast();
+
+  const [selectedColor, setSelectedColor] = useState(product?.colors?.[0] || null);
+  const [selectedSize, setSelectedSize] = useState(product?.sizes?.[0] || null);
   const [quantity, setQuantity] = useState(1);
-  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [isWishlisted, setIsWishlisted] = useState(product ? isInWishlist(product.id) : false);
+  const [addingToCart, setAddingToCart] = useState(false);
 
   const incrementQuantity = () => setQuantity(prev => prev + 1);
   const decrementQuantity = () => setQuantity(prev => Math.max(1, prev - 1));
 
-  const handleAddToCart = () => {
-    // Add to cart logic
-    console.log('Add to cart:', { product, quantity, selectedColor, selectedSize });
+  const handleAddToCart = async () => {
+    if (!isAuthenticated) {
+      toast({
+        title: 'Login Required',
+        description: 'Please login to add items to cart',
+        variant: 'destructive',
+      });
+      onClose();
+      navigate('/auth');
+      return;
+    }
+
+    try {
+      setAddingToCart(true);
+      await addToCart(product.id, quantity);
+      toast({
+        title: 'Added to Cart',
+        description: `${product.name} has been added to your cart`,
+      });
+    } catch (err) {
+      toast({
+        title: 'Error',
+        description: 'Failed to add item to cart',
+        variant: 'destructive',
+      });
+    } finally {
+      setAddingToCart(false);
+    }
   };
 
-  const handleBuyNow = () => {
-    // Buy now logic
-    console.log('Buy now:', { product, quantity, selectedColor, selectedSize });
+  const handleBuyNow = async () => {
+    if (!isAuthenticated) {
+      toast({
+        title: 'Login Required',
+        description: 'Please login to proceed',
+        variant: 'destructive',
+      });
+      onClose();
+      navigate('/auth');
+      return;
+    }
+
+    try {
+      setAddingToCart(true);
+      await addToCart(product.id, quantity);
+      onClose();
+      navigate('/checkout');
+    } catch (err) {
+      toast({
+        title: 'Error',
+        description: 'Failed to add item to cart',
+        variant: 'destructive',
+      });
+    } finally {
+      setAddingToCart(false);
+    }
+  };
+
+  const handleWishlistToggle = async () => {
+    if (!isAuthenticated) {
+      toast({
+        title: 'Login Required',
+        description: 'Please login to add items to wishlist',
+        variant: 'destructive',
+      });
+      onClose();
+      navigate('/auth');
+      return;
+    }
+
+    try {
+      if (isWishlisted) {
+        await removeFromWishlist(product.id);
+        setIsWishlisted(false);
+        toast({
+          title: 'Removed from Wishlist',
+          description: `${product.name} has been removed from your wishlist`,
+        });
+      } else {
+        await addToWishlist(product.id);
+        setIsWishlisted(true);
+        toast({
+          title: 'Added to Wishlist',
+          description: `${product.name} has been added to your wishlist`,
+        });
+      }
+    } catch (err) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update wishlist',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/products/${product.slug || product.id}`;
+    const shareText = `Check out ${product.name} on Vedessa!`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: product.name,
+          text: shareText,
+          url: shareUrl,
+        });
+      } catch (err) {
+        // User cancelled or share failed
+      }
+    } else {
+      navigator.clipboard.writeText(shareUrl);
+      toast({
+        title: 'Link Copied',
+        description: 'Product link copied to clipboard',
+      });
+    }
   };
 
   if (!product) return null;
@@ -53,11 +172,14 @@ export default function ProductQuickView({ product, open, onClose }: ProductQuic
               {/* Main Image */}
               <div className="relative aspect-square bg-gray-50 rounded-lg overflow-hidden">
                 <img
-                  src={product.images?.[selectedImage]?.url || product.images?.[0]?.url}
+                  src={product.image || '/placeholder.svg'}
                   alt={product.name}
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/placeholder.svg';
+                  }}
                 />
-                
+
                 {/* Sale Badge */}
                 {product.comparePrice && product.comparePrice > product.price && (
                   <div className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-medium">
@@ -72,29 +194,6 @@ export default function ProductQuickView({ product, open, onClose }: ProductQuic
                   </div>
                 )}
               </div>
-
-              {/* Thumbnail Images */}
-              {product.images && product.images.length > 1 && (
-                <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 sm:gap-3">
-                  {product.images.map((image: any, index: number) => (
-                    <button
-                      key={index}
-                      onClick={() => setSelectedImage(index)}
-                      className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${
-                        selectedImage === index
-                          ? 'border-green-700 ring-2 ring-green-200'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <img
-                        src={image.url}
-                        alt={`${product.name} ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
 
             {/* Right Side - Product Details */}
@@ -120,11 +219,10 @@ export default function ProductQuickView({ product, open, onClose }: ProductQuic
                       {[...Array(5)].map((_, i) => (
                         <Star
                           key={i}
-                          className={`w-4 h-4 ${
-                            i < Math.floor(product.rating)
-                              ? 'fill-yellow-400 text-yellow-400'
-                              : 'text-gray-300'
-                          }`}
+                          className={`w-4 h-4 ${i < Math.floor(product.rating)
+                            ? 'fill-yellow-400 text-yellow-400'
+                            : 'text-gray-300'
+                            }`}
                         />
                       ))}
                     </div>
@@ -183,11 +281,10 @@ export default function ProductQuickView({ product, open, onClose }: ProductQuic
                       <button
                         key={index}
                         onClick={() => setSelectedColor(color)}
-                        className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 transition-all ${
-                          selectedColor?.name === color.name
-                            ? 'border-gray-900 ring-2 ring-gray-300'
-                            : 'border-gray-300 hover:border-gray-400'
-                        }`}
+                        className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 transition-all ${selectedColor?.name === color.name
+                          ? 'border-gray-900 ring-2 ring-gray-300'
+                          : 'border-gray-300 hover:border-gray-400'
+                          }`}
                         style={{ backgroundColor: color.hex }}
                         title={color.name}
                       />
@@ -207,11 +304,10 @@ export default function ProductQuickView({ product, open, onClose }: ProductQuic
                       <button
                         key={index}
                         onClick={() => setSelectedSize(size)}
-                        className={`px-4 py-2 border rounded-md text-sm font-medium transition-all ${
-                          selectedSize === size
-                            ? 'border-gray-900 bg-gray-900 text-white'
-                            : 'border-gray-300 hover:border-gray-400'
-                        }`}
+                        className={`px-4 py-2 border rounded-md text-sm font-medium transition-all ${selectedSize === size
+                          ? 'border-gray-900 bg-gray-900 text-white'
+                          : 'border-gray-300 hover:border-gray-400'
+                          }`}
                       >
                         {size}
                       </button>
@@ -248,15 +344,22 @@ export default function ProductQuickView({ product, open, onClose }: ProductQuic
               <div className="space-y-3 mb-6">
                 <button
                   onClick={handleAddToCart}
-                  disabled={product.stock === 0}
-                  className="w-full bg-[#C17855] hover:bg-[#A66545] disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-3 sm:py-4 px-6 rounded-md font-medium uppercase tracking-wider transition-all"
+                  disabled={product.stock === 0 || addingToCart}
+                  className="w-full bg-[#C17855] hover:bg-[#A66545] disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-3 sm:py-4 px-6 rounded-md font-medium uppercase tracking-wider transition-all flex items-center justify-center gap-2"
                 >
-                  Add to Cart
+                  {addingToCart ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Adding...
+                    </>
+                  ) : (
+                    'Add to Cart'
+                  )}
                 </button>
-                
+
                 <button
                   onClick={handleBuyNow}
-                  disabled={product.stock === 0}
+                  disabled={product.stock === 0 || addingToCart}
                   className="w-full bg-gray-900 hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-3 sm:py-4 px-6 rounded-md font-medium uppercase tracking-wider transition-all"
                 >
                   Buy It Now
@@ -264,18 +367,20 @@ export default function ProductQuickView({ product, open, onClose }: ProductQuic
 
                 <div className="flex gap-3">
                   <button
-                    onClick={() => setIsWishlisted(!isWishlisted)}
-                    className={`flex-1 border-2 py-3 px-4 rounded-md font-medium transition-all flex items-center justify-center gap-2 ${
-                      isWishlisted
-                        ? 'border-red-500 text-red-500 bg-red-50'
-                        : 'border-gray-300 hover:border-gray-400'
-                    }`}
+                    onClick={handleWishlistToggle}
+                    className={`flex-1 border-2 py-3 px-4 rounded-md font-medium transition-all flex items-center justify-center gap-2 ${isWishlisted
+                      ? 'border-red-500 text-red-500 bg-red-50'
+                      : 'border-gray-300 hover:border-gray-400'
+                      }`}
                   >
                     <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-red-500' : ''}`} />
-                    <span className="hidden sm:inline">Wishlist</span>
+                    <span className="hidden sm:inline">{isWishlisted ? 'Wishlisted' : 'Wishlist'}</span>
                   </button>
-                  
-                  <button className="flex-1 border-2 border-gray-300 hover:border-gray-400 py-3 px-4 rounded-md font-medium transition-all flex items-center justify-center gap-2">
+
+                  <button
+                    onClick={handleShare}
+                    className="flex-1 border-2 border-gray-300 hover:border-gray-400 py-3 px-4 rounded-md font-medium transition-all flex items-center justify-center gap-2"
+                  >
                     <Share2 className="w-5 h-5" />
                     <span className="hidden sm:inline">Share</span>
                   </button>
@@ -290,21 +395,21 @@ export default function ProductQuickView({ product, open, onClose }: ProductQuic
                     <span className="text-gray-900 font-medium">{product.vendor}</span>
                   </div>
                 )}
-                
+
                 {product.category && (
                   <div className="flex items-start gap-2">
                     <span className="text-gray-500 min-w-[80px]">Category:</span>
                     <span className="text-gray-900 font-medium">{product.category.name}</span>
                   </div>
                 )}
-                
+
                 {product.collection && (
                   <div className="flex items-start gap-2">
                     <span className="text-gray-500 min-w-[80px]">Collection:</span>
                     <span className="text-gray-900 font-medium">{product.collection.name}</span>
                   </div>
                 )}
-                
+
                 {product.tags && product.tags.length > 0 && (
                   <div className="flex items-start gap-2">
                     <span className="text-gray-500 min-w-[80px]">Tags:</span>
@@ -324,8 +429,8 @@ export default function ProductQuickView({ product, open, onClose }: ProductQuic
 
               {/* View Full Details Link */}
               <div className="mt-6">
-                
-                <a  href={`/products/${product.slug}`}
+
+                <a href={`/products/${product.slug}`}
                   className="text-sm text-green-700 hover:text-green-800 font-medium underline"
                 >
                   View Full Product Details →

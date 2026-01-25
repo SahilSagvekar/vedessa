@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { z } from 'zod';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,7 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; fullName?: string }>({});
-  
+
   const { signIn, signUp, user, isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -33,32 +33,32 @@ const Auth = () => {
 
   const validateForm = () => {
     const newErrors: { email?: string; password?: string; fullName?: string } = {};
-    
+
     const emailResult = emailSchema.safeParse(email);
     if (!emailResult.success) {
       newErrors.email = emailResult.error.errors[0].message;
     }
-    
+
     const passwordResult = passwordSchema.safeParse(password);
     if (!passwordResult.success) {
       newErrors.password = passwordResult.error.errors[0].message;
     }
-    
+
     if (!isLogin && !fullName.trim()) {
       newErrors.fullName = 'Full name is required';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
-    
+
     setIsSubmitting(true);
-    
+
     try {
       if (isLogin) {
         const { error } = await signIn(email, password);
@@ -179,6 +179,13 @@ const Auth = () => {
               </div>
               {errors.password && (
                 <p className="text-sm text-destructive">{errors.password}</p>
+              )}
+              {isLogin && (
+                <div className="text-right">
+                  <Link to="/forgot-password" className="text-sm text-primary hover:underline">
+                    Forgot Password?
+                  </Link>
+                </div>
               )}
             </div>
 

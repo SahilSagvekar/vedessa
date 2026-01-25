@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, ShoppingCart, TrendingUp, Clock, Plus, Pencil, Trash2, Loader2 } from 'lucide-react';
+import { Package, ShoppingCart, TrendingUp, Clock, Plus, Pencil, Trash2, Loader2, Users, Check, X } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import { useAuth } from '@/components/contexts/AuthContext';
 import productsService from '@/services/productsService';
 import ordersService from '@/services/ordersService';
+import vendorService from '@/services/vendorService';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -59,7 +60,9 @@ const Admin = () => {
   const { toast } = useToast();
 
   const [productList, setProductList] = useState<Product[]>([]);
-  const [activeTab, setActiveTab] = useState<'products' | 'orders'>('products');
+  const [vendorList, setVendorList] = useState<any[]>([]);
+  const [orderList, setOrderList] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'vendors'>('products');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editProductId, setEditProductId] = useState<string | null>(null);
@@ -107,8 +110,19 @@ const Admin = () => {
     if (isAdmin) {
       fetchProducts();
       fetchStats();
+      fetchVendors();
+      fetchOrders();
     }
   }, [isAdmin]);
+
+  const fetchVendors = async () => {
+    try {
+      const response = await vendorService.getAllVendors();
+      setVendorList(response.data.vendors);
+    } catch (error) {
+      console.error('Failed to fetch vendors:', error);
+    }
+  };
 
   const fetchProducts = async () => {
     try {
@@ -130,14 +144,47 @@ const Admin = () => {
     try {
       const ordersResponse = await ordersService.getAllOrders({});
       setTotalOrders(ordersResponse.data.pagination.total);
-      
+
       const revenue = ordersResponse.data.orders.reduce(
-        (sum: number, order: any) => sum + order.total,
+        (sum: number, order: any) => sum + (parseFloat(order.totalAmount) || 0),
         0
       );
       setTotalRevenue(revenue);
     } catch (error) {
       console.error('Failed to fetch stats:', error);
+    }
+  };
+
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const ordersResponse = await ordersService.getAllOrders({});
+      setOrderList(ordersResponse.data.orders);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to load orders',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateOrderStatus = async (orderId: string, newStatus: string) => {
+    try {
+      await ordersService.updateOrderStatus(orderId, newStatus);
+      toast({
+        title: 'Status Updated',
+        description: `Order status changed to ${newStatus}`,
+      });
+      fetchOrders(); // Refresh list
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update status',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -286,6 +333,23 @@ const Admin = () => {
     return labels[category] || category;
   };
 
+  const handleApproveVendor = async (id: string, approve: boolean) => {
+    try {
+      await vendorService.approveVendor(id, { approve });
+      toast({
+        title: approve ? 'Vendor Approved' : 'Vendor Rejected',
+        description: `Vendor status has been updated successfully.`,
+      });
+      fetchVendors();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to update vendor status',
+        variant: 'destructive',
+      });
+    }
+  };
+
   if (authLoading || !isAdmin) {
     return (
       <Layout>
@@ -325,23 +389,30 @@ const Admin = () => {
         <div className="flex gap-4 mb-6 border-b border-border">
           <button
             onClick={() => setActiveTab('products')}
-            className={`pb-3 px-1 text-sm font-medium transition-colors ${
-              activeTab === 'products'
-                ? 'text-foreground border-b-2 border-foreground'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
+            className={`pb-3 px-1 text-sm font-medium transition-colors ${activeTab === 'products'
+              ? 'text-foreground border-b-2 border-foreground'
+              : 'text-muted-foreground hover:text-foreground'
+              }`}
           >
             Products
           </button>
           <button
             onClick={() => setActiveTab('orders')}
-            className={`pb-3 px-1 text-sm font-medium transition-colors ${
-              activeTab === 'orders'
-                ? 'text-foreground border-b-2 border-foreground'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
+            className={`pb-3 px-1 text-sm font-medium transition-colors ${activeTab === 'orders'
+              ? 'text-foreground border-b-2 border-foreground'
+              : 'text-muted-foreground hover:text-foreground'
+              }`}
           >
             Orders
+          </button>
+          <button
+            onClick={() => setActiveTab('vendors')}
+            className={`pb-3 px-1 text-sm font-medium transition-colors ${activeTab === 'vendors'
+              ? 'text-foreground border-b-2 border-foreground'
+              : 'text-muted-foreground hover:text-foreground'
+              }`}
+          >
+            Vendors
           </button>
         </div>
 
@@ -566,22 +637,170 @@ const Admin = () => {
           </div>
         )}
 
-        {/* Orders Tab */}
         {activeTab === 'orders' && (
-          <div className="bg-card border border-border rounded-lg p-8 text-center">
-            <ShoppingCart className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-foreground mb-2">View orders in Admin Dashboard</h3>
-            <p className="text-muted-foreground mb-4">
-              Go to the Admin Dashboard to view and manage all orders.
-            </p>
-            <Button onClick={() => navigate('/dashboard')}>
-              Go to Dashboard
-            </Button>
+          <div className="bg-card border border-border rounded-lg">
+            <div className="p-4 border-b border-border">
+              <h2 className="text-lg font-semibold text-foreground">Order Management</h2>
+            </div>
+
+            {loading ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : orderList.length === 0 ? (
+              <div className="text-center py-12">
+                <ShoppingCart className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+                <p className="text-muted-foreground">No orders found.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="bg-muted/50">
+                      <th className="p-4 font-medium text-sm">Order #</th>
+                      <th className="p-4 font-medium text-sm">Customer</th>
+                      <th className="p-4 font-medium text-sm">Date</th>
+                      <th className="p-4 font-medium text-sm">Total</th>
+                      <th className="p-4 font-medium text-sm">Status</th>
+                      <th className="p-4 font-medium text-sm text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {orderList.map((order) => (
+                      <tr key={order.id} className="hover:bg-muted/30 transition-colors">
+                        <td className="p-4 font-medium text-sm text-foreground">
+                          {order.orderNumber || order.order_number}
+                        </td>
+                        <td className="p-4 text-sm">
+                          <div className="text-foreground">{order.user?.fullName || order.shippingAddress?.fullName || 'N/A'}</div>
+                          <div className="text-xs text-muted-foreground">{order.user?.email || order.shippingAddress?.email}</div>
+                        </td>
+                        <td className="p-4 text-sm text-muted-foreground">
+                          {new Date(order.createdAt || order.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="p-4 text-sm font-semibold text-foreground">
+                          ₹{(parseFloat(order.totalAmount) || parseFloat(order.total) || 0).toFixed(2)}
+                        </td>
+                        <td className="p-4">
+                          <Badge className={`
+                            ${order.status === 'DELIVERED' ? 'bg-green-100 text-green-700 hover:bg-green-100' :
+                              order.status === 'CANCELLED' ? 'bg-red-100 text-red-700 hover:bg-red-100' :
+                                order.status === 'SHIPPED' ? 'bg-blue-100 text-blue-700 hover:bg-blue-100' :
+                                  'bg-amber-100 text-amber-700 hover:bg-amber-100'}
+                            border-none
+                          `}>
+                            {order.status}
+                          </Badge>
+                        </td>
+                        <td className="p-4 text-right">
+                          <Select
+                            onValueChange={(value) => handleUpdateOrderStatus(order.id, value)}
+                            defaultValue={order.status}
+                          >
+                            <SelectTrigger className="w-32 ml-auto h-8 text-xs">
+                              <SelectValue placeholder="Update Status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="PENDING">Pending</SelectItem>
+                              <SelectItem value="PROCESSING">Processing</SelectItem>
+                              <SelectItem value="SHIPPED">Shipped</SelectItem>
+                              <SelectItem value="DELIVERED">Delivered</SelectItem>
+                              <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Vendors Tab */}
+        {activeTab === 'vendors' && (
+          <div className="bg-card border border-border rounded-lg">
+            <div className="p-4 border-b border-border">
+              <h2 className="text-lg font-semibold text-foreground">Vendor Management</h2>
+            </div>
+
+            {loading ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            ) : vendorList.length === 0 ? (
+              <div className="text-center py-12">
+                <Users className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+                <p className="text-muted-foreground">No vendors found.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="bg-muted/50">
+                      <th className="p-4 font-medium text-sm">Vendor / Company</th>
+                      <th className="p-4 font-medium text-sm">Contact</th>
+                      <th className="p-4 font-medium text-sm">Status</th>
+                      <th className="p-4 font-medium text-sm text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {vendorList.map((vendor) => (
+                      <tr key={vendor.id} className="hover:bg-muted/30 transition-colors">
+                        <td className="p-4">
+                          <div className="font-medium text-foreground">{vendor.fullName}</div>
+                          <div className="text-xs text-muted-foreground">{vendor.companyName}</div>
+                        </td>
+                        <td className="p-4">
+                          <div className="text-sm">{vendor.email}</div>
+                          <div className="text-xs text-muted-foreground">{vendor.phone}</div>
+                        </td>
+                        <td className="p-4">
+                          {vendor.isApproved ? (
+                            <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200">
+                              Approved
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100 border-yellow-200">
+                              Pending
+                            </Badge>
+                          )}
+                        </td>
+                        <td className="p-4 text-right">
+                          <div className="flex justify-end gap-2">
+                            {!vendor.isApproved ? (
+                              <Button
+                                size="sm"
+                                onClick={() => handleApproveVendor(vendor.id, true)}
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                              >
+                                <Check className="w-4 h-4 mr-1" /> Approve
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleApproveVendor(vendor.id, false)}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <X className="w-4 h-4 mr-1" /> Revoke
+                              </Button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
       </div>
     </Layout>
   );
 };
+
 
 export default Admin;

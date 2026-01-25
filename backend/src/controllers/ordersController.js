@@ -1,4 +1,5 @@
 const prisma = require('../config/database');
+const emailService = require('../services/emailService');
 
 /**
  * Generate unique order number
@@ -119,6 +120,20 @@ const createOrder = async (req, res) => {
       message: 'Order created successfully',
       data: order
     });
+
+    // Send order confirmation email asynchronously
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: req.userId },
+        select: { email: true, fullName: true }
+      });
+
+      if (user && user.email) {
+        await emailService.sendOrderConfirmationEmail(user.email, order, user.fullName);
+      }
+    } catch (emailError) {
+      console.error('Failed to send order confirmation email:', emailError);
+    }
   } catch (error) {
     console.error('Create order error:', error);
     res.status(500).json({
@@ -461,6 +476,15 @@ const updateOrderStatus = async (req, res) => {
       message: 'Order status updated',
       data: order
     });
+
+    // Send status update email
+    if (status === 'SHIPPED' && order.user && order.user.email) {
+      try {
+        await emailService.sendOrderShippedEmail(order.user.email, order);
+      } catch (emailError) {
+        console.error('Failed to send order shipped email:', emailError);
+      }
+    }
   } catch (error) {
     if (error.code === 'P2025') {
       return res.status(404).json({

@@ -1,72 +1,66 @@
-import { useParams, Link } from 'react-router-dom';
+ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import Layout from '@/components/layout/Layout';
 import { Loader2, Plus, Minus, Heart, Share2, Star, Check, ChevronLeft } from 'lucide-react';
+import { useCart } from '@/hooks/useCart';
+import { useWishlist } from '@/hooks/useWishlist';
+import { useAuth } from '@/components/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import productsService from '@/services/productsService';
 
 export default function ProductDetail() {
   const { slug } = useParams();
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  const { addToCart } = useCart();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const { toast } = useToast();
+
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+  const [addingToCart, setAddingToCart] = useState(false);
+
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [isWishlisted, setIsWishlisted] = useState(false);
 
+  // Fetch product from backend
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        // For now, use mock data since backend might not be ready
-        // Replace this with actual API call when backend is ready
-        const mockProduct = {
-          id: '1',
-          name: 'Ayurvedic Face Cream',
-          slug: 'ayurvedic-face-cream',
-          description: 'Discover the ancient science of Ayurveda through our carefully crafted products. Each formulation is a blend of traditional wisdom and modern science, created to nourish your skin and hair naturally.',
-          price: 599,
-          comparePrice: 799,
-          stock: 25,
-          isBestseller: true,
-          rating: 4.5,
-          reviewCount: 128,
-          brand: 'Vedessa',
-          vendor: 'Vedessa Ayurveda',
-          category: { name: 'Skincare' },
-          collection: { name: 'Eladhi Collection' },
-          tags: ['Natural', 'Ayurvedic', 'Vegan'],
-          images: [
-            { url: 'https://images.unsplash.com/photo-1596755389378-c31d21fd1273?w=800', alt: 'Product 1' },
-            { url: 'https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=800', alt: 'Product 2' },
-            { url: 'https://images.unsplash.com/photo-1571875257727-256c39da42af?w=800', alt: 'Product 3' },
-          ]
-        };
+        // Fetch from backend API
+        const response = await productsService.getProductById(slug);
 
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        setProduct(mockProduct);
-
-        // Uncomment this when backend is ready:
-        /*
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/products/${slug}`
-        );
-
-        if (!response.ok) {
-          throw new Error('Product not found');
+        if (response.data) {
+          // Transform backend response to expected format
+          const productData = response.data;
+          setProduct({
+            id: productData.id,
+            name: productData.name,
+            slug: slug,
+            description: productData.description,
+            price: productData.price,
+            comparePrice: productData.compare_price || null,
+            stock: productData.stock,
+            isBestseller: productData.is_bestseller,
+            isNew: productData.is_new,
+            rating: productData.rating,
+            reviewCount: productData.reviews || 0,
+            brand: 'Vedessa',
+            vendor: 'Vedessa Ayurveda',
+            category: productData.category_name ? { name: productData.category_name } : null,
+            collection: productData.collection_name ? { name: productData.collection_name } : null,
+            tags: ['Natural', 'Ayurvedic'],
+            image: productData.image,
+            images: productData.image ? [
+              { url: productData.image, alt: productData.name }
+            ] : []
+          });
         }
-
-        const data = await response.json();
-        
-        if (data.success) {
-          setProduct(data.data);
-        } else {
-          throw new Error(data.message || 'Failed to fetch product');
-        }
-        */
       } catch (err) {
         console.error('Error fetching product:', err);
         setError(err instanceof Error ? err.message : 'Failed to load product');
@@ -80,6 +74,13 @@ export default function ProductDetail() {
     }
   }, [slug]);
 
+  // Check if product is in wishlist
+  useEffect(() => {
+    if (product && isAuthenticated) {
+      setIsWishlisted(isInWishlist(product.id));
+    }
+  }, [product, isAuthenticated, isInWishlist]);
+
   const incrementQuantity = () => {
     if (product && quantity < product.stock) {
       setQuantity(prev => prev + 1);
@@ -90,14 +91,119 @@ export default function ProductDetail() {
     setQuantity(prev => Math.max(1, prev - 1));
   };
 
-  const handleAddToCart = () => {
-    console.log('Add to cart:', { product, quantity });
-    alert('Added to cart! (Cart functionality coming soon)');
+  const handleAddToCart = async () => {
+    if (!isAuthenticated) {
+      toast({
+        title: 'Login Required',
+        description: 'Please login to add items to cart',
+        variant: 'destructive',
+      });
+      navigate('/auth');
+      return;
+    }
+
+    try {
+      setAddingToCart(true);
+      await addToCart(product.id, quantity);
+      toast({
+        title: 'Added to Cart',
+        description: `${product.name} has been added to your cart`,
+      });
+    } catch (err) {
+      toast({
+        title: 'Error',
+        description: 'Failed to add item to cart',
+        variant: 'destructive',
+      });
+    } finally {
+      setAddingToCart(false);
+    }
   };
 
-  const handleBuyNow = () => {
-    console.log('Buy now:', { product, quantity });
-    alert('Proceeding to checkout! (Checkout functionality coming soon)');
+  const handleBuyNow = async () => {
+    if (!isAuthenticated) {
+      toast({
+        title: 'Login Required',
+        description: 'Please login to proceed',
+        variant: 'destructive',
+      });
+      navigate('/auth');
+      return;
+    }
+
+    try {
+      setAddingToCart(true);
+      await addToCart(product.id, quantity);
+      navigate('/checkout');
+    } catch (err) {
+      toast({
+        title: 'Error',
+        description: 'Failed to add item to cart',
+        variant: 'destructive',
+      });
+    } finally {
+      setAddingToCart(false);
+    }
+  };
+
+  const handleWishlistToggle = async () => {
+    if (!isAuthenticated) {
+      toast({
+        title: 'Login Required',
+        description: 'Please login to add items to wishlist',
+        variant: 'destructive',
+      });
+      navigate('/auth');
+      return;
+    }
+
+    try {
+      if (isWishlisted) {
+        await removeFromWishlist(product.id);
+        setIsWishlisted(false);
+        toast({
+          title: 'Removed from Wishlist',
+          description: `${product.name} has been removed from your wishlist`,
+        });
+      } else {
+        await addToWishlist(product.id);
+        setIsWishlisted(true);
+        toast({
+          title: 'Added to Wishlist',
+          description: `${product.name} has been added to your wishlist`,
+        });
+      }
+    } catch (err) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update wishlist',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleShare = async () => {
+    const shareUrl = window.location.href;
+    const shareText = `Check out ${product.name} on Vedessa!`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: product.name,
+          text: shareText,
+          url: shareUrl,
+        });
+      } catch (err) {
+        // User cancelled or share failed
+      }
+    } else {
+      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(shareUrl);
+      toast({
+        title: 'Link Copied',
+        description: 'Product link copied to clipboard',
+      });
+    }
   };
 
   if (loading) {
@@ -116,8 +222,8 @@ export default function ProductDetail() {
         <div className="container mx-auto px-4 py-20 text-center">
           <h1 className="text-2xl font-serif text-gray-900 mb-4">Product Not Found</h1>
           <p className="text-gray-600 mb-6">{error || 'The product you are looking for does not exist.'}</p>
-          <Link 
-            to="/products" 
+          <Link
+            to="/products"
             className="inline-flex items-center gap-2 text-green-700 hover:text-green-800 font-medium"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -159,7 +265,7 @@ export default function ProductDetail() {
                 alt={product.name}
                 className="w-full h-full object-cover"
               />
-              
+
               {/* Badges */}
               <div className="absolute top-4 left-4 flex flex-col gap-2">
                 {discount > 0 && (
@@ -189,11 +295,10 @@ export default function ProductDetail() {
                   <button
                     key={index}
                     onClick={() => setSelectedImage(index)}
-                    className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${
-                      selectedImage === index
-                        ? 'border-green-700 ring-2 ring-green-200'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
+                    className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${selectedImage === index
+                      ? 'border-green-700 ring-2 ring-green-200'
+                      : 'border-gray-200 hover:border-gray-300'
+                      }`}
                   >
                     <img
                       src={image.url}
@@ -227,11 +332,10 @@ export default function ProductDetail() {
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
-                      className={`w-5 h-5 ${
-                        i < Math.floor(product.rating)
-                          ? 'fill-yellow-400 text-yellow-400'
-                          : 'text-gray-300'
-                      }`}
+                      className={`w-5 h-5 ${i < Math.floor(product.rating)
+                        ? 'fill-yellow-400 text-yellow-400'
+                        : 'text-gray-300'
+                        }`}
                     />
                   ))}
                 </div>
@@ -308,15 +412,22 @@ export default function ProductDetail() {
             <div className="space-y-3 mb-8">
               <button
                 onClick={handleAddToCart}
-                disabled={product.stock === 0}
-                className="w-full bg-[#C17855] hover:bg-[#A66545] disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-4 px-6 rounded-md text-base font-medium uppercase tracking-wider transition-all"
+                disabled={product.stock === 0 || addingToCart}
+                className="w-full bg-[#C17855] hover:bg-[#A66545] disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-4 px-6 rounded-md text-base font-medium uppercase tracking-wider transition-all flex items-center justify-center gap-2"
               >
-                Add to Cart
+                {addingToCart ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Adding...
+                  </>
+                ) : (
+                  'Add to Cart'
+                )}
               </button>
-              
+
               <button
                 onClick={handleBuyNow}
-                disabled={product.stock === 0}
+                disabled={product.stock === 0 || addingToCart}
                 className="w-full bg-gray-900 hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-4 px-6 rounded-md text-base font-medium uppercase tracking-wider transition-all"
               >
                 Buy It Now
@@ -324,18 +435,20 @@ export default function ProductDetail() {
 
               <div className="grid grid-cols-2 gap-3">
                 <button
-                  onClick={() => setIsWishlisted(!isWishlisted)}
-                  className={`border-2 py-3 px-4 rounded-md font-medium transition-all flex items-center justify-center gap-2 ${
-                    isWishlisted
-                      ? 'border-red-500 text-red-500 bg-red-50'
-                      : 'border-gray-300 hover:border-gray-400'
-                  }`}
+                  onClick={handleWishlistToggle}
+                  className={`border-2 py-3 px-4 rounded-md font-medium transition-all flex items-center justify-center gap-2 ${isWishlisted
+                    ? 'border-red-500 text-red-500 bg-red-50'
+                    : 'border-gray-300 hover:border-gray-400'
+                    }`}
                 >
                   <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-red-500' : ''}`} />
-                  <span className="hidden sm:inline">Wishlist</span>
+                  <span className="hidden sm:inline">{isWishlisted ? 'Wishlisted' : 'Wishlist'}</span>
                 </button>
-                
-                <button className="border-2 border-gray-300 hover:border-gray-400 py-3 px-4 rounded-md font-medium transition-all flex items-center justify-center gap-2">
+
+                <button
+                  onClick={handleShare}
+                  className="border-2 border-gray-300 hover:border-gray-400 py-3 px-4 rounded-md font-medium transition-all flex items-center justify-center gap-2"
+                >
                   <Share2 className="w-5 h-5" />
                   <span className="hidden sm:inline">Share</span>
                 </button>
@@ -350,7 +463,7 @@ export default function ProductDetail() {
                   <span className="text-gray-900 font-medium">{product.vendor}</span>
                 </div>
               )}
-              
+
               {product.category && (
                 <div className="flex gap-2">
                   <span className="text-gray-500 min-w-[100px]">Category:</span>
@@ -359,7 +472,7 @@ export default function ProductDetail() {
                   </span>
                 </div>
               )}
-              
+
               {product.collection && (
                 <div className="flex gap-2">
                   <span className="text-gray-500 min-w-[100px]">Collection:</span>
@@ -368,7 +481,7 @@ export default function ProductDetail() {
                   </span>
                 </div>
               )}
-              
+
               {product.tags && product.tags.length > 0 && (
                 <div className="flex gap-2">
                   <span className="text-gray-500 min-w-[100px]">Tags:</span>

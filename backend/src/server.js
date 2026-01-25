@@ -9,6 +9,7 @@ const cartRouter = require('./routes/cart');
 const wishlistRouter = require('./routes/wishlist');
 const ordersRouter = require('./routes/orders');
 const paymentRoutes = require('./routes/payment.routes');
+const vendorRoutes = require('./routes/vendor.routes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -65,6 +66,7 @@ app.use('/api/collections', collectionsRouter);
 app.use('/api/cart', cartRouter);
 app.use('/api/wishlist', wishlistRouter);
 app.use('/api/orders', ordersRouter);
+app.use('/api/vendors', vendorRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

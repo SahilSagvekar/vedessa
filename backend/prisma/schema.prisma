@@ -18,18 +18,32 @@ model User {
   fullName     String?   @map("full_name")
   avatarUrl    String?   @map("avatar_url")
   role         UserRole  @default(CUSTOMER)
+  
+  // Vendor-specific fields
+  companyName  String?   @map("company_name")
+  gstNumber    String?   @map("gst_number")
+  phone        String?
+  address      String?
+  city         String?
+  state        String?
+  pincode      String?
+  bankDetails  String?   @map("bank_details") // JSON stored as string
+  isApproved   Boolean   @default(false) @map("is_approved") // For vendor approval workflow
+  
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
 
   cartItems    CartItem[]
   wishlist     Wishlist[]
   orders       Order[]
+  products     Product[]  // Products added by vendor
 
   @@map("users")
 }
 
 enum UserRole {
   CUSTOMER
+  VENDOR
   ADMIN
 }
 
@@ -67,6 +81,7 @@ model Product {
   image         String?
   categoryId    String?     @map("category_id")
   collectionId  String?     @map("collection_id")
+  vendorId      String?     @map("vendor_id") // Link to vendor user
   rating        Decimal     @default(4.5) @db.Decimal(2, 1)
   reviews       Int         @default(0)
   isNew         Boolean     @default(false) @map("is_new")
@@ -77,12 +92,14 @@ model Product {
 
   category      Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   collection    Collection? @relation(fields: [collectionId], references: [id], onDelete: SetNull)
+  vendor        User?       @relation(fields: [vendorId], references: [id], onDelete: SetNull)
   cartItems     CartItem[]
   wishlist      Wishlist[]
   orderItems    OrderItem[]
 
   @@index([categoryId])
   @@index([collectionId])
+  @@index([vendorId])
   @@index([isNew])
   @@index([isBestseller])
   @@map("products")

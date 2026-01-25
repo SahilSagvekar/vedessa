@@ -25,7 +25,7 @@ const Cart = () => {
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!isAuthenticated && !loading) {
-      navigate('/login');
+      navigate('/auth');
     }
   }, [isAuthenticated, loading, navigate]);
 

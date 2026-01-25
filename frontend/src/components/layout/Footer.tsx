@@ -149,21 +149,21 @@ const Footer = () => {
               <li className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0 text-green-400" />
                 <span>
-                  987, Vile Parle, Mumbai,
+                  Dahisar, Mumbai,
                   <br />
-                  Maharashtra 400056
+                  Maharashtra 400068
                 </span>
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="w-4 h-4 flex-shrink-0 text-green-400" />
                 <a href="tel:+919876543210" className="hover:text-white transition-colors">
-                  +91 98765-43210
+                  +91 8779989858
                 </a>
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="w-4 h-4 flex-shrink-0 text-green-400" />
-                <a href="mailto:hello@vedessa.com" className="hover:text-white transition-colors">
-                  hello@vedessa.com
+                <a href="mailto:vedessa0203@gmail.com" className="hover:text-white transition-colors">
+                  vedessa0203@gmail.com
                 </a>
               </li>
             </ul>

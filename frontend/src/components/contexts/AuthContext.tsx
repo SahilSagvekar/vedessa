@@ -6,7 +6,7 @@ interface User {
   email: string;
   fullName: string | null;
   avatarUrl: string | null;
-  role: 'CUSTOMER' | 'ADMIN';
+  role: 'CUSTOMER' | 'ADMIN' | 'VENDOR';
   createdAt: string;
 }
 
@@ -15,6 +15,7 @@ interface AuthContextType {
   loading: boolean;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  isVendor: boolean;
   signUp: (email: string, password: string, fullName?: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -34,12 +35,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const initAuth = () => {
       const token = authService.getToken();
       const storedUser = authService.getUser();
-      
+
       if (token && storedUser) {
         setUser(storedUser);
         setIsAuthenticated(true);
       }
-      
+
       setLoading(false);
     };
 
@@ -111,6 +112,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     loading,
     isAuthenticated,
     isAdmin: user?.role === 'ADMIN',
+    isVendor: user?.role === 'VENDOR',
     signUp,
     signIn,
     signOut,

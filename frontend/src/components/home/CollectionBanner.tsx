@@ -19,9 +19,11 @@ const CollectionBanner = () => {
               <p className="text-xl text-white/90 mb-6">
                 For healthy, lustrous hair
               </p>
-              <button className="bg-[#C17855] hover:bg-[#A66545] text-white px-10 py-4 text-sm font-medium tracking-wider uppercase transition-colors">
-                EXPLORE COLLECTION
-              </button>
+              <Link to="/products?collection=bringaras">
+                <Button className="bg-[#C17855] hover:bg-[#A66545] text-white px-10 py-4 text-sm font-medium tracking-wider uppercase transition-colors">
+                  EXPLORE COLLECTION
+                </Button>
+              </Link>
             </div>
           </div>
         </div>

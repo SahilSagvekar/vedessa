@@ -19,6 +19,15 @@ import Terms from '@/pages/Terms';
 import Privacy from '@/pages/Privacy';
 import Refund from '@/pages/Refund';
 import ProductDetail from '@/pages/ProductDetail';
+import About from '@/pages/About';
+import Contact from '@/pages/Contact';
+import FAQ from '@/pages/FAQ';
+import ShippingReturns from '@/pages/ShippingReturns';
+import OrderDetail from '@/pages/OrderDetail';
+import ForgotPassword from '@/pages/ForgotPassword';
+import ResetPassword from '@/pages/ResetPassword';
+import VendorRegistration from '@/pages/VendorRegistration';
+import VendorDashboard from '@/pages/VendorDashboard';
 
 const queryClient = new QueryClient();
 
@@ -43,6 +52,18 @@ const App = () => (
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/refund" element={<Refund />} />
+              {/* New Pages */}
+              <Route path="/about" element={<About />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/faq" element={<FAQ />} />
+              <Route path="/shipping" element={<ShippingReturns />} />
+              <Route path="/returns" element={<ShippingReturns />} />
+              <Route path="/orders/:id" element={<OrderDetail />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              {/* Vendor Routes */}
+              <Route path="/vendor/register" element={<VendorRegistration />} />
+              <Route path="/vendor/dashboard" element={<VendorDashboard />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
