@@ -59,7 +59,7 @@ export const authService = {
   },
 
   // Update profile
-  updateProfile: async (data) => {
+  updateProfile: async function (data) {
     // If data is provided as separate arguments (legacy), handle it
     let payload = data;
     if (arguments.length > 1) {

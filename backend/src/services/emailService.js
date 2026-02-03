@@ -2,36 +2,36 @@ const nodemailer = require('nodemailer');
 
 // Create reusable transporter
 const createTransporter = () => {
-    // For development, you can use Gmail
-    // For production, use services like SendGrid, AWS SES, or Mailgun
+  // For development, you can use Gmail
+  // For production, use services like SendGrid, AWS SES, or Mailgun
 
-    if (process.env.EMAIL_SERVICE === 'gmail') {
-        return nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASSWORD // Use App Password, not regular password
-            }
-        });
-    }
-
-    // For other SMTP services
+  if (process.env.EMAIL_SERVICE === 'gmail') {
     return nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: process.env.SMTP_PORT || 587,
-        secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
-        auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASSWORD
-        }
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD // Use App Password, not regular password
+      }
     });
+  }
+
+  // For other SMTP services
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: process.env.SMTP_PORT || 587,
+    secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASSWORD
+    }
+  });
 };
 
 // Email templates
 const emailTemplates = {
-    passwordReset: (resetUrl, userName) => ({
-        subject: 'Reset Your Password - Vedessa',
-        html: `
+  passwordReset: (resetUrl, userName) => ({
+    subject: 'Reset Your Password - Vedessa',
+    html: `
       <!DOCTYPE html>
       <html>
       <head>
@@ -71,11 +71,11 @@ const emailTemplates = {
       </body>
       </html>
     `
-    }),
+  }),
 
-    orderConfirmation: (order, userName) => ({
-        subject: `Order Confirmation #${order.orderNumber} - Vedessa`,
-        html: `
+  orderConfirmation: (order, userName) => ({
+    subject: `Order Confirmation #${order.orderNumber} - Vedessa`,
+    html: `
       <!DOCTYPE html>
       <html>
       <head>
@@ -124,11 +124,11 @@ const emailTemplates = {
       </body>
       </html>
     `
-    }),
+  }),
 
-    vendorApproval: (vendorName, companyName) => ({
-        subject: 'Your Vendor Account Has Been Approved! - Vedessa',
-        html: `
+  vendorApproval: (vendorName, companyName) => ({
+    subject: 'Your Vendor Account Has Been Approved! - Vedessa',
+    html: `
       <!DOCTYPE html>
       <html>
       <head>
@@ -176,11 +176,11 @@ const emailTemplates = {
       </body>
       </html>
     `
-    }),
+  }),
 
-    vendorRejection: (vendorName, reason) => ({
-        subject: 'Vendor Application Update - Vedessa',
-        html: `
+  vendorRejection: (vendorName, reason) => ({
+    subject: 'Vendor Application Update - Vedessa',
+    html: `
       <!DOCTYPE html>
       <html>
       <head>
@@ -212,11 +212,11 @@ const emailTemplates = {
       </body>
       </html>
     `
-    }),
+  }),
 
-    orderShipped: (order, trackingNumber) => ({
-        subject: `Your Order Has Shipped! #${order.orderNumber} - Vedessa`,
-        html: `
+  orderShipped: (order, trackingNumber) => ({
+    subject: `Your Order Has Shipped! #${order.orderNumber} - Vedessa`,
+    html: `
       <!DOCTYPE html>
       <html>
       <head>
@@ -258,67 +258,185 @@ const emailTemplates = {
       </body>
       </html>
     `
-    })
+  }),
+
+  collaborationRequest: (formData) => ({
+    subject: `New Collaboration Request from ${formData.fullName}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+          .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+          .info-box { background: white; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #059669; }
+          .label { font-weight: bold; color: #059669; margin-top: 15px; display: block; }
+          .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🤝 New Collaboration Request</h1>
+          </div>
+          <div class="content">
+            <p>You have received a new collaboration inquiry from your website.</p>
+            
+            <div class="info-box">
+              <span class="label">Full Name:</span>
+              <p>${formData.fullName}</p>
+              
+              <span class="label">Email:</span>
+              <p><a href="mailto:${formData.email}">${formData.email}</a></p>
+              
+              ${formData.phone ? `
+                <span class="label">Phone:</span>
+                <p><a href="tel:${formData.phone}">${formData.phone}</a></p>
+              ` : ''}
+              
+              <span class="label">About Their Work:</span>
+              <p style="white-space: pre-wrap;">${formData.message}</p>
+            </div>
+            
+            <p style="margin-top: 20px; font-size: 12px; color: #666;">
+              Submitted on: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
+            </p>
+          </div>
+          <div class="footer">
+            <p>© ${new Date().getFullYear()} Vedessa. All rights reserved.</p>
+            <p>This is an automated notification from your website.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `
+  }),
+
+  supportRequest: (formData) => ({
+    subject: `Support Request from ${formData.fullName}`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #d97706 0%, #f59e0b 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+          .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+          .info-box { background: white; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #d97706; }
+          .label { font-weight: bold; color: #d97706; margin-top: 15px; display: block; }
+          .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🎧 New Support Request</h1>
+          </div>
+          <div class="content">
+            <p>You have received a new support request from your website.</p>
+            
+            <div class="info-box">
+              <span class="label">Full Name:</span>
+              <p>${formData.fullName}</p>
+              
+              <span class="label">Email:</span>
+              <p><a href="mailto:${formData.email}">${formData.email}</a></p>
+              
+              ${formData.phone ? `
+                <span class="label">Phone:</span>
+                <p><a href="tel:${formData.phone}">${formData.phone}</a></p>
+              ` : ''}
+              
+              <span class="label">Concern:</span>
+              <p style="white-space: pre-wrap;">${formData.concern}</p>
+            </div>
+            
+            <p style="margin-top: 20px; font-size: 12px; color: #666;">
+              Submitted on: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
+            </p>
+          </div>
+          <div class="footer">
+            <p>© ${new Date().getFullYear()} Vedessa. All rights reserved.</p>
+            <p>This is an automated notification from your website.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `
+  })
 };
 
 // Send email function
 const sendEmail = async (to, template, data) => {
-    try {
-        const transporter = createTransporter();
-        const emailContent = template(data);
+  try {
+    const transporter = createTransporter();
+    const emailContent = template(data);
 
-        const mailOptions = {
-            from: `"Vedessa" <${process.env.EMAIL_USER || process.env.SMTP_USER}>`,
-            to,
-            subject: emailContent.subject,
-            html: emailContent.html
-        };
+    const mailOptions = {
+      from: `"Vedessa" <${process.env.EMAIL_USER || process.env.SMTP_USER}>`,
+      to,
+      subject: emailContent.subject,
+      html: emailContent.html
+    };
 
-        const info = await transporter.sendMail(mailOptions);
-        console.log('Email sent successfully:', info.messageId);
-        return { success: true, messageId: info.messageId };
-    } catch (error) {
-        console.error('Error sending email:', error);
-        return { success: false, error: error.message };
-    }
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Email sent successfully:', info.messageId);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('Error sending email:', error);
+    return { success: false, error: error.message };
+  }
 };
 
 // Exported functions
 module.exports = {
-    sendPasswordResetEmail: async (email, resetToken, userName) => {
-        const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
-        return await sendEmail(email, emailTemplates.passwordReset, resetUrl, userName);
-    },
+  sendPasswordResetEmail: async (email, resetToken, userName) => {
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+    return await sendEmail(email, emailTemplates.passwordReset, resetUrl, userName);
+  },
 
-    sendOrderConfirmationEmail: async (email, order, userName) => {
-        return await sendEmail(email, emailTemplates.orderConfirmation, { order, userName });
-    },
+  sendOrderConfirmationEmail: async (email, order, userName) => {
+    return await sendEmail(email, emailTemplates.orderConfirmation, { order, userName });
+  },
 
-    sendVendorApprovalEmail: async (email, vendorName, companyName) => {
-        return await sendEmail(email, emailTemplates.vendorApproval, { vendorName, companyName });
-    },
+  sendVendorApprovalEmail: async (email, vendorName, companyName) => {
+    return await sendEmail(email, emailTemplates.vendorApproval, { vendorName, companyName });
+  },
 
-    sendVendorRejectionEmail: async (email, vendorName, reason) => {
-        return await sendEmail(email, emailTemplates.vendorRejection, { vendorName, reason });
-    },
+  sendVendorRejectionEmail: async (email, vendorName, reason) => {
+    return await sendEmail(email, emailTemplates.vendorRejection, { vendorName, reason });
+  },
 
-    sendOrderShippedEmail: async (email, order, trackingNumber) => {
-        return await sendEmail(email, emailTemplates.orderShipped, { order, trackingNumber });
-    },
+  sendOrderShippedEmail: async (email, order, trackingNumber) => {
+    return await sendEmail(email, emailTemplates.orderShipped, { order, trackingNumber });
+  },
 
-    // Test email function
-    sendTestEmail: async (email) => {
-        try {
-            const transporter = createTransporter();
-            await transporter.sendMail({
-                from: `"Vedessa" <${process.env.EMAIL_USER || process.env.SMTP_USER}>`,
-                to: email,
-                subject: 'Test Email - Vedessa',
-                html: '<h1>Email Service is Working!</h1><p>Your email configuration is correct.</p>'
-            });
-            return { success: true };
-        } catch (error) {
-            return { success: false, error: error.message };
-        }
+  // Test email function
+  sendTestEmail: async (email) => {
+    try {
+      const transporter = createTransporter();
+      await transporter.sendMail({
+        from: `"Vedessa" <${process.env.EMAIL_USER || process.env.SMTP_USER}>`,
+        to: email,
+        subject: 'Test Email - Vedessa',
+        html: '<h1>Email Service is Working!</h1><p>Your email configuration is correct.</p>'
+      });
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
     }
+  },
+
+  sendCollaborationEmail: async (formData) => {
+    const adminEmail = process.env.ADMIN_EMAIL || 'vedessa0203@gmail.com';
+    return await sendEmail(adminEmail, emailTemplates.collaborationRequest, formData);
+  },
+
+  sendSupportEmail: async (formData) => {
+    const adminEmail = process.env.ADMIN_EMAIL || 'vedessa0203@gmail.com';
+    return await sendEmail(adminEmail, emailTemplates.supportRequest, formData);
+  }
 };

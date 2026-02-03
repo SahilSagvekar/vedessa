@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
-import { Send, Users, HeadphonesIcon } from 'lucide-react';
+import { Send, Users, HeadphonesIcon, Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import api from '@/lib/api';
 
 export default function SupportCollaborations() {
+  const { toast } = useToast();
   const [collaborationForm, setCollaborationForm] = useState({
     fullName: '',
     email: '',
@@ -16,16 +19,71 @@ export default function SupportCollaborations() {
     concern: ''
   });
 
-  const handleCollaborationSubmit = (e: React.FormEvent) => {
+  const [isSubmittingCollaboration, setIsSubmittingCollaboration] = useState(false);
+  const [isSubmittingSupport, setIsSubmittingSupport] = useState(false);
+
+  const handleCollaborationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle collaboration form submission
-    console.log('Collaboration:', collaborationForm);
+    setIsSubmittingCollaboration(true);
+
+    try {
+      const response = await api.post('/contact/collaboration', collaborationForm);
+
+      if (response.data.success) {
+        toast({
+          title: 'Success!',
+          description: response.data.message || 'Your collaboration request has been submitted successfully.',
+        });
+
+        // Reset form
+        setCollaborationForm({
+          fullName: '',
+          email: '',
+          phone: '',
+          message: ''
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Submission Failed',
+        description: error.response?.data?.message || 'Failed to submit your request. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmittingCollaboration(false);
+    }
   };
 
-  const handleSupportSubmit = (e: React.FormEvent) => {
+  const handleSupportSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle support form submission
-    console.log('Support:', supportForm);
+    setIsSubmittingSupport(true);
+
+    try {
+      const response = await api.post('/contact/support', supportForm);
+
+      if (response.data.success) {
+        toast({
+          title: 'Success!',
+          description: response.data.message || 'Your support request has been submitted successfully.',
+        });
+
+        // Reset form
+        setSupportForm({
+          fullName: '',
+          email: '',
+          phone: '',
+          concern: ''
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Submission Failed',
+        description: error.response?.data?.message || 'Failed to submit your request. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmittingSupport(false);
+    }
   };
 
   return (
@@ -37,7 +95,7 @@ export default function SupportCollaborations() {
             Support & Collaborations
           </h2>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Whether you need help with your order or want to collaborate with us, 
+            Whether you need help with your order or want to collaborate with us,
             we're here to support and connect with those who share our mission.
           </p>
         </div>
@@ -51,7 +109,7 @@ export default function SupportCollaborations() {
                 Collaboration
               </span>
             </div>
-            
+
             <h3 className="text-2xl font-serif text-gray-800 mb-2">
               Collaborations & Media
             </h3>
@@ -68,7 +126,7 @@ export default function SupportCollaborations() {
                   type="text"
                   placeholder="Enter full name"
                   value={collaborationForm.fullName}
-                  onChange={(e) => setCollaborationForm({...collaborationForm, fullName: e.target.value})}
+                  onChange={(e) => setCollaborationForm({ ...collaborationForm, fullName: e.target.value })}
                   className="w-full px-4 py-3 rounded-lg border-0 bg-white shadow-sm focus:ring-2 focus:ring-green-500 outline-none transition-all"
                   required
                 />
@@ -83,7 +141,7 @@ export default function SupportCollaborations() {
                     type="email"
                     placeholder="Enter email address"
                     value={collaborationForm.email}
-                    onChange={(e) => setCollaborationForm({...collaborationForm, email: e.target.value})}
+                    onChange={(e) => setCollaborationForm({ ...collaborationForm, email: e.target.value })}
                     className="w-full px-4 py-3 rounded-lg border-0 bg-white shadow-sm focus:ring-2 focus:ring-green-500 outline-none transition-all"
                     required
                   />
@@ -96,7 +154,7 @@ export default function SupportCollaborations() {
                     type="tel"
                     placeholder="Enter phone number"
                     value={collaborationForm.phone}
-                    onChange={(e) => setCollaborationForm({...collaborationForm, phone: e.target.value})}
+                    onChange={(e) => setCollaborationForm({ ...collaborationForm, phone: e.target.value })}
                     className="w-full px-4 py-3 rounded-lg border-0 bg-white shadow-sm focus:ring-2 focus:ring-green-500 outline-none transition-all"
                   />
                 </div>
@@ -109,7 +167,7 @@ export default function SupportCollaborations() {
                 <textarea
                   placeholder="Tell us about your work, audience, and collaboration ideas..."
                   value={collaborationForm.message}
-                  onChange={(e) => setCollaborationForm({...collaborationForm, message: e.target.value})}
+                  onChange={(e) => setCollaborationForm({ ...collaborationForm, message: e.target.value })}
                   rows={4}
                   className="w-full px-4 py-3 rounded-lg border-0 bg-white shadow-sm focus:ring-2 focus:ring-green-500 outline-none transition-all resize-none"
                   required
@@ -118,10 +176,20 @@ export default function SupportCollaborations() {
 
               <button
                 type="submit"
-                className="w-full bg-gray-900 hover:bg-gray-800 text-white py-4 rounded-full font-medium uppercase tracking-wider transition-all flex items-center justify-center gap-2 group"
+                disabled={isSubmittingCollaboration}
+                className="w-full bg-gray-900 hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-4 rounded-full font-medium uppercase tracking-wider transition-all flex items-center justify-center gap-2 group"
               >
-                Submit
-                <Send className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                {isSubmittingCollaboration ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    Submit
+                    <Send className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </>
+                )}
               </button>
             </form>
           </div>
@@ -134,7 +202,7 @@ export default function SupportCollaborations() {
                 Support
               </span>
             </div>
-            
+
             <h3 className="text-2xl font-serif text-gray-800 mb-2">
               Order Support & Returns
             </h3>
@@ -151,7 +219,7 @@ export default function SupportCollaborations() {
                   type="text"
                   placeholder="Enter full name"
                   value={supportForm.fullName}
-                  onChange={(e) => setSupportForm({...supportForm, fullName: e.target.value})}
+                  onChange={(e) => setSupportForm({ ...supportForm, fullName: e.target.value })}
                   className="w-full px-4 py-3 rounded-lg border-0 bg-white shadow-sm focus:ring-2 focus:ring-amber-500 outline-none transition-all"
                   required
                 />
@@ -166,7 +234,7 @@ export default function SupportCollaborations() {
                     type="email"
                     placeholder="Enter email address"
                     value={supportForm.email}
-                    onChange={(e) => setSupportForm({...supportForm, email: e.target.value})}
+                    onChange={(e) => setSupportForm({ ...supportForm, email: e.target.value })}
                     className="w-full px-4 py-3 rounded-lg border-0 bg-white shadow-sm focus:ring-2 focus:ring-amber-500 outline-none transition-all"
                     required
                   />
@@ -179,7 +247,7 @@ export default function SupportCollaborations() {
                     type="tel"
                     placeholder="Enter phone number"
                     value={supportForm.phone}
-                    onChange={(e) => setSupportForm({...supportForm, phone: e.target.value})}
+                    onChange={(e) => setSupportForm({ ...supportForm, phone: e.target.value })}
                     className="w-full px-4 py-3 rounded-lg border-0 bg-white shadow-sm focus:ring-2 focus:ring-amber-500 outline-none transition-all"
                   />
                 </div>
@@ -192,7 +260,7 @@ export default function SupportCollaborations() {
                 <textarea
                   placeholder="Describe your order issue, return request, or question..."
                   value={supportForm.concern}
-                  onChange={(e) => setSupportForm({...supportForm, concern: e.target.value})}
+                  onChange={(e) => setSupportForm({ ...supportForm, concern: e.target.value })}
                   rows={4}
                   className="w-full px-4 py-3 rounded-lg border-0 bg-white shadow-sm focus:ring-2 focus:ring-amber-500 outline-none transition-all resize-none"
                   required
@@ -201,10 +269,20 @@ export default function SupportCollaborations() {
 
               <button
                 type="submit"
-                className="w-full bg-gray-900 hover:bg-gray-800 text-white py-4 rounded-full font-medium uppercase tracking-wider transition-all flex items-center justify-center gap-2 group"
+                disabled={isSubmittingSupport}
+                className="w-full bg-gray-900 hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white py-4 rounded-full font-medium uppercase tracking-wider transition-all flex items-center justify-center gap-2 group"
               >
-                Submit
-                <Send className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                {isSubmittingSupport ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    Submit
+                    <Send className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </>
+                )}
               </button>
             </form>
           </div>
