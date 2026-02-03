@@ -149,6 +149,9 @@ model Order {
   shippingCost    Decimal     @default(0) @map("shipping_cost") @db.Decimal(10, 2)
   shippingAddress Json?       @map("shipping_address")
   paymentMethod   String?     @map("payment_method")
+  razorpayOrderId String?     @unique @map("razorpay_order_id")
+  razorpayPaymentId String?   @map("razorpay_payment_id")
+  razorpaySignature String?   @map("razorpay_signature")
   createdAt       DateTime    @default(now()) @map("created_at")
   updatedAt       DateTime    @updatedAt @map("updated_at")
 

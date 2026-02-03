@@ -12,38 +12,77 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
-// Create order (called before payment)
+/**
+ * Helper: Generate unique order number
+ */
+const generateOrderNumber = () => {
+  const timestamp = Date.now().toString();
+  const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+  return `ORD-${timestamp}-${random}`;
+};
+
+/**
+ * 1. Create Order (called before payment modal opens)
+ * Now creates a PENDING record in our DB first to track the attempt.
+ */
 router.post('/create-order', protect, async (req, res) => {
   try {
-    const { amount, currency = 'INR', receipt } = req.body;
+    const { orderData } = req.body;
 
-    // Validate amount
-    if (!amount || amount <= 0) {
+    if (!orderData || !orderData.total) {
       return res.status(400).json({
         success: false,
-        message: 'Valid amount is required',
+        message: 'Order data with total amount is required',
       });
     }
+
+    const amount = orderData.total;
+    const currency = 'INR';
 
     // Create Razorpay order
     const options = {
       amount: Math.round(amount * 100), // Amount in paise
       currency,
-      receipt: receipt || `receipt_${Date.now()}`,
+      receipt: `receipt_${Date.now()}`,
       notes: {
         user_id: req.user.id,
-        user_email: req.user.email,
       },
     };
 
-    const order = await razorpay.orders.create(options);
+    const razorpayOrder = await razorpay.orders.create(options);
+
+    // Create record in our database as PENDING
+    const dbOrder = await prisma.order.create({
+      data: {
+        orderNumber: generateOrderNumber(),
+        userId: req.user.id,
+        totalAmount: amount,
+        subtotal: orderData.subtotal || amount,
+        taxAmount: orderData.tax || 0,
+        shippingCost: orderData.shipping || 0,
+        status: 'PENDING',
+        paymentMethod: 'RAZORPAY',
+        shippingAddress: orderData.shippingAddress,
+        razorpayOrderId: razorpayOrder.id,
+        items: {
+          create: orderData.items.map((item) => ({
+            productId: item.id || item.productId || item.product_id,
+            productName: item.name || item.productName || 'Unknown Product',
+            productImage: item.image || item.productImage || null,
+            quantity: item.quantity,
+            price: item.price,
+          })),
+        },
+      }
+    });
 
     res.json({
       success: true,
       data: {
-        orderId: order.id,
-        amount: order.amount,
-        currency: order.currency,
+        orderId: razorpayOrder.id,
+        dbOrderId: dbOrder.id,
+        amount: razorpayOrder.amount,
+        currency: razorpayOrder.currency,
         keyId: process.env.RAZORPAY_KEY_ID,
       },
     });
@@ -57,14 +96,15 @@ router.post('/create-order', protect, async (req, res) => {
   }
 });
 
-// Verify payment signature
+/**
+ * 2. Verify Payment (Immediate client-side verification)
+ */
 router.post('/verify-payment', protect, async (req, res) => {
   try {
     const {
       razorpay_order_id,
       razorpay_payment_id,
       razorpay_signature,
-      orderData,
     } = req.body;
 
     // Verify signature
@@ -83,46 +123,15 @@ router.post('/verify-payment', protect, async (req, res) => {
       });
     }
 
-    // Generate order number
-    const timestamp = Date.now().toString();
-    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    const orderNumber = `ORD-${timestamp}-${random}`;
-
-    // Calculate values
-    const subtotal = orderData.subtotal || 0;
-    const taxAmount = orderData.tax || 0;
-    const shippingCost = orderData.shipping || 0;
-    const totalAmount = orderData.total || (subtotal + taxAmount + shippingCost);
-
-    // Create order in database with correct schema field names
-    const order = await prisma.order.create({
+    // Find our order and update it
+    const updatedOrder = await prisma.order.update({
+      where: { razorpayOrderId: razorpay_order_id },
       data: {
-        orderNumber,
-        userId: req.user.id,
-        totalAmount,
-        subtotal,
-        taxAmount,
-        shippingCost,
         status: 'PROCESSING',
-        paymentMethod: 'RAZORPAY',
-        shippingAddress: orderData.shippingAddress,
-        items: {
-          create: orderData.items.map((item) => ({
-            productId: item.productId || item.product_id,
-            productName: item.productName || item.name || 'Unknown Product',
-            productImage: item.productImage || item.image || null,
-            quantity: item.quantity,
-            price: item.price,
-          })),
-        },
+        razorpayPaymentId: razorpay_payment_id,
+        razorpaySignature: razorpay_signature,
       },
-      include: {
-        items: {
-          include: {
-            product: true,
-          },
-        },
-      },
+      include: { items: true }
     });
 
     // Clear user's cart
@@ -131,11 +140,10 @@ router.post('/verify-payment', protect, async (req, res) => {
     });
 
     // Update product stock
-    for (const item of orderData.items) {
-      const productId = item.productId || item.product_id;
-      if (productId) {
+    for (const item of updatedOrder.items) {
+      if (item.productId) {
         await prisma.product.update({
-          where: { id: productId },
+          where: { id: item.productId },
           data: {
             stock: {
               decrement: item.quantity,
@@ -147,11 +155,8 @@ router.post('/verify-payment', protect, async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Payment verified and order created successfully',
-      data: {
-        order,
-        razorpay_payment_id,
-      },
+      message: 'Payment verified successfully',
+      data: updatedOrder
     });
   } catch (error) {
     console.error('Verify payment error:', error);
@@ -163,47 +168,71 @@ router.post('/verify-payment', protect, async (req, res) => {
   }
 });
 
-// Handle payment failure
-router.post('/payment-failed', protect, async (req, res) => {
+/**
+ * 3. Webhook Handler (Asynchronous server-side verification)
+ * Automatically processes payments even if browser is closed.
+ */
+router.post('/webhook', async (req, res) => {
   try {
-    const { razorpay_order_id, error } = req.body;
+    const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    const signature = req.headers['x-razorpay-signature'];
 
-    console.error('Payment failed:', {
-      order_id: razorpay_order_id,
-      user_id: req.user.id,
-      error,
-    });
+    // Verify webhook signature
+    const expectedSignature = crypto
+      .createHmac('sha256', secret)
+      .update(JSON.stringify(req.body))
+      .digest('hex');
 
-    res.json({
-      success: true,
-      message: 'Payment failure recorded',
-    });
+    if (expectedSignature !== signature) {
+      return res.status(400).json({ success: false, message: 'Invalid webhook signature' });
+    }
+
+    const event = req.body.event;
+    const payload = req.body.payload;
+
+    if (event === 'order.paid') {
+      const razorpayOrder = payload.order.entity;
+      const razorpayPaymentId = payload.payment.entity.id;
+
+      // Check if order exists in our DB
+      const order = await prisma.order.findUnique({
+        where: { razorpayOrderId: razorpayOrder.id },
+        include: { items: true }
+      });
+
+      if (order && order.status === 'PENDING') {
+        // Mark as paid
+        await prisma.order.update({
+          where: { id: order.id },
+          data: {
+            status: 'PROCESSING',
+            razorpayPaymentId: razorpayPaymentId,
+          }
+        });
+
+        // Clear cart (if we have userId)
+        if (order.userId) {
+          await prisma.cartItem.deleteMany({
+            where: { userId: order.userId }
+          });
+        }
+
+        // Update stock
+        for (const item of order.items) {
+          if (item.productId) {
+            await prisma.product.update({
+              where: { id: item.productId },
+              data: { stock: { decrement: item.quantity } }
+            });
+          }
+        }
+      }
+    }
+
+    res.json({ status: 'ok' });
   } catch (error) {
-    console.error('Payment failure handler error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to handle payment failure',
-    });
-  }
-});
-
-// Fetch payment details
-router.get('/payment/:paymentId', protect, async (req, res) => {
-  try {
-    const { paymentId } = req.params;
-
-    const payment = await razorpay.payments.fetch(paymentId);
-
-    res.json({
-      success: true,
-      data: payment,
-    });
-  } catch (error) {
-    console.error('Fetch payment error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch payment details',
-    });
+    console.error('Webhook error:', error);
+    res.status(500).json({ success: false, message: 'Webhook handler failed' });
   }
 });
 
