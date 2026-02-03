@@ -1,4 +1,4 @@
- import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import Layout from '@/components/layout/Layout';
 import { Loader2, Plus, Minus, Heart, Share2, Star, Check, ChevronLeft } from 'lucide-react';
@@ -7,6 +7,7 @@ import { useWishlist } from '@/hooks/useWishlist';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import productsService from '@/services/productsService';
+import ProductReviews from '@/components/product/ProductReviews';
 
 export default function ProductDetail() {
   const { slug } = useParams();
@@ -33,7 +34,7 @@ export default function ProductDetail() {
         setError(null);
 
         // Fetch from backend API
-        const response = await productsService.getProductById(slug);
+        const response = await productsService.getProduct(slug);
 
         if (response.data) {
           // Transform backend response to expected format
@@ -499,6 +500,14 @@ export default function ProductDetail() {
               )}
             </div>
           </div>
+        </div>
+
+        {/* Reviews Section */}
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 border-t border-gray-200 mt-12">
+          <ProductReviews
+            productId={product.id}
+            productName={product.name}
+          />
         </div>
       </div>
     </Layout>

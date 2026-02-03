@@ -6,6 +6,7 @@ import { useAuth } from '@/components/contexts/AuthContext';
 import productsService from '@/services/productsService';
 import ordersService from '@/services/ordersService';
 import vendorService from '@/services/vendorService';
+import VendorManagement from '@/components/admin/VendorManagement';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -765,82 +766,7 @@ const Admin = () => {
 
         {/* Vendors Tab */}
         {activeTab === 'vendors' && (
-          <div className="bg-card border border-border rounded-lg">
-            <div className="p-4 border-b border-border">
-              <h2 className="text-lg font-semibold text-foreground">Vendor Management</h2>
-            </div>
-
-            {loading ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              </div>
-            ) : vendorList.length === 0 ? (
-              <div className="text-center py-12">
-                <Users className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
-                <p className="text-muted-foreground">No vendors found.</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="bg-muted/50">
-                      <th className="p-4 font-medium text-sm">Vendor / Company</th>
-                      <th className="p-4 font-medium text-sm">Contact</th>
-                      <th className="p-4 font-medium text-sm">Status</th>
-                      <th className="p-4 font-medium text-sm text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {vendorList.map((vendor) => (
-                      <tr key={vendor.id} className="hover:bg-muted/30 transition-colors">
-                        <td className="p-4">
-                          <div className="font-medium text-foreground">{vendor.fullName}</div>
-                          <div className="text-xs text-muted-foreground">{vendor.companyName}</div>
-                        </td>
-                        <td className="p-4">
-                          <div className="text-sm">{vendor.email}</div>
-                          <div className="text-xs text-muted-foreground">{vendor.phone}</div>
-                        </td>
-                        <td className="p-4">
-                          {vendor.isApproved ? (
-                            <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-green-200">
-                              Approved
-                            </Badge>
-                          ) : (
-                            <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100 border-yellow-200">
-                              Pending
-                            </Badge>
-                          )}
-                        </td>
-                        <td className="p-4 text-right">
-                          <div className="flex justify-end gap-2">
-                            {!vendor.isApproved ? (
-                              <Button
-                                size="sm"
-                                onClick={() => handleApproveVendor(vendor.id, true)}
-                                className="bg-green-600 hover:bg-green-700 text-white"
-                              >
-                                <Check className="w-4 h-4 mr-1" /> Approve
-                              </Button>
-                            ) : (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleApproveVendor(vendor.id, false)}
-                                className="text-destructive hover:text-destructive"
-                              >
-                                <X className="w-4 h-4 mr-1" /> Revoke
-                              </Button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+          <VendorManagement />
         )}
       </div>
     </Layout>

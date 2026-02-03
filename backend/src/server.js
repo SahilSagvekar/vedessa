@@ -1,6 +1,9 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const sentry = require('./config/sentry');
+const logger = require('./config/logger');
+
 const productsRouter = require('./routes/products');
 const categoriesRouter = require('./routes/categories');
 const collectionsRouter = require('./routes/collections');
@@ -12,9 +15,18 @@ const paymentRoutes = require('./routes/payment.routes');
 const vendorRoutes = require('./routes/vendor.routes');
 const shippingRoutes = require('./routes/shipping');
 const contactRoutes = require('./routes/contact');
+const adminRoutes = require('./routes/admin.routes');
+const reviewRoutes = require('./routes/review.routes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Initialize Sentry (must be first)
+sentry.initSentry(app);
+
+// Sentry request handler (must be before other middleware)
+app.use(sentry.requestHandler());
+app.use(sentry.tracingHandler());
 
 // CORS configuration
 const allowedOrigins = [
@@ -40,7 +52,7 @@ app.use(cors({
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      console.log('CORS blocked origin:', origin);
+      logger.warn('CORS blocked origin:', { origin });
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -55,9 +67,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static('uploads'));
 
+// Sanitization middleware (protect against XSS)
+const { sanitizeAll } = require('./middleware/sanitize');
+app.use(sanitizeAll({
+  skipFields: ['password', 'passwordHash', 'token', 'bankDetails', 'resetToken', 'comment', 'title']
+}));
+
 // Request logging middleware
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  logger.logRequest(req);
   next();
 });
 
@@ -72,6 +90,8 @@ app.use('/api/orders', ordersRouter);
 app.use('/api/vendors', vendorRoutes);
 app.use('/api/shipping', shippingRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -147,9 +167,28 @@ app.use((req, res) => {
   });
 });
 
+// Sentry error handler (must be before other error handlers)
+app.use(sentry.errorHandler());
+
 // Error handling middleware
 app.use((error, req, res, next) => {
-  console.error('Server error:', error);
+  // Log error with context
+  logger.logError(error, {
+    user: req.user,
+    url: req.url,
+    method: req.method,
+    body: req.body,
+  });
+
+  // Capture error in Sentry if not already captured
+  if (process.env.SENTRY_DSN) {
+    sentry.captureException(error, {
+      user: req.user,
+      url: req.url,
+      method: req.method,
+    });
+  }
+
   res.status(500).json({
     success: false,
     message: 'Internal server error',
@@ -161,12 +200,11 @@ app.use((error, req, res, next) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log('\n🚀 Ayurveda Essentials API Server');
-  console.log('================================');
-  console.log(`📡 Server running on http://localhost:${PORT}`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`✅ CORS enabled for: ${process.env.CORS_ORIGIN || 'http://localhost:5173'}`);
-  console.log('================================\n');
+  logger.info('🚀 Vedessa API Server Started');
+  logger.info(`📡 Server running on http://localhost:${PORT}`);
+  logger.info(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  logger.info(`✅ CORS enabled for: ${allowedOrigins.join(', ')}`);
+  logger.info(`📝 Logging level: ${logger.level}`);
 });
 
 module.exports = app;

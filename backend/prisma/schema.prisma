@@ -37,6 +37,7 @@ model User {
   wishlist     Wishlist[]
   orders       Order[]
   products     Product[]  // Products added by vendor
+  reviews      Review[]   // Reviews written by user
 
   @@map("users")
 }
@@ -96,6 +97,7 @@ model Product {
   cartItems     CartItem[]
   wishlist      Wishlist[]
   orderItems    OrderItem[]
+  productReviews Review[]   @relation("ProductReviews")
 
   @@index([categoryId])
   @@index([collectionId])
@@ -196,4 +198,35 @@ model OrderItem {
 
   @@index([orderId])
   @@map("order_items")
+}
+
+// Review model
+model Review {
+  id              String   @id @default(uuid())
+  productId       String   @map("product_id")
+  userId          String   @map("user_id")
+  rating          Int      // 1-5 stars
+  title           String?  // Review title/headline
+  comment         String   // Review text
+  isVerified      Boolean  @default(false) @map("is_verified") // Verified purchase
+  helpfulCount    Int      @default(0) @map("helpful_count") // Number of helpful votes
+  notHelpfulCount Int      @default(0) @map("not_helpful_count")
+  
+  // Admin moderation
+  isApproved      Boolean  @default(true) @map("is_approved") // Auto-approve or require moderation
+  isFlagged       Boolean  @default(false) @map("is_flagged") // Flagged for review
+  adminResponse   String?  @map("admin_response") // Optional admin/vendor response
+  
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  product         Product  @relation("ProductReviews", fields: [productId], references: [id], onDelete: Cascade)
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, userId]) // One review per user per product
+  @@index([productId])
+  @@index([userId])
+  @@index([rating])
+  @@index([isApproved])
+  @@map("reviews")
 }

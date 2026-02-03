@@ -29,10 +29,10 @@ export default function SupportCollaborations() {
     try {
       const response = await api.post('/contact/collaboration', collaborationForm);
 
-      if (response.data.success) {
+      if (response.success) {
         toast({
           title: 'Success!',
-          description: response.data.message || 'Your collaboration request has been submitted successfully.',
+          description: response.message || 'Your collaboration request has been submitted successfully.',
         });
 
         // Reset form
@@ -61,10 +61,10 @@ export default function SupportCollaborations() {
     try {
       const response = await api.post('/contact/support', supportForm);
 
-      if (response.data.success) {
+      if (response.success) {
         toast({
           title: 'Success!',
-          description: response.data.message || 'Your support request has been submitted successfully.',
+          description: response.message || 'Your support request has been submitted successfully.',
         });
 
         // Reset form

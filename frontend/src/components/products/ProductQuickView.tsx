@@ -1,7 +1,7 @@
 // components/products/ProductQuickView.tsx
 import React, { useState } from 'react';
 import { X, Plus, Minus, Heart, Share2, Star, Check, Loader2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -130,7 +130,7 @@ export default function ProductQuickView({ product, open, onClose }: ProductQuic
   };
 
   const handleShare = async () => {
-    const shareUrl = `${window.location.origin}/products/${product.slug || product.id}`;
+    const shareUrl = `${window.location.origin}/products/${product.id}`;
     const shareText = `Check out ${product.name} on Vedessa!`;
 
     if (navigator.share) {
@@ -430,11 +430,12 @@ export default function ProductQuickView({ product, open, onClose }: ProductQuic
               {/* View Full Details Link */}
               {/* <div className="mt-6">
 
-                <a href={`/products/${product.slug}`}
+                <Link to={`/products/${product.id}`}
+                  onClick={onClose}
                   className="text-sm text-green-700 hover:text-green-800 font-medium underline"
                 >
                   View Full Product Details →
-                </a>
+                </Link>
               </div> */}
             </div>
           </div>

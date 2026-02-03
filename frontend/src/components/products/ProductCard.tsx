@@ -1,6 +1,7 @@
 // components/products/ProductCard.tsx
 import React, { useState } from 'react';
 import { Heart, Star, Eye } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import ProductQuickView from './ProductQuickView';
 
 interface ProductCardProps {
@@ -15,22 +16,14 @@ export default function ProductCard({ product }: ProductCardProps) {
     ? Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100)
     : 0;
 
-  const handleCardClick = (e: React.MouseEvent) => {
-    // Prevent opening modal when clicking on action buttons
-    if ((e.target as HTMLElement).closest('button')) {
-      return;
-    }
-    setIsQuickViewOpen(true);
-  };
-
   return (
     <>
-      <div
-        className="group relative bg-white rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-        onClick={handleCardClick}
-      >
-        {/* Product Image */}
-        <div className="relative aspect-square overflow-hidden bg-gray-100">
+      <div className="group relative bg-white rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-default">
+        {/* Product Image Link */}
+        <Link
+          to={`/products/${product.id}`}
+          className="relative block aspect-square overflow-hidden bg-gray-100"
+        >
           <img
             src={product.image || '/placeholder.svg'}
             alt={product.name}
@@ -58,33 +51,35 @@ export default function ProductCard({ product }: ProductCardProps) {
               </span>
             )}
           </div>
+        </Link>
 
-          {/* Quick Actions - Show on hover */}
-          <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsWishlisted(!isWishlisted);
-              }}
-              className="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors"
-              aria-label="Add to wishlist"
-            >
-              <Heart
-                className={`w-4 h-4 ${isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-600'}`}
-              />
-            </button>
+        {/* Quick Actions - Show on hover */}
+        <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsWishlisted(!isWishlisted);
+            }}
+            className="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors"
+            aria-label="Add to wishlist"
+          >
+            <Heart
+              className={`w-4 h-4 ${isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-600'}`}
+            />
+          </button>
 
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsQuickViewOpen(true);
-              }}
-              className="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors"
-              aria-label="Quick view"
-            >
-              <Eye className="w-4 h-4 text-gray-600" />
-            </button>
-          </div>
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsQuickViewOpen(true);
+            }}
+            className="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors"
+            aria-label="Quick view"
+          >
+            <Eye className="w-4 h-4 text-gray-600" />
+          </button>
         </div>
 
         {/* Product Info */}
@@ -96,10 +91,12 @@ export default function ProductCard({ product }: ProductCardProps) {
             </p>
           )}
 
-          {/* Product Name */}
-          <h3 className="text-sm sm:text-base font-medium text-gray-900 mb-2 line-clamp-2 hover:text-green-700 transition-colors">
-            {product.name}
-          </h3>
+          {/* Product Name Link */}
+          <Link to={`/products/${product.id}`}>
+            <h3 className="text-sm sm:text-base font-medium text-gray-900 mb-2 line-clamp-2 hover:text-green-700 transition-colors">
+              {product.name}
+            </h3>
+          </Link>
 
           {/* Rating */}
           {product.rating && (
