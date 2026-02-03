@@ -428,14 +428,14 @@ export default function ProductQuickView({ product, open, onClose }: ProductQuic
               </div>
 
               {/* View Full Details Link */}
-              <div className="mt-6">
+              {/* <div className="mt-6">
 
                 <a href={`/products/${product.slug}`}
                   className="text-sm text-green-700 hover:text-green-800 font-medium underline"
                 >
                   View Full Product Details →
                 </a>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>

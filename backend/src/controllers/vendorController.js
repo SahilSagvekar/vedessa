@@ -369,6 +369,11 @@ exports.updateProduct = async (req, res) => {
             isBestseller
         } = req.body;
 
+        console.log('=== UPDATE PRODUCT REQUEST ===');
+        console.log('Product ID:', id);
+        console.log('req.body:', JSON.stringify(req.body, null, 2));
+        console.log('req.file:', req.file);
+
         let image = undefined;
         if (req.file) {
             image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
@@ -383,8 +388,17 @@ exports.updateProduct = async (req, res) => {
         if (description !== undefined) updateData.description = description;
         if (price) updateData.price = parseFloat(price);
         if (image !== undefined) updateData.image = image;
-        if (categoryId !== undefined) updateData.categoryId = categoryId;
-        if (collectionId !== undefined) updateData.collectionId = collectionId;
+
+        // Handle categoryId - convert empty string to null
+        if (categoryId !== undefined) {
+            updateData.categoryId = (categoryId && categoryId.trim() !== '') ? categoryId : null;
+        }
+
+        // Handle collectionId - convert empty string to null
+        if (collectionId !== undefined) {
+            updateData.collectionId = (collectionId && collectionId.trim() !== '') ? collectionId : null;
+        }
+
         if (stock !== undefined) updateData.stock = parseInt(stock);
         if (isNew !== undefined) updateData.isNew = isNew === 'true' || isNew === true;
         if (isBestseller !== undefined) updateData.isBestseller = isBestseller === 'true' || isBestseller === true;

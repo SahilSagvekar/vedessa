@@ -83,18 +83,30 @@ export default function VendorProducts() {
     };
 
     const handleEditProduct = (product) => {
+        console.log('=== EDIT PRODUCT CLICKED ===');
+        console.log('Product object:', product);
+        console.log('Product categoryId:', product.categoryId);
+        console.log('Product category:', product.category);
+        console.log('Product collectionId:', product.collectionId);
+        console.log('Product collection:', product.collection);
+
         setEditingProduct(product);
-        setFormData({
+
+        const formValues = {
             name: product.name,
             description: product.description || '',
             price: product.price.toString(),
             stock: product.stock.toString(),
             image: product.image || '',
-            categoryId: product.categoryId || '',
-            collectionId: product.collectionId || '',
+            // Handle both direct ID fields and nested objects
+            categoryId: product.categoryId || product.category?.id || '',
+            collectionId: product.collectionId || product.collection?.id || '',
             isNew: product.isNew || false,
             isBestseller: product.isBestseller || false
-        });
+        };
+
+        console.log('Setting form data to:', formValues);
+        setFormData(formValues);
         setShowAddModal(true);
         setImageFile(null);
     };
@@ -121,25 +133,44 @@ export default function VendorProducts() {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        console.log('=== FORM SUBMIT ===');
+        console.log('Editing product:', editingProduct);
+        console.log('Form data:', formData);
+        console.log('Image file:', imageFile);
+
         try {
             const data = new FormData();
 
             // Append all fields except image
             Object.keys(formData).forEach(key => {
                 if (key !== 'image') {
+                    console.log(`Appending ${key}:`, formData[key]);
                     data.append(key, formData[key]);
                 }
             });
 
             // Handle image separately - only append if we have a file or valid URL
             if (imageFile) {
+                console.log('Appending image file:', imageFile.name);
                 data.append('image', imageFile);
             } else if (formData.image && formData.image.trim() !== '') {
-                data.append('image', formData.image);
+                // Only send image URL if it's different from the original (for edit mode)
+                // or if we're creating a new product
+                if (!editingProduct || formData.image !== (editingProduct.image || '')) {
+                    console.log('Appending image URL:', formData.image);
+                    data.append('image', formData.image);
+                }
             }
-            // If neither imageFile nor formData.image, don't append image field at all
+            // If neither imageFile nor new image URL, don't append image field at all
+            // This preserves the existing image when editing
+
+            console.log('FormData entries:');
+            for (let pair of data.entries()) {
+                console.log(pair[0] + ':', pair[1]);
+            }
 
             if (editingProduct) {
+                console.log('Updating product ID:', editingProduct.id);
                 await vendorService.updateProduct(editingProduct.id, data);
                 toast({
                     title: 'Success',
@@ -155,9 +186,17 @@ export default function VendorProducts() {
             setShowAddModal(false);
             fetchProducts();
         } catch (error) {
+            console.error('Product save error:', error);
+            console.error('Error response:', error.response?.data);
+
+            const errorMessage = error.response?.data?.message
+                || error.response?.data?.error
+                || error.message
+                || 'Failed to save product';
+
             toast({
                 title: 'Error',
-                description: error.message || 'Failed to save product',
+                description: errorMessage,
                 variant: 'destructive',
             });
         }
@@ -272,7 +311,6 @@ export default function VendorProducts() {
                                         type="text"
                                         value={formData.name}
                                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                        required
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
                                     />
                                 </div>
@@ -299,7 +337,6 @@ export default function VendorProducts() {
                                             step="0.01"
                                             value={formData.price}
                                             onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                                            required
                                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
                                         />
                                     </div>
@@ -312,7 +349,6 @@ export default function VendorProducts() {
                                             type="number"
                                             value={formData.stock}
                                             onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                                            required
                                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
                                         />
                                     </div>

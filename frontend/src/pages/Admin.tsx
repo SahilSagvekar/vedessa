@@ -66,6 +66,7 @@ const Admin = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editProductId, setEditProductId] = useState<string | null>(null);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -203,6 +204,7 @@ const Admin = () => {
     });
     setIsEditMode(false);
     setEditProductId(null);
+    setEditingProduct(null);
     setImageFile(null);
   };
 
@@ -212,11 +214,12 @@ const Admin = () => {
   };
 
   const openEditDialog = (product: Product) => {
+    setEditingProduct(product);
     setFormData({
       name: product.name,
       description: product.description,
       price: product.price.toString(),
-      image: product.image,
+      image: product.image || '', // Ensure image is always a string
       category: product.category,
       collection: product.collection,
       isNew: product.isNew,
@@ -249,14 +252,15 @@ const Admin = () => {
       return;
     }
 
-    if (!formData.image.trim() && !imageFile) {
-      toast({
-        title: 'Validation Error',
-        description: 'Image is required',
-        variant: 'destructive',
-      });
-      return;
-    }
+
+    // if (!formData.image?.trim() && !imageFile) {
+    //   toast({
+    //     title: 'Validation Error',
+    //     description: 'Image is required',
+    //     variant: 'destructive',
+    //   });
+    //   return;
+    // }
 
     setSubmitting(true);
 
@@ -275,9 +279,14 @@ const Admin = () => {
       if (imageFile) {
         productData.append('image', imageFile);
       } else if (formData.image && formData.image.trim() !== '') {
-        productData.append('image', formData.image);
+        // Only send image URL if it's different from the original (for edit mode)
+        // or if we're creating a new product
+        if (!isEditMode || !editingProduct || formData.image !== (editingProduct.image || '')) {
+          productData.append('image', formData.image);
+        }
       }
-      // If neither imageFile nor formData.image, don't append image field at all
+      // If neither imageFile nor new image URL, don't append image field at all
+      // This preserves the existing image when editing
 
       // Add default values for rating and reviews if creating
       if (!isEditMode) {
