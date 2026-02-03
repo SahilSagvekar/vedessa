@@ -12,6 +12,7 @@ const {
   resetPassword
 } = require('../controllers/authController');
 const { auth } = require('../middleware/auth');
+const upload = require('../middleware/upload');
 
 // Public routes
 router.post('/register', register);
@@ -25,7 +26,7 @@ router.post('/reset-password', resetPassword);
 
 // Protected routes (require authentication)
 router.get('/me', auth, getMe);
-router.put('/profile', auth, updateProfile);
+router.put('/profile', auth, upload.single('avatar'), updateProfile);
 router.put('/password', auth, changePassword);
 
 module.exports = router;

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Loader2, Plus, Edit2, Trash2, Search } from 'lucide-react';
+import { Loader2, Plus, Edit2, Trash2, Search, Package } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import vendorService from '@/services/vendorService';
 import productsService from '@/services/productsService';
@@ -25,6 +25,7 @@ export default function VendorProducts() {
         isNew: false,
         isBestseller: false
     });
+    const [imageFile, setImageFile] = useState(null);
 
     useEffect(() => {
         fetchProducts();
@@ -78,6 +79,7 @@ export default function VendorProducts() {
             isBestseller: false
         });
         setShowAddModal(true);
+        setImageFile(null);
     };
 
     const handleEditProduct = (product) => {
@@ -94,6 +96,7 @@ export default function VendorProducts() {
             isBestseller: product.isBestseller || false
         });
         setShowAddModal(true);
+        setImageFile(null);
     };
 
     const handleDeleteProduct = async (productId) => {
@@ -119,14 +122,27 @@ export default function VendorProducts() {
         e.preventDefault();
 
         try {
+            const data = new FormData();
+            Object.keys(formData).forEach(key => {
+                if (key !== 'image' || !imageFile) {
+                    data.append(key, formData[key]);
+                }
+            });
+
+            if (imageFile) {
+                data.append('image', imageFile);
+            } else if (formData.image) {
+                data.append('image', formData.image);
+            }
+
             if (editingProduct) {
-                await vendorService.updateProduct(editingProduct.id, formData);
+                await vendorService.updateProduct(editingProduct.id, data);
                 toast({
                     title: 'Success',
                     description: 'Product updated successfully',
                 });
             } else {
-                await vendorService.createProduct(formData);
+                await vendorService.createProduct(data);
                 toast({
                     title: 'Success',
                     description: 'Product created successfully',
@@ -300,15 +316,36 @@ export default function VendorProducts() {
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Image URL
+                                        Product Image
                                     </label>
-                                    <input
-                                        type="url"
-                                        value={formData.image}
-                                        onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                                        placeholder="https://example.com/image.jpg"
-                                    />
+                                    <div className="space-y-3">
+                                        {formData.image && !imageFile && (
+                                            <div className="relative w-24 h-24 rounded-lg overflow-hidden border border-gray-200">
+                                                <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
+                                            </div>
+                                        )}
+                                        {imageFile && (
+                                            <div className="relative w-24 h-24 rounded-lg overflow-hidden border border-gray-200">
+                                                <img src={URL.createObjectURL(imageFile)} alt="Preview" className="w-full h-full object-cover" />
+                                            </div>
+                                        )}
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => setImageFile(e.target.files[0])}
+                                            className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                                        />
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs text-gray-400">OR</span>
+                                            <input
+                                                type="url"
+                                                value={formData.image}
+                                                onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                                                className="flex-1 px-3 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-green-500 outline-none"
+                                                placeholder="Paste image URL instead"
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div className="grid md:grid-cols-2 gap-4">

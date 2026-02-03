@@ -19,7 +19,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, fullName?: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
-  updateProfile: (fullName: string, avatarUrl?: string) => Promise<{ error: Error | null }>;
+  updateProfile: (data: any) => Promise<{ error: Error | null }>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<{ error: Error | null }>;
   refreshUser: () => Promise<void>;
 }
@@ -78,10 +78,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const updateProfile = async (fullName: string, avatarUrl?: string) => {
+  const updateProfile = async (data: any) => {
     try {
-      const response = await authService.updateProfile(fullName, avatarUrl);
-      setUser(response.data);
+      const response = await authService.updateProfile(data);
+      setUser(response.data.data || response.data);
       return { error: null };
     } catch (error) {
       return { error: new Error(error as string) };

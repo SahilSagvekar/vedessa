@@ -8,6 +8,7 @@ const {
   deleteProduct
 } = require('../controllers/productsController');
 const { auth, isAdmin } = require('../middleware/auth');
+const upload = require('../middleware/upload');
 
 // Public routes
 // GET /api/products - Get all products with filters
@@ -55,10 +56,10 @@ router.get('/:id', getProductById);
 
 // Admin routes (require authentication + admin role)
 // POST /api/products - Create product (admin only)
-router.post('/', auth, isAdmin, createProduct);
+router.post('/', auth, isAdmin, upload.single('image'), createProduct);
 
 // PUT /api/products/:id - Update product (admin only)
-router.put('/:id', auth, isAdmin, updateProduct);
+router.put('/:id', auth, isAdmin, upload.single('image'), updateProduct);
 
 // DELETE /api/products/:id - Delete product (admin only)
 router.delete('/:id', auth, isAdmin, deleteProduct);

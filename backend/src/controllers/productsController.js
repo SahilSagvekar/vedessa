@@ -204,7 +204,6 @@ const createProduct = async (req, res) => {
       name,
       description,
       price,
-      image,
       categoryId,
       collectionId,
       rating = 4.5,
@@ -213,6 +212,11 @@ const createProduct = async (req, res) => {
       isBestseller = false,
       stock = 100
     } = req.body;
+
+    let image = req.body.image;
+    if (req.file) {
+      image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    }
 
     // Validation
     if (!name || !price) {
@@ -232,8 +236,8 @@ const createProduct = async (req, res) => {
         collectionId: collectionId || null,
         rating: parseFloat(rating),
         reviews: parseInt(reviews),
-        isNew,
-        isBestseller,
+        isNew: isNew === 'true' || isNew === true,
+        isBestseller: isBestseller === 'true' || isBestseller === true,
         stock: parseInt(stock)
       },
       include: {
@@ -268,7 +272,7 @@ const updateProduct = async (req, res) => {
 
     // Build update object with only provided fields
     const allowedFields = [
-      'name', 'description', 'price', 'image', 'categoryId', 
+      'name', 'description', 'price', 'categoryId',
       'collectionId', 'rating', 'reviews', 'isNew', 'isBestseller', 'stock'
     ];
 
@@ -278,11 +282,19 @@ const updateProduct = async (req, res) => {
           updateData[field] = parseFloat(req.body[field]);
         } else if (field === 'reviews' || field === 'stock') {
           updateData[field] = parseInt(req.body[field]);
+        } else if (field === 'isNew' || field === 'isBestseller') {
+          updateData[field] = req.body[field] === 'true' || req.body[field] === true;
         } else {
           updateData[field] = req.body[field];
         }
       }
     });
+
+    if (req.file) {
+      updateData.image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    } else if (req.body.image !== undefined) {
+      updateData.image = req.body.image;
+    }
 
     if (Object.keys(updateData).length === 0) {
       return res.status(400).json({

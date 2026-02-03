@@ -269,13 +269,17 @@ exports.createProduct = async (req, res) => {
             name,
             description,
             price,
-            image,
             categoryId,
             collectionId,
             stock,
             isNew,
             isBestseller
         } = req.body;
+
+        let image = req.body.image;
+        if (req.file) {
+            image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+        }
 
         if (!name || !price) {
             return res.status(400).json({
@@ -294,8 +298,8 @@ exports.createProduct = async (req, res) => {
                 collectionId,
                 vendorId: req.user.id,
                 stock: stock ? parseInt(stock) : 100,
-                isNew: isNew || false,
-                isBestseller: isBestseller || false
+                isNew: isNew === 'true' || isNew === true,
+                isBestseller: isBestseller === 'true' || isBestseller === true
             },
             include: {
                 category: true,
@@ -354,13 +358,17 @@ exports.updateProduct = async (req, res) => {
             name,
             description,
             price,
-            image,
             categoryId,
             collectionId,
             stock,
             isNew,
             isBestseller
         } = req.body;
+
+        let image = req.body.image;
+        if (req.file) {
+            image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+        }
 
         const updateData = {};
         if (name) updateData.name = name;
@@ -370,8 +378,8 @@ exports.updateProduct = async (req, res) => {
         if (categoryId !== undefined) updateData.categoryId = categoryId;
         if (collectionId !== undefined) updateData.collectionId = collectionId;
         if (stock !== undefined) updateData.stock = parseInt(stock);
-        if (isNew !== undefined) updateData.isNew = isNew;
-        if (isBestseller !== undefined) updateData.isBestseller = isBestseller;
+        if (isNew !== undefined) updateData.isNew = isNew === 'true' || isNew === true;
+        if (isBestseller !== undefined) updateData.isBestseller = isBestseller === 'true' || isBestseller === true;
 
         const product = await prisma.product.update({
             where: { id },

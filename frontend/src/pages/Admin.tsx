@@ -35,8 +35,8 @@ interface Product {
   image: string;
   category: string;
   collection: string;
-  is_new: boolean;
-  is_bestseller: boolean;
+  isNew: boolean;
+  isBestseller: boolean;
   stock: number;
   rating: number;
   reviews: number;
@@ -49,8 +49,8 @@ interface ProductFormData {
   image: string;
   category: string;
   collection: string;
-  is_new: boolean;
-  is_bestseller: boolean;
+  isNew: boolean;
+  isBestseller: boolean;
   stock: string;
 }
 
@@ -68,6 +68,7 @@ const Admin = () => {
   const [editProductId, setEditProductId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   // Stats
   const [totalOrders, setTotalOrders] = useState(0);
@@ -81,8 +82,8 @@ const Admin = () => {
     image: '',
     category: 'skincare',
     collection: 'bringaras',
-    is_new: false,
-    is_bestseller: false,
+    isNew: false,
+    isBestseller: false,
     stock: '100',
   });
 
@@ -196,12 +197,13 @@ const Admin = () => {
       image: '',
       category: 'skincare',
       collection: 'bringaras',
-      is_new: false,
-      is_bestseller: false,
+      isNew: false,
+      isBestseller: false,
       stock: '100',
     });
     setIsEditMode(false);
     setEditProductId(null);
+    setImageFile(null);
   };
 
   const openAddDialog = () => {
@@ -217,12 +219,13 @@ const Admin = () => {
       image: product.image,
       category: product.category,
       collection: product.collection,
-      is_new: product.is_new,
-      is_bestseller: product.is_bestseller,
+      isNew: product.isNew,
+      isBestseller: product.isBestseller,
       stock: product.stock.toString(),
     });
     setIsEditMode(true);
     setEditProductId(product.id);
+    setImageFile(null);
     setIsDialogOpen(true);
   };
 
@@ -246,10 +249,10 @@ const Admin = () => {
       return;
     }
 
-    if (!formData.image.trim()) {
+    if (!formData.image.trim() && !imageFile) {
       toast({
         title: 'Validation Error',
-        description: 'Image URL is required',
+        description: 'Image is required',
         variant: 'destructive',
       });
       return;
@@ -258,19 +261,24 @@ const Admin = () => {
     setSubmitting(true);
 
     try {
-      const productData = {
-        name: formData.name,
-        description: formData.description,
-        price: parseFloat(formData.price),
-        image: formData.image,
-        category: formData.category,
-        collection: formData.collection,
-        is_new: formData.is_new,
-        is_bestseller: formData.is_bestseller,
-        stock: parseInt(formData.stock) || 100,
-        rating: 4.5,
-        reviews: 0,
-      };
+      const productData = new FormData();
+      Object.keys(formData).forEach(key => {
+        if (key !== 'image' || !imageFile) {
+          productData.append(key, (formData as any)[key]);
+        }
+      });
+
+      if (imageFile) {
+        productData.append('image', imageFile);
+      } else if (formData.image) {
+        productData.append('image', formData.image);
+      }
+
+      // Add default values for rating and reviews if creating
+      if (!isEditMode) {
+        productData.append('rating', '4.5');
+        productData.append('reviews', '0');
+      }
 
       if (isEditMode && editProductId) {
         // Update product
@@ -484,13 +492,36 @@ const Admin = () => {
                     </div>
 
                     <div>
-                      <Label htmlFor="image">Image URL *</Label>
-                      <Input
-                        id="image"
-                        value={formData.image}
-                        onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                        placeholder="https://example.com/image.jpg"
-                      />
+                      <Label htmlFor="image">Product Image</Label>
+                      <div className="mt-2 space-y-3">
+                        {formData.image && !imageFile && (
+                          <div className="relative w-24 h-24 rounded-md overflow-hidden border">
+                            <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
+                          </div>
+                        )}
+                        {imageFile && (
+                          <div className="relative w-24 h-24 rounded-md overflow-hidden border">
+                            <img src={URL.createObjectURL(imageFile)} alt="Preview" className="w-full h-full object-cover" />
+                          </div>
+                        )}
+                        <Input
+                          id="imageFile"
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                          className="cursor-pointer"
+                        />
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground uppercase">OR Paste URL</span>
+                          <Input
+                            id="image"
+                            value={formData.image}
+                            onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                            placeholder="https://example.com/image.jpg"
+                            className="flex-1"
+                          />
+                        </div>
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -535,23 +566,23 @@ const Admin = () => {
                       <div className="flex items-center space-x-2">
                         <input
                           type="checkbox"
-                          id="is_new"
-                          checked={formData.is_new}
-                          onChange={(e) => setFormData({ ...formData, is_new: e.target.checked })}
+                          id="isNew"
+                          checked={formData.isNew}
+                          onChange={(e) => setFormData({ ...formData, isNew: e.target.checked })}
                           className="rounded"
                         />
-                        <Label htmlFor="is_new" className="cursor-pointer">Mark as New</Label>
+                        <Label htmlFor="isNew" className="cursor-pointer">Mark as New</Label>
                       </div>
 
                       <div className="flex items-center space-x-2">
                         <input
                           type="checkbox"
-                          id="is_bestseller"
-                          checked={formData.is_bestseller}
-                          onChange={(e) => setFormData({ ...formData, is_bestseller: e.target.checked })}
+                          id="isBestseller"
+                          checked={formData.isBestseller}
+                          onChange={(e) => setFormData({ ...formData, isBestseller: e.target.checked })}
                           className="rounded"
                         />
-                        <Label htmlFor="is_bestseller" className="cursor-pointer">Mark as Bestseller</Label>
+                        <Label htmlFor="isBestseller" className="cursor-pointer">Mark as Bestseller</Label>
                       </div>
                     </div>
 
@@ -604,12 +635,12 @@ const Admin = () => {
                         <Badge variant="secondary" className="text-xs">
                           {getCategoryLabel(product.category)}
                         </Badge>
-                        {product.is_new && (
+                        {product.isNew && (
                           <Badge className="bg-kama-orange text-accent-foreground text-xs">
                             New
                           </Badge>
                         )}
-                        {product.is_bestseller && (
+                        {product.isBestseller && (
                           <Badge className="bg-green-600 text-white text-xs">
                             Bestseller
                           </Badge>

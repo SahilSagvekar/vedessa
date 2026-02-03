@@ -10,12 +10,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  User, 
-  ShoppingBag, 
-  Heart, 
-  MapPin, 
-  Lock, 
+import {
+  User,
+  ShoppingBag,
+  Heart,
+  MapPin,
+  Lock,
   Package,
   Loader2,
   LogOut
@@ -31,6 +31,7 @@ const CustomerDashboard = () => {
   // Profile form state
   const [fullName, setFullName] = useState(user?.fullName || '');
   const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || '');
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
 
   // Password form state
@@ -44,7 +45,15 @@ const CustomerDashboard = () => {
     setIsUpdatingProfile(true);
 
     try {
-      const { error } = await updateProfile(fullName, avatarUrl);
+      const data = new FormData();
+      data.append('fullName', fullName);
+      if (avatarFile) {
+        data.append('avatar', avatarFile);
+      } else if (avatarUrl) {
+        data.append('avatarUrl', avatarUrl);
+      }
+
+      const { error } = await updateProfile(data);
       if (error) {
         toast({
           title: 'Update Failed',
@@ -56,6 +65,7 @@ const CustomerDashboard = () => {
           title: 'Profile Updated',
           description: 'Your profile has been updated successfully.',
         });
+        setAvatarFile(null);
       }
     } finally {
       setIsUpdatingProfile(false);
@@ -236,12 +246,11 @@ const CustomerDashboard = () => {
                                   {new Date(order.created_at).toLocaleDateString()}
                                 </p>
                               </div>
-                              <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                order.status === 'DELIVERED' ? 'bg-green-100 text-green-800' :
-                                order.status === 'CANCELLED' ? 'bg-red-100 text-red-800' :
-                                order.status === 'SHIPPED' ? 'bg-blue-100 text-blue-800' :
-                                'bg-yellow-100 text-yellow-800'
-                              }`}>
+                              <span className={`px-3 py-1 rounded-full text-xs font-medium ${order.status === 'DELIVERED' ? 'bg-green-100 text-green-800' :
+                                  order.status === 'CANCELLED' ? 'bg-red-100 text-red-800' :
+                                    order.status === 'SHIPPED' ? 'bg-blue-100 text-blue-800' :
+                                      'bg-yellow-100 text-yellow-800'
+                                }`}>
                                 {order.status}
                               </span>
                             </div>
@@ -304,14 +313,37 @@ const CustomerDashboard = () => {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="avatarUrl">Avatar URL (optional)</Label>
-                        <Input
-                          id="avatarUrl"
-                          type="url"
-                          value={avatarUrl}
-                          onChange={(e) => setAvatarUrl(e.target.value)}
-                          placeholder="https://example.com/avatar.jpg"
-                        />
+                        <Label htmlFor="avatar">Profile Picture</Label>
+                        <div className="flex items-center gap-4 py-2">
+                          <div className="w-16 h-16 rounded-full overflow-hidden border bg-muted">
+                            {avatarFile ? (
+                              <img src={URL.createObjectURL(avatarFile)} alt="Preview" className="w-full h-full object-cover" />
+                            ) : avatarUrl ? (
+                              <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <User className="w-8 h-8 text-muted-foreground" />
+                              </div>
+                            )}
+                          </div>
+                          <Input
+                            id="avatar"
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => setAvatarFile(e.target.files?.[0] || null)}
+                            className="cursor-pointer"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground uppercase">OR URL</span>
+                          <Input
+                            id="avatarUrl"
+                            type="url"
+                            value={avatarUrl}
+                            onChange={(e) => setAvatarUrl(e.target.value)}
+                            placeholder="https://example.com/avatar.jpg"
+                          />
+                        </div>
                       </div>
 
                       <Button

@@ -9,13 +9,13 @@ export const authService = {
       password,
       fullName,
     });
-    
+
     // Save token and user to localStorage
     if (response.data.token) {
       localStorage.setItem('authToken', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
     }
-    
+
     return response;
   },
 
@@ -25,13 +25,13 @@ export const authService = {
       email,
       password,
     });
-    
+
     // Save token and user to localStorage
     if (response.data.token) {
       localStorage.setItem('authToken', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
     }
-    
+
     return response;
   },
 
@@ -49,27 +49,31 @@ export const authService = {
   // Get current user
   getMe: async () => {
     const response = await api.get('/auth/me');
-    
+
     // Update user in localStorage
     if (response.data) {
       localStorage.setItem('user', JSON.stringify(response.data));
     }
-    
+
     return response;
   },
 
   // Update profile
-  updateProfile: async (fullName, avatarUrl) => {
-    const response = await api.put('/auth/profile', {
-      fullName,
-      avatarUrl,
-    });
-    
+  updateProfile: async (data) => {
+    // If data is provided as separate arguments (legacy), handle it
+    let payload = data;
+    if (arguments.length > 1) {
+      payload = { fullName: arguments[0], avatarUrl: arguments[1] };
+    }
+
+    const response = await api.put('/auth/profile', payload);
+
     // Update user in localStorage
     if (response.data) {
-      localStorage.setItem('user', JSON.stringify(response.data));
+      const userData = response.data.data || response.data;
+      localStorage.setItem('user', JSON.stringify(userData));
     }
-    
+
     return response;
   },
 

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const vendorController = require('../controllers/vendorController');
 const { auth } = require('../middleware/auth');
+const upload = require('../middleware/upload');
 
 // Helper function to restrict access to specific roles
 const restrictTo = (...roles) => {
@@ -29,8 +30,8 @@ router.put('/me', vendorController.updateMyProfile);
 
 // Vendor products
 router.get('/products', vendorController.getMyProducts);
-router.post('/products', vendorController.createProduct);
-router.put('/products/:id', vendorController.updateProduct);
+router.post('/products', upload.single('image'), vendorController.createProduct);
+router.put('/products/:id', upload.single('image'), vendorController.updateProduct);
 router.delete('/products/:id', vendorController.deleteProduct);
 
 // Vendor orders

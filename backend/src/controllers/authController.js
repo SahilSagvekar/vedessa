@@ -188,8 +188,13 @@ const getMe = async (req, res) => {
  */
 const updateProfile = async (req, res) => {
   try {
-    const { fullName, avatarUrl } = req.body;
+    const { fullName } = req.body;
+    let { avatarUrl } = req.body;
     const updateData = {};
+
+    if (req.file) {
+      avatarUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    }
 
     if (fullName !== undefined) updateData.fullName = fullName;
     if (avatarUrl !== undefined) updateData.avatarUrl = avatarUrl;
