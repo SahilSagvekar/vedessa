@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import couponService from '@/services/couponService';
+import { Tag, X } from 'lucide-react';
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -26,6 +28,10 @@ const Checkout = () => {
     state: '',
     pincode: '',
   });
+
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -103,17 +109,51 @@ const Checkout = () => {
     return true;
   };
 
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return;
+
+    try {
+      setIsApplyingCoupon(true);
+      const response = await couponService.validateCoupon(couponCode, cart.summary.total);
+
+      if (response.success) {
+        setAppliedCoupon(response.data);
+        toast({
+          title: 'Coupon Applied!',
+          description: `You saved ₹${response.data.discountAmount}`,
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Invalid Coupon',
+        description: typeof error === 'string' ? error : (error.response?.data?.message || 'Failed to apply coupon'),
+        variant: 'destructive',
+      });
+      setAppliedCoupon(null);
+    } finally {
+      setIsApplyingCoupon(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode('');
+  };
+
   const handlePlaceOrder = async () => {
     if (!validateForm()) return;
 
     const shippingCost = cart.summary.subtotal > 1000 ? 0 : 50;
+    const discountAmount = appliedCoupon ? appliedCoupon.discountAmount : 0;
 
     // Prepare order data
     const orderData = {
-      total: cart.summary.total + shippingCost,
+      total: Math.max(0, cart.summary.total + shippingCost - discountAmount),
       subtotal: cart.summary.subtotal,
       tax: cart.summary.tax,
       shipping: shippingCost,
+      discountAmount,
+      couponId: appliedCoupon?.id,
       shippingAddress,
       userEmail: user.email,
       items: cart.items.map(item => ({
@@ -289,9 +329,56 @@ const Checkout = () => {
               {cart.summary.subtotal > 1000 && (
                 <p className="text-xs text-green-600">🎉 You get free shipping!</p>
               )}
+
+              {/* Coupon UI */}
+              <div className="pt-4 border-t border-border">
+                <p className="text-sm font-medium text-foreground mb-3">Apply Coupon</p>
+                {appliedCoupon ? (
+                  <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-md p-3">
+                    <div className="flex items-center gap-2">
+                      <Tag className="w-4 h-4 text-green-600" />
+                      <div>
+                        <p className="text-sm font-bold text-green-700">{appliedCoupon.code}</p>
+                        <p className="text-xs text-green-600">₹{appliedCoupon.discountAmount.toFixed(2)} saved</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleRemoveCoupon}
+                      className="text-green-700 hover:text-green-800"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Enter code"
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                      className="uppercase"
+                    />
+                    <Button
+                      onClick={handleApplyCoupon}
+                      disabled={isApplyingCoupon || !couponCode}
+                      variant="outline"
+                      className="border-kama-olive text-kama-olive"
+                    >
+                      {isApplyingCoupon ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Apply'}
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {appliedCoupon && (
+                <div className="flex justify-between text-sm text-green-600 font-medium pt-2">
+                  <span>Coupon Discount ({appliedCoupon.code})</span>
+                  <span>-₹{appliedCoupon.discountAmount.toFixed(2)}</span>
+                </div>
+              )}
+
               <div className="flex justify-between text-lg font-semibold pt-2 border-t border-border">
                 <span className="text-foreground">Total</span>
-                <span className="text-foreground">₹{finalTotal.toFixed(2)}</span>
+                <span className="text-foreground">₹{(finalTotal - (appliedCoupon?.discountAmount || 0)).toFixed(2)}</span>
               </div>
             </div>
 

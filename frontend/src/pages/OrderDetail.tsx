@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
-import { ChevronLeft, Package, Truck, CheckCircle, Clock, XCircle, Loader2, MapPin } from 'lucide-react';
+import { ChevronLeft, Package, Truck, CheckCircle, Clock, XCircle, Loader2, MapPin, ExternalLink } from 'lucide-react';
 import { useAuth } from '@/components/contexts/AuthContext';
 import ordersService from '@/services/ordersService';
 
@@ -22,6 +22,7 @@ interface Order {
     subtotal: number;
     tax: number;
     shipping_cost: number;
+    discount_amount?: number;
     shipping_address: {
         name: string;
         phone: string;
@@ -32,6 +33,9 @@ interface Order {
     };
     payment_status: string;
     payment_method: string;
+    awb_number?: string;
+    tracking_url?: string;
+    estimated_delivery?: string;
     items: OrderItem[];
     created_at: string;
     updated_at: string;
@@ -246,6 +250,12 @@ export default function OrderDetail() {
                                             {order.shipping_cost === 0 ? 'Free' : `₹${order.shipping_cost?.toFixed(2)}`}
                                         </span>
                                     </div>
+                                    {order.discount_amount && order.discount_amount > 0 && (
+                                        <div className="flex justify-between text-green-600 font-medium">
+                                            <span>Discount</span>
+                                            <span>-₹{order.discount_amount.toFixed(2)}</span>
+                                        </div>
+                                    )}
                                     <div className="flex justify-between pt-3 border-t font-semibold text-base">
                                         <span>Total</span>
                                         <span>₹{order.total_amount?.toFixed(2)}</span>
@@ -285,6 +295,37 @@ export default function OrderDetail() {
                                             {order.shipping_address.city}, {order.shipping_address.state} - {order.shipping_address.pincode}
                                         </p>
                                         <p className="pt-2">Phone: {order.shipping_address.phone}</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Tracking Info */}
+                            {order.awb_number && (
+                                <div className="bg-kama-olive/5 border border-kama-olive/20 rounded-xl p-6 shadow-sm">
+                                    <h2 className="font-semibold text-kama-olive mb-4 flex items-center gap-2">
+                                        <Truck className="w-4 h-4" />
+                                        Ekart Tracking
+                                    </h2>
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-gray-600">AWB Number</span>
+                                            <span className="font-mono font-bold text-gray-900">{order.awb_number}</span>
+                                        </div>
+                                        {order.estimated_delivery && (
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-gray-600">Est. Delivery</span>
+                                                <span className="font-medium text-gray-900">
+                                                    {new Date(order.estimated_delivery).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                                                </span>
+                                            </div>
+                                        )}
+                                        <Link
+                                            to={`/track-order?awb=${order.awb_number}`}
+                                            className="mt-4 flex items-center justify-center gap-2 w-full py-2 bg-kama-olive text-kama-cream rounded-lg text-sm font-medium hover:bg-kama-olive-light transition-colors"
+                                        >
+                                            Track Shipment
+                                            <ExternalLink className="w-3 h-3" />
+                                        </Link>
                                     </div>
                                 </div>
                             )}

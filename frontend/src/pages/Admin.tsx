@@ -7,6 +7,7 @@ import productsService from '@/services/productsService';
 import ordersService from '@/services/ordersService';
 import vendorService from '@/services/vendorService';
 import VendorManagement from '@/components/admin/VendorManagement';
+import CouponManagement from '@/components/admin/CouponManagement';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -63,7 +64,7 @@ const Admin = () => {
   const [productList, setProductList] = useState<Product[]>([]);
   const [vendorList, setVendorList] = useState<any[]>([]);
   const [orderList, setOrderList] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'vendors'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'vendors' | 'coupons'>('products');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editProductId, setEditProductId] = useState<string | null>(null);
@@ -437,6 +438,15 @@ const Admin = () => {
           >
             Vendors
           </button>
+          <button
+            onClick={() => setActiveTab('coupons')}
+            className={`pb-3 px-1 text-sm font-medium transition-colors ${activeTab === 'coupons'
+              ? 'text-foreground border-b-2 border-foreground'
+              : 'text-muted-foreground hover:text-foreground'
+              }`}
+          >
+            Coupons
+          </button>
         </div>
 
         {/* Products Management */}
@@ -767,6 +777,11 @@ const Admin = () => {
         {/* Vendors Tab */}
         {activeTab === 'vendors' && (
           <VendorManagement />
+        )}
+
+        {/* Coupons Tab */}
+        {activeTab === 'coupons' && (
+          <CouponManagement />
         )}
       </div>
     </Layout>

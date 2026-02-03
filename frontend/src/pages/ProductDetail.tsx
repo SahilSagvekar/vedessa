@@ -8,6 +8,7 @@ import { useAuth } from '@/components/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import productsService from '@/services/productsService';
 import ProductReviews from '@/components/product/ProductReviews';
+import SEO from '@/components/seo/SEO';
 
 export default function ProductDetail() {
   const { slug } = useParams();
@@ -241,6 +242,16 @@ export default function ProductDetail() {
 
   return (
     <Layout>
+      {product && (
+        <SEO
+          title={product.name}
+          description={product.description}
+          image={product.image}
+          type="product"
+          price={product.price.toString()}
+          availability={product.stock > 0 ? 'instock' : 'oos'}
+        />
+      )}
       {/* Breadcrumb */}
       <div className="bg-gray-50 border-b border-gray-200">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">

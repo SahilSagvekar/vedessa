@@ -60,6 +60,8 @@ router.post('/create-order', protect, async (req, res) => {
         subtotal: orderData.subtotal || amount,
         taxAmount: orderData.tax || 0,
         shippingCost: orderData.shipping || 0,
+        discountAmount: orderData.discountAmount || 0,
+        couponId: orderData.couponId || null,
         status: 'PENDING',
         paymentMethod: 'RAZORPAY',
         shippingAddress: orderData.shippingAddress,
@@ -133,6 +135,14 @@ router.post('/verify-payment', protect, async (req, res) => {
       },
       include: { items: true }
     });
+
+    // Increment coupon usage if applied
+    if (updatedOrder.couponId) {
+      await prisma.coupon.update({
+        where: { id: updatedOrder.couponId },
+        data: { usedCount: { increment: 1 } }
+      });
+    }
 
     // Clear user's cart
     await prisma.cartItem.deleteMany({
@@ -209,6 +219,14 @@ router.post('/webhook', async (req, res) => {
             razorpayPaymentId: razorpayPaymentId,
           }
         });
+
+        // Increment coupon usage if applied
+        if (order.couponId) {
+          await prisma.coupon.update({
+            where: { id: order.couponId },
+            data: { usedCount: { increment: 1 } }
+          });
+        }
 
         // Clear cart (if we have userId)
         if (order.userId) {

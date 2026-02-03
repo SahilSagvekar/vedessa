@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Heart, User, ShoppingBag, LogOut, Menu, ChevronDown } from 'lucide-react';
+import { Search, Heart, User, ShoppingBag, LogOut, Menu, ChevronDown, Truck } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
 import { useWishlist } from '@/hooks/useWishlist';
 import { useAuth } from '@/components/contexts/AuthContext';
@@ -143,6 +143,13 @@ const Header = () => {
                         >
                           {isAdmin ? 'Admin Dashboard' : isVendor ? 'Vendor Dashboard' : 'My Account'}
                         </Link>
+                        <Link
+                          to="/track-order"
+                          onClick={closeMenu}
+                          className="block py-3 px-4 text-foreground hover:bg-muted rounded-md transition-colors"
+                        >
+                          Track Order
+                        </Link>
                         <button
                           onClick={() => {
                             signOut();
@@ -250,6 +257,12 @@ const Header = () => {
                       <DropdownMenuItem asChild>
                         <Link to="/dashboard" className="cursor-pointer">
                           {isAdmin ? 'Admin Dashboard' : isVendor ? 'Vendor Dashboard' : 'My Account'}
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to="/track-order" className="cursor-pointer">
+                          <Truck className="w-4 h-4 mr-2" />
+                          Track Order
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />

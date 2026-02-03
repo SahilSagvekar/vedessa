@@ -7,10 +7,12 @@ import CollectionBanner from '@/components/home/CollectionBanner';
 import Bestsellers from '@/components/home/Bestsellers';
 import SupportCollaborations from '@/components/SupportCollaborations'
 import Testimonials from '@/components/Testimonials';
+import SEO from '@/components/seo/SEO';
 
 const Index = () => {
   return (
     <Layout>
+      <SEO />
       <HeroSection />
       <CollectionsGrid />
       <NewLaunches />

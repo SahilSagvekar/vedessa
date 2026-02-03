@@ -17,6 +17,7 @@ const shippingRoutes = require('./routes/shipping');
 const contactRoutes = require('./routes/contact');
 const adminRoutes = require('./routes/admin.routes');
 const reviewRoutes = require('./routes/review.routes');
+const couponRoutes = require('./routes/coupon.routes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -92,6 +93,7 @@ app.use('/api/shipping', shippingRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/coupons', couponRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
