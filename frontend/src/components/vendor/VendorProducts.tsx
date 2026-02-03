@@ -123,17 +123,21 @@ export default function VendorProducts() {
 
         try {
             const data = new FormData();
+
+            // Append all fields except image
             Object.keys(formData).forEach(key => {
-                if (key !== 'image' || !imageFile) {
+                if (key !== 'image') {
                     data.append(key, formData[key]);
                 }
             });
 
+            // Handle image separately - only append if we have a file or valid URL
             if (imageFile) {
                 data.append('image', imageFile);
-            } else if (formData.image) {
+            } else if (formData.image && formData.image.trim() !== '') {
                 data.append('image', formData.image);
             }
+            // If neither imageFile nor formData.image, don't append image field at all
 
             if (editingProduct) {
                 await vendorService.updateProduct(editingProduct.id, data);

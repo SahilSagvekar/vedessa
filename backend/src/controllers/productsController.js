@@ -1,5 +1,7 @@
 const prisma = require('../config/database');
 
+// Last updated: 2026-02-03 08:23 - Fixed image handling for product creation
+
 /**
  * Get all products with filters, sorting, and pagination
  * GET /api/products?category=skincare&collection=eladhi&isNew=true&sort=price_asc&limit=20&offset=0
@@ -200,6 +202,12 @@ const getProductById = async (req, res) => {
  */
 const createProduct = async (req, res) => {
   try {
+    console.log('=== CREATE PRODUCT REQUEST ===');
+    console.log('req.body:', JSON.stringify(req.body, null, 2));
+    console.log('req.file:', req.file);
+    console.log('typeof req.body.image:', typeof req.body.image);
+    console.log('req.body.image value:', req.body.image);
+
     const {
       name,
       description,
@@ -213,9 +221,16 @@ const createProduct = async (req, res) => {
       stock = 100
     } = req.body;
 
-    let image = req.body.image;
+    // Handle image - ensure it's either a string or null, never an object
+    let image = null;
     if (req.file) {
       image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    } else if (req.body.image && typeof req.body.image === 'string' && req.body.image.trim() !== '') {
+      image = req.body.image;
+    }
+    // Explicitly ignore if image is an object (empty or otherwise)
+    if (typeof image === 'object') {
+      image = null;
     }
 
     // Validation
@@ -226,20 +241,24 @@ const createProduct = async (req, res) => {
       });
     }
 
+    const productData = {
+      name,
+      description,
+      price: parseFloat(price),
+      image,
+      categoryId: (categoryId && typeof categoryId === 'string' && categoryId.trim() !== '') ? categoryId : null,
+      collectionId: (collectionId && typeof collectionId === 'string' && collectionId.trim() !== '') ? collectionId : null,
+      rating: parseFloat(rating),
+      reviews: parseInt(reviews),
+      isNew: isNew === 'true' || isNew === true,
+      isBestseller: isBestseller === 'true' || isBestseller === true,
+      stock: parseInt(stock)
+    };
+
+    console.log('Creating product with data:', JSON.stringify(productData, null, 2));
+
     const product = await prisma.product.create({
-      data: {
-        name,
-        description,
-        price: parseFloat(price),
-        image,
-        categoryId: categoryId || null,
-        collectionId: collectionId || null,
-        rating: parseFloat(rating),
-        reviews: parseInt(reviews),
-        isNew: isNew === 'true' || isNew === true,
-        isBestseller: isBestseller === 'true' || isBestseller === true,
-        stock: parseInt(stock)
-      },
+      data: productData,
       include: {
         category: true,
         collection: true
@@ -292,8 +311,10 @@ const updateProduct = async (req, res) => {
 
     if (req.file) {
       updateData.image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
-    } else if (req.body.image !== undefined) {
+    } else if (typeof req.body.image === 'string' && req.body.image.trim() !== '') {
       updateData.image = req.body.image;
+    } else if (req.body.image === null || req.body.image === 'null') {
+      updateData.image = null;
     }
 
     if (Object.keys(updateData).length === 0) {

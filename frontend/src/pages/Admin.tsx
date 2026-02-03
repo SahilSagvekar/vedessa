@@ -260,19 +260,24 @@ const Admin = () => {
 
     setSubmitting(true);
 
+
     try {
       const productData = new FormData();
+
+      // Append all fields except image
       Object.keys(formData).forEach(key => {
-        if (key !== 'image' || !imageFile) {
+        if (key !== 'image') {
           productData.append(key, (formData as any)[key]);
         }
       });
 
+      // Handle image separately - only append if we have a file or valid URL
       if (imageFile) {
         productData.append('image', imageFile);
-      } else if (formData.image) {
+      } else if (formData.image && formData.image.trim() !== '') {
         productData.append('image', formData.image);
       }
+      // If neither imageFile nor formData.image, don't append image field at all
 
       // Add default values for rating and reviews if creating
       if (!isEditMode) {

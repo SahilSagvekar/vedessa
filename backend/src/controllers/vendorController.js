@@ -276,9 +276,11 @@ exports.createProduct = async (req, res) => {
             isBestseller
         } = req.body;
 
-        let image = req.body.image;
+        let image = null;
         if (req.file) {
             image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+        } else if (typeof req.body.image === 'string' && req.body.image.trim() !== '') {
+            image = req.body.image;
         }
 
         if (!name || !price) {
@@ -288,19 +290,21 @@ exports.createProduct = async (req, res) => {
             });
         }
 
+        const productData = {
+            name,
+            description,
+            price: parseFloat(price),
+            image,
+            categoryId: (categoryId && typeof categoryId === 'string') ? categoryId : null,
+            collectionId: (collectionId && typeof collectionId === 'string') ? collectionId : null,
+            vendorId: req.user.id,
+            stock: stock ? parseInt(stock) : 100,
+            isNew: isNew === 'true' || isNew === true,
+            isBestseller: isBestseller === 'true' || isBestseller === true
+        };
+
         const product = await prisma.product.create({
-            data: {
-                name,
-                description,
-                price: parseFloat(price),
-                image,
-                categoryId,
-                collectionId,
-                vendorId: req.user.id,
-                stock: stock ? parseInt(stock) : 100,
-                isNew: isNew === 'true' || isNew === true,
-                isBestseller: isBestseller === 'true' || isBestseller === true
-            },
+            data: productData,
             include: {
                 category: true,
                 collection: true,
@@ -365,9 +369,13 @@ exports.updateProduct = async (req, res) => {
             isBestseller
         } = req.body;
 
-        let image = req.body.image;
+        let image = undefined;
         if (req.file) {
             image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+        } else if (typeof req.body.image === 'string' && req.body.image.trim() !== '') {
+            image = req.body.image;
+        } else if (req.body.image === null || req.body.image === 'null') {
+            image = null;
         }
 
         const updateData = {};
