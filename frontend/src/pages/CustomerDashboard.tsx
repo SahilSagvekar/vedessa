@@ -23,10 +23,18 @@ import {
 
 const CustomerDashboard = () => {
   const { user, signOut, updateProfile, changePassword, loading } = useAuth();
-  const { orders, loading: ordersLoading } = useOrders();
-  const { wishlist, count: wishlistCount } = useWishlist();
+  const { orders = [], loading: ordersLoading } = useOrders();
+  const { wishlist = [], count: wishlistCount = 0 } = useWishlist();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  console.log('CustomerDashboard render:', {
+    user,
+    loading,
+    ordersLoading,
+    ordersCount: orders?.length,
+    wishlistCount
+  });
 
   // Profile form state
   const [fullName, setFullName] = useState(user?.fullName || '');
@@ -127,6 +135,7 @@ const CustomerDashboard = () => {
   };
 
   if (loading) {
+    console.log('CustomerDashboard: showing loading state');
     return (
       <Layout>
         <div className="container mx-auto px-4 py-16">
@@ -137,6 +146,8 @@ const CustomerDashboard = () => {
       </Layout>
     );
   }
+
+  console.log('CustomerDashboard: rendering main content');
 
   return (
     <Layout>
@@ -240,26 +251,26 @@ const CustomerDashboard = () => {
                             <div className="flex justify-between items-start mb-2">
                               <div>
                                 <p className="font-medium text-foreground">
-                                  Order #{order.order_number}
+                                  Order #{order.order_number || order.orderNumber || 'N/A'}
                                 </p>
                                 <p className="text-sm text-muted-foreground">
-                                  {new Date(order.created_at).toLocaleDateString()}
+                                  {order.created_at || order.createdAt ? new Date(order.created_at || order.createdAt).toLocaleDateString() : 'N/A'}
                                 </p>
                               </div>
                               <span className={`px-3 py-1 rounded-full text-xs font-medium ${order.status === 'DELIVERED' ? 'bg-green-100 text-green-800' :
-                                  order.status === 'CANCELLED' ? 'bg-red-100 text-red-800' :
-                                    order.status === 'SHIPPED' ? 'bg-blue-100 text-blue-800' :
-                                      'bg-yellow-100 text-yellow-800'
+                                order.status === 'CANCELLED' ? 'bg-red-100 text-red-800' :
+                                  order.status === 'SHIPPED' ? 'bg-blue-100 text-blue-800' :
+                                    'bg-yellow-100 text-yellow-800'
                                 }`}>
-                                {order.status}
+                                {order.status || 'PENDING'}
                               </span>
                             </div>
                             <div className="flex justify-between items-center">
                               <p className="text-sm text-muted-foreground">
-                                {order.item_count} {order.item_count === 1 ? 'item' : 'items'}
+                                {order.item_count || 0} {(order.item_count || 0) === 1 ? 'item' : 'items'}
                               </p>
                               <p className="font-semibold text-foreground">
-                                ₹{order.total.toFixed(2)}
+                                ₹{(order.total || order.totalAmount || 0).toFixed(2)}
                               </p>
                             </div>
                           </div>

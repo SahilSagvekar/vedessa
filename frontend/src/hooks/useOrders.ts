@@ -14,6 +14,7 @@ export const useOrders = (filters = {}) => {
   const fetchOrders = async (params = {}) => {
     if (!isAuthenticated) {
       setOrders([]);
+      setLoading(false);
       return;
     }
 
@@ -22,11 +23,20 @@ export const useOrders = (filters = {}) => {
 
     try {
       const response = await ordersService.getOrders({ ...filters, ...params });
-      setOrders(response.data.orders || []);
-      setPagination(response.data.pagination);
-    } catch (err) {
-      setError(err);
+      console.log('Orders response:', response);
+
+      // Handle different response structures
+      if (response?.data) {
+        setOrders(response.data.orders || response.data || []);
+        setPagination(response.data.pagination || null);
+      } else {
+        setOrders([]);
+      }
+    } catch (err: any) {
       console.error('Failed to fetch orders:', err);
+      setError(err);
+      setOrders([]); // Set empty array instead of leaving it undefined
+      // Don't show toast here to avoid spamming user
     } finally {
       setLoading(false);
     }

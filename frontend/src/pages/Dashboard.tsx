@@ -5,6 +5,7 @@ import { Loader2 } from 'lucide-react';
 import CustomerDashboard from './CustomerDashboard';
 import VendorDashboard from './VendorDashboard';
 import Admin from './Admin';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 /**
  * Dashboard Router
@@ -47,15 +48,17 @@ const Dashboard = () => {
 
 
   // Route to appropriate dashboard based on role
-  if (isAdmin) {
-    return <Admin />;
-  }
-
-  if (isVendor) {
-    return <VendorDashboard />;
-  }
-
-  return <CustomerDashboard />;
+  return (
+    <ErrorBoundary>
+      {isAdmin ? (
+        <Admin />
+      ) : isVendor ? (
+        <VendorDashboard />
+      ) : (
+        <CustomerDashboard />
+      )}
+    </ErrorBoundary>
+  );
 };
 
 export default Dashboard;

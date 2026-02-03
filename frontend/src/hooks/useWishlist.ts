@@ -13,6 +13,7 @@ export const useWishlist = () => {
   const fetchWishlist = async () => {
     if (!isAuthenticated) {
       setWishlist([]);
+      setLoading(false);
       return;
     }
 
@@ -21,10 +22,17 @@ export const useWishlist = () => {
 
     try {
       const response = await wishlistService.getWishlist();
-      setWishlist(response.data.items || []);
-    } catch (err) {
-      setError(err);
+      console.log('Wishlist response:', response);
+
+      if (response?.data) {
+        setWishlist(response.data.items || response.data || []);
+      } else {
+        setWishlist([]);
+      }
+    } catch (err: any) {
       console.error('Failed to fetch wishlist:', err);
+      setError(err);
+      setWishlist([]); // Set empty array instead of leaving it undefined
     } finally {
       setLoading(false);
     }
