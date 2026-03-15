@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronDown, Loader2, Grid3x3, LayoutGrid, SlidersHorizontal, X, Star } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import ProductCard from '@/components/products/ProductCard';
 import { useProducts } from '@/hooks/useProducts';
+import { categoriesService } from '@/services/categoriesService';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,8 +28,30 @@ const Products = () => {
   const [sortBy, setSortBy] = useState<string>('newest');
   const [priceRange, setPriceRange] = useState<string>('all');
   const [minRating, setMinRating] = useState<number>(0);
+  const [inStock, setInStock] = useState<string>('all');
+  const [showNew, setShowNew] = useState<boolean>(false);
+  const [showBestsellers, setShowBestsellers] = useState<boolean>(false);
   const [gridView, setGridView] = useState<number>(4); // 3 or 4 columns
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [collections, setCollections] = useState<any[]>([]);
+
+  // Fetch categories and collections
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [catsRes, colsRes] = await Promise.all([
+          categoriesService.getCategories(),
+          categoriesService.getCollections()
+        ]);
+        setCategories(catsRes.data);
+        setCollections(colsRes.data);
+      } catch (err) {
+        console.error('Failed to fetch filter data:', err);
+      }
+    };
+    fetchData();
+  }, []);
 
   // Build API filters
   const apiFilters: any = {};
@@ -53,6 +76,18 @@ const Products = () => {
 
   if (minRating > 0) {
     apiFilters.minRating = minRating;
+  }
+
+  if (inStock !== 'all') {
+    apiFilters.inStock = inStock;
+  }
+
+  if (showNew) {
+    apiFilters.isNew = 'true';
+  }
+
+  if (showBestsellers) {
+    apiFilters.isBestseller = 'true';
   }
 
   // Map sort options to backend format
@@ -96,12 +131,62 @@ const Products = () => {
         </button>
         <div className="space-y-2">
           <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input type="checkbox" className="rounded border-gray-300" />
-            <span>In stock (35)</span>
+            <input 
+              type="radio" 
+              name="avail" 
+              checked={inStock === 'all'}
+              onChange={() => setInStock('all')}
+              className="border-gray-300"
+            />
+            <span>All Availability</span>
           </label>
           <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input type="checkbox" className="rounded border-gray-300" />
-            <span>Out of stock (5)</span>
+            <input 
+              type="radio" 
+              name="avail" 
+              checked={inStock === 'true'}
+              onChange={() => setInStock('true')}
+              className="border-gray-300"
+            />
+            <span>In stock</span>
+          </label>
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input 
+              type="radio" 
+              name="avail" 
+              checked={inStock === 'false'}
+              onChange={() => setInStock('false')}
+              className="border-gray-300"
+            />
+            <span>Out of stock</span>
+          </label>
+        </div>
+      </div>
+
+      {/* Product Status Filter */}
+      <div className="border-b border-gray-200 pb-6">
+        <button className="flex items-center justify-between w-full mb-3">
+          <span className="text-sm font-medium">Product Status</span>
+          <ChevronDown className="w-4 h-4" />
+        </button>
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input 
+              type="checkbox" 
+              checked={showNew}
+              onChange={(e) => setShowNew(e.target.checked)}
+              className="rounded border-gray-300" 
+            />
+            <span>New Arrivals</span>
+          </label>
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input 
+              type="checkbox" 
+              checked={showBestsellers}
+              onChange={(e) => setShowBestsellers(e.target.checked)}
+              className="rounded border-gray-300" 
+            />
+            <span>Bestsellers</span>
           </label>
         </div>
       </div>
@@ -166,32 +251,36 @@ const Products = () => {
         </div>
       </div>
 
-      {/* Product Type Filter */}
+
+      {/* Category Filter */}
       <div className="border-b border-gray-200 pb-6">
         <button className="flex items-center justify-between w-full mb-3">
-          <span className="text-sm font-medium">Product type</span>
+          <span className="text-sm font-medium">Category</span>
           <ChevronDown className="w-4 h-4" />
         </button>
         <div className="space-y-2">
           <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input type="checkbox" className="rounded border-gray-300" />
-            <span>Face Wash (12)</span>
+            <input 
+              type="radio" 
+              name="category"
+              checked={selectedCategory === 'all'}
+              onChange={() => setSelectedCategory('all')}
+              className="border-gray-300" 
+            />
+            <span>All Categories</span>
           </label>
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input type="checkbox" className="rounded border-gray-300" />
-            <span>Hair Oil (8)</span>
-          </label>
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input type="checkbox" className="rounded border-gray-300" />
-            <span>Massage Serum (6)</span>
-          </label>
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input type="checkbox" className="rounded border-gray-300" />
-            <span>Moisturizer (10)</span>
-          </label>
-          <button className="text-xs text-gray-500 hover:text-gray-700 mt-2">
-            + Show more
-          </button>
+          {categories.map((cat) => (
+            <label key={cat.id} className="flex items-center gap-2 text-sm cursor-pointer">
+              <input 
+                type="radio" 
+                name="category"
+                checked={selectedCategory === cat.slug}
+                onChange={() => setSelectedCategory(cat.slug)}
+                className="border-gray-300" 
+              />
+              <span>{cat.name} ({cat.product_count})</span>
+            </label>
+          ))}
         </div>
       </div>
 
@@ -212,46 +301,18 @@ const Products = () => {
             />
             <span>All Collections</span>
           </label>
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input 
-              type="radio" 
-              name="collection"
-              checked={selectedCollection === 'bringaras'}
-              onChange={() => setSelectedCollection('bringaras')}
-              className="border-gray-300" 
-            />
-            <span>Bringaras (15)</span>
-          </label>
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input 
-              type="radio" 
-              name="collection"
-              checked={selectedCollection === 'eladhi'}
-              onChange={() => setSelectedCollection('eladhi')}
-              className="border-gray-300" 
-            />
-            <span>Eladhi (12)</span>
-          </label>
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input 
-              type="radio" 
-              name="collection"
-              checked={selectedCollection === 'ashwaras'}
-              onChange={() => setSelectedCollection('ashwaras')}
-              className="border-gray-300" 
-            />
-            <span>Ashwaras (8)</span>
-          </label>
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input 
-              type="radio" 
-              name="collection"
-              checked={selectedCollection === 'kumkumadi'}
-              onChange={() => setSelectedCollection('kumkumadi')}
-              className="border-gray-300" 
-            />
-            <span>Kumkumadi (5)</span>
-          </label>
+          {collections.map((col) => (
+            <label key={col.id} className="flex items-center gap-2 text-sm cursor-pointer">
+              <input 
+                type="radio" 
+                name="collection"
+                checked={selectedCollection === col.slug}
+                onChange={() => setSelectedCollection(col.slug)}
+                className="border-gray-300" 
+              />
+              <span>{col.name} ({col.product_count})</span>
+            </label>
+          ))}
         </div>
       </div>
 

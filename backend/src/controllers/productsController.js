@@ -41,6 +41,12 @@ const getAllProducts = async (req, res) => {
       where.isBestseller = true;
     }
 
+    if (req.query.inStock === 'true') {
+      where.stock = { gt: 0 };
+    } else if (req.query.inStock === 'false') {
+      where.stock = 0;
+    }
+
     if (minPrice || maxPrice) {
       where.price = {};
       if (minPrice) where.price.gte = parseFloat(minPrice);
@@ -291,6 +297,10 @@ const createProduct = async (req, res) => {
       stock = 100,
       variants = []
     } = req.body;
+    
+    console.log('Extracted body fields:', { name, price, categoryId, collectionId });
+    console.log('req.files:', req.files);
+    console.log('req.file:', req.file);
 
     // Handle images
     let primaryImage = null;
@@ -298,7 +308,8 @@ const createProduct = async (req, res) => {
 
     if (req.files && req.files.length > 0) {
       req.files.forEach((file, index) => {
-        const url = `${req.protocol}://${req.get('host')}/uploads/${file.filename}`;
+        // With CloudinaryStorage, file.path is the full Cloudinary URL
+        const url = file.path || file.secure_url;
         if (index === 0) primaryImage = url;
         imagesData.push({
           url,
@@ -314,6 +325,9 @@ const createProduct = async (req, res) => {
         order: 0
       });
     }
+
+    console.log('Images Data prepared:', imagesData);
+    console.log('Primary Image:', primaryImage);
 
     // Validation
     if (!name || !price) {
@@ -409,7 +423,7 @@ const updateProduct = async (req, res) => {
 
     if (req.files && req.files.length > 0) {
       const imagesData = req.files.map((file, index) => ({
-        url: `${req.protocol}://${req.get('host')}/uploads/${file.filename}`,
+        url: file.path || file.secure_url,
         isPrimary: index === 0,
         order: index
       }));

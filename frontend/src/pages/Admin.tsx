@@ -279,7 +279,7 @@ const Admin = () => {
 
       // Handle image separately - only append if we have a file or valid URL
       if (imageFile) {
-        productData.append('image', imageFile);
+        productData.append('images', imageFile);
       } else if (formData.image && formData.image.trim() !== '') {
         // Only send image URL if it's different from the original (for edit mode)
         // or if we're creating a new product

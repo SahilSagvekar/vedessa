@@ -5,6 +5,21 @@ import { useNavigate } from 'react-router-dom';
 import paymentService from '../services/paymentService';
 import { useToast } from './use-toast';
 
+// Lazy-load Razorpay script only when needed
+const loadRazorpayScript = (): Promise<boolean> => {
+  return new Promise((resolve) => {
+    if ((window as any).Razorpay) {
+      resolve(true);
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
+
 export const useRazorpay = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -13,6 +28,19 @@ export const useRazorpay = () => {
   const initiatePayment = async (orderData) => {
     try {
       setLoading(true);
+
+      // Load Razorpay script if not already loaded
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded) {
+        toast({
+          title: 'Error',
+          description: 'Failed to load payment gateway. Please try again.',
+          variant: 'destructive',
+        });
+        setLoading(false);
+        return;
+      }
+
 
       // Step 1: Create Razorpay order
       const orderResponse = await paymentService.createOrder(orderData);

@@ -31,6 +31,10 @@ const Header = () => {
 
   const menuItems = [
     {
+      title: 'ALL',
+      link: '/products',
+    },
+    {
       title: 'SKIN',
       link: '/products?category=skincare',
     },
@@ -184,6 +188,9 @@ const Header = () => {
 
               {/* Center-Right: Navigation Links (Hidden on small screens) */}
               <div className="hidden xl:flex items-center space-x-6 flex-1 justify-center">
+                <Link to="/products" className="text-sm font-medium text-foreground hover:text-kama-olive transition-colors">
+                  ALL
+                </Link>
                 <Link to="/products?category=skincare" className="text-sm font-medium text-foreground hover:text-kama-olive transition-colors">
                   SKIN
                 </Link>

@@ -68,6 +68,7 @@ export const useProducts = (options: UseProductsOptions = {}) => {
 
         const response = await fetch(
           `${import.meta.env.VITE_API_URL}/api/products?${params.toString()}`
+          // `${import.meta.env.VITE_API_URL}/api/products?${params.toString()}`
         );
 
         if (!response.ok) {

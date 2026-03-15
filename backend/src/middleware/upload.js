@@ -1,25 +1,37 @@
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const dotenv = require('dotenv');
 
-// Ensure uploads directory exists
-const uploadDir = 'uploads';
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir);
-}
+dotenv.config();
 
-// Set storage engine
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, 'uploads/');
-    },
-    filename: function (req, file, cb) {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+// Configure Cloudinary
+console.log('--- Configuring Cloudinary Middleware ---');
+console.log('Cloud Name:', process.env.CLOUDINARY_CLOUD_NAME);
+
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+// Configure Cloudinary Storage
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: 'vedessa/products',
+        allowed_formats: ['jpg', 'png', 'jpeg', 'webp', 'svg'],
+        public_id: (req, file) => {
+            console.log('--- Cloudinary Storage: Processing file ---');
+            console.log('Filename:', file.originalname);
+            console.log('Mimetype:', file.mimetype);
+            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+            return file.fieldname + '-' + uniqueSuffix;
+        }
     }
 });
 
-// File filter (optional)
+// File filter
 const fileFilter = (req, file, cb) => {
     if (file.mimetype.startsWith('image/')) {
         cb(null, true);
