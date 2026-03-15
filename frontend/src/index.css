@@ -7,6 +7,10 @@
 
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
   :root {
     --background: 40 20% 96%;
     --foreground: 90 20% 20%;
@@ -97,6 +101,33 @@
   
   .font-sans {
     font-family: 'Inter', sans-serif;
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--kama-olive));
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--kama-olive-light));
+  }
+
+  /* Global Transition Defaults */
+  .smooth-transition {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  a, button {
+    @apply transition-colors duration-200;
   }
 }
 

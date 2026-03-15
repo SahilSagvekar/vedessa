@@ -8,19 +8,37 @@ import Bestsellers from '@/components/home/Bestsellers';
 import SupportCollaborations from '@/components/SupportCollaborations'
 import Testimonials from '@/components/Testimonials';
 import SEO from '@/components/seo/SEO';
+import ScrollReveal from '@/components/common/ScrollReveal';
 
 const Index = () => {
   return (
     <Layout>
       <SEO />
       <HeroSection />
-      <CollectionsGrid />
-      <NewLaunches />
-      <ArtOfAyurveda />
-      <CollectionBanner />
-      <Bestsellers />
-      {/* <Testimonials /> */}
-      <SupportCollaborations />
+      
+      <ScrollReveal>
+        <CollectionsGrid />
+      </ScrollReveal>
+      
+      <ScrollReveal delay={0.2}>
+        <NewLaunches />
+      </ScrollReveal>
+      
+      <ScrollReveal>
+        <ArtOfAyurveda />
+      </ScrollReveal>
+      
+      <ScrollReveal>
+        <CollectionBanner />
+      </ScrollReveal>
+      
+      <ScrollReveal>
+        <Bestsellers />
+      </ScrollReveal>
+      
+      <ScrollReveal>
+        <SupportCollaborations />
+      </ScrollReveal>
     </Layout>
   );
 };
