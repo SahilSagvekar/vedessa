@@ -16,6 +16,7 @@ const getAllProducts = async (req, res) => {
       minPrice,
       maxPrice,
       search,
+      minRating,
       sort = 'created_at_desc',
       limit = 50,
       offset = 0
@@ -44,6 +45,10 @@ const getAllProducts = async (req, res) => {
       where.price = {};
       if (minPrice) where.price.gte = parseFloat(minPrice);
       if (maxPrice) where.price.lte = parseFloat(maxPrice);
+    }
+
+    if (minRating) {
+      where.rating = { gte: parseFloat(minRating) };
     }
     
     if (search) {

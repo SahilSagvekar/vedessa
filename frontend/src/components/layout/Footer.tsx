@@ -20,7 +20,7 @@ const Footer = () => {
               celebrate India's rich Ayurvedic traditions. Premium quality, style, and innovation.
             </p>
             {/* App Download Badges */}
-            <div className="flex gap-2 mt-4">
+            {/* <div className="flex gap-2 mt-4">
               <a href="#" className="block">
                 <img
                   src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Download_on_the_App_Store_Badge.svg/320px-Download_on_the_App_Store_Badge.svg.png"
@@ -35,7 +35,7 @@ const Footer = () => {
                   className="h-10 w-auto"
                 />
               </a>
-            </div>
+            </div> */}
           </div>
 
           {/* Quick Links */}
@@ -175,7 +175,7 @@ const Footer = () => {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             {/* Social Icons */}
             <div className="flex items-center gap-4">
-              <a
+              {/* <a
                 href="#"
                 className="w-8 h-8 rounded-full bg-gray-800 hover:bg-green-600 flex items-center justify-center transition-colors"
                 aria-label="Facebook"
@@ -202,21 +202,21 @@ const Footer = () => {
                 aria-label="YouTube"
               >
                 <Youtube className="w-4 h-4" />
-              </a>
+              </a> */}
             </div>
 
             {/* Copyright */}
-            <p className="text-sm text-gray-500 text-center md:text-left">
+            <p className="text-sm text-gray-500 text-center">
               © 2025 Vedessa - Beauty Store Responsive eCommerce | Powered by Vedessa
             </p>
 
             {/* Payment Methods */}
             <div className="flex items-center gap-2">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/320px-Visa_Inc._logo.svg.png" alt="Visa" className="h-6" />
+              {/* <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/320px-Visa_Inc._logo.svg.png" alt="Visa" className="h-6" />
               <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/320px-Mastercard-logo.svg.png" alt="Mastercard" className="h-6" />
               <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/PayPal.svg/320px-PayPal.svg.png" alt="PayPal" className="h-6" />
               <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/American_Express_logo_%282018%29.svg/320px-American_Express_logo_%282018%29.svg.png" alt="Amex" className="h-6" />
-              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Razorpay_logo.svg/320px-Razorpay_logo.svg.png" alt="Razorpay" className="h-6" />
+              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Razorpay_logo.svg/320px-Razorpay_logo.svg.png" alt="Razorpay" className="h-6" /> */}
             </div>
           </div>
         </div>

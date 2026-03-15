@@ -68,10 +68,10 @@ const Header = () => {
         <div className="bg-kama-olive text-kama-cream text-xs py-2 px-4 overflow-hidden">
           <div className="flex animate-marquee whitespace-nowrap">
             <span className="font-light">
-              Weekend Offer: Complimentary Mini's Worth Upto Rs 5640 On Shopping Above Rs 4000 • 10% off on first order above Rs. 1500. Use Code - KAMA10
+              vedessa - Authentic Ayurveda | 100% Natural & Cruelty-Free Products | Shop Now and Experience the Essence of Ayurveda!
             </span>
             <span className="font-light ml-8">
-              Weekend Offer: Complimentary Mini's Worth Upto Rs 5640 On Shopping Above Rs 4000 • 10% off on first order above Rs. 1500. Use Code - KAMA10
+              vedessa - Authentic Ayurveda | 100% Natural & Cruelty-Free Products | Shop Now and Experience the Essence of Ayurveda!
             </span>
           </div>
         </div>
