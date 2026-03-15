@@ -25,6 +25,7 @@ export default function ProductDetail() {
 
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const [selectedVariant, setSelectedVariant] = useState<any>(null);
   const [isWishlisted, setIsWishlisted] = useState(false);
 
   // Fetch product from backend
@@ -58,10 +59,16 @@ export default function ProductDetail() {
             collection: productData.collection_name ? { name: productData.collection_name } : null,
             tags: ['Natural', 'Ayurvedic'],
             image: productData.image,
-            images: productData.image ? [
-              { url: productData.image, alt: productData.name }
-            ] : []
+            images: productData.images && productData.images.length > 0 
+              ? productData.images.map((img: any) => ({ url: img.url, alt: productData.name }))
+              : (productData.image ? [{ url: productData.image, alt: productData.name }] : []),
+            variants: productData.variants || []
           });
+
+          // Pre-select first variant if available
+          if (productData.variants && productData.variants.length > 0) {
+            setSelectedVariant(productData.variants[0]);
+          }
         }
       } catch (err) {
         console.error('Error fetching product:', err);
@@ -106,7 +113,7 @@ export default function ProductDetail() {
 
     try {
       setAddingToCart(true);
-      await addToCart(product.id, quantity);
+      await addToCart(product.id, quantity, selectedVariant?.id);
       toast({
         title: 'Added to Cart',
         description: `${product.name} has been added to your cart`,
@@ -135,7 +142,7 @@ export default function ProductDetail() {
 
     try {
       setAddingToCart(true);
-      await addToCart(product.id, quantity);
+      await addToCart(product.id, quantity, selectedVariant?.id);
       navigate('/checkout');
     } catch (err) {
       toast({
@@ -357,10 +364,39 @@ export default function ProductDetail() {
               </div>
             )}
 
+            {/* Variants Selector */}
+            {product.variants && product.variants.length > 0 && (
+              <div className="mb-6">
+                <p className="text-sm font-medium text-gray-700 mb-3">
+                  Select {product.variants[0].name}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {product.variants.map((variant: any) => (
+                    <button
+                      key={variant.id}
+                      onClick={() => setSelectedVariant(variant)}
+                      className={`px-4 py-2 rounded-md border-2 transition-all ${
+                        selectedVariant?.id === variant.id
+                          ? 'border-green-700 bg-green-50 text-green-700'
+                          : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                      }`}
+                    >
+                      {variant.value}
+                      {variant.price && variant.price !== product.price && (
+                        <span className="ml-1 text-xs opacity-70">
+                          (₹{parseFloat(variant.price).toFixed(0)})
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Price */}
             <div className="flex items-baseline gap-3 mb-6 pb-6 border-b border-gray-200">
               <span className="text-4xl sm:text-5xl font-serif text-gray-900">
-                ₹{product.price.toFixed(2)}
+                ₹{selectedVariant?.price ? parseFloat(selectedVariant.price).toFixed(2) : product.price.toFixed(2)}
               </span>
               {product.comparePrice && product.comparePrice > product.price && (
                 <>
@@ -385,10 +421,10 @@ export default function ProductDetail() {
             <div className="mb-6">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-gray-700">Availability:</span>
-                {product.stock > 0 ? (
+                {(selectedVariant ? selectedVariant.stock : product.stock) > 0 ? (
                   <div className="flex items-center gap-1 text-green-700">
                     <Check className="w-4 h-4" />
-                    <span className="text-sm font-medium">{product.stock} in stock</span>
+                    <span className="text-sm font-medium">{selectedVariant ? selectedVariant.stock : product.stock} in stock</span>
                   </div>
                 ) : (
                   <span className="text-sm font-medium text-red-600">Out of stock</span>
@@ -412,7 +448,7 @@ export default function ProductDetail() {
                 </span>
                 <button
                   onClick={incrementQuantity}
-                  disabled={quantity >= product.stock}
+                  disabled={quantity >= (selectedVariant?.stock || product.stock)}
                   className="p-3 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <Plus className="w-5 h-5" />
@@ -424,7 +460,7 @@ export default function ProductDetail() {
             <div className="space-y-3 mb-8">
               <button
                 onClick={handleAddToCart}
-                disabled={product.stock === 0 || addingToCart}
+                disabled={(selectedVariant ? selectedVariant.stock === 0 : product.stock === 0) || addingToCart}
                 className="w-full bg-[#C17855] hover:bg-[#A66545] disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-4 px-6 rounded-md text-base font-medium uppercase tracking-wider transition-all flex items-center justify-center gap-2"
               >
                 {addingToCart ? (

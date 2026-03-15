@@ -220,17 +220,33 @@ exports.getMyProducts = async (req, res) => {
                 take: parseInt(limit),
                 include: {
                     category: true,
-                    collection: true
+                    collection: true,
+                    variants: true
                 },
                 orderBy: { createdAt: 'desc' }
             }),
             prisma.product.count({ where })
         ]);
 
+        // Add low stock flag to products and variants
+        const productsWithAlerts = products.map(product => {
+            const isLowStock = product.stock <= product.lowStockThreshold;
+            const variantsWithAlerts = product.variants.map(variant => ({
+                ...variant,
+                isLowStock: variant.stock <= variant.lowStockThreshold
+            }));
+            
+            return {
+                ...product,
+                isLowStock: isLowStock || variantsWithAlerts.some(v => v.isLowStock),
+                variants: variantsWithAlerts
+            };
+        });
+
         res.json({
             success: true,
             data: {
-                products,
+                products: productsWithAlerts,
                 pagination: {
                     total,
                     page: parseInt(page),
@@ -273,14 +289,32 @@ exports.createProduct = async (req, res) => {
             collectionId,
             stock,
             isNew,
-            isBestseller
+            isBestseller,
+            lowStockThreshold,
+            variants = []
         } = req.body;
 
-        let image = null;
-        if (req.file) {
-            image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
-        } else if (typeof req.body.image === 'string' && req.body.image.trim() !== '') {
-            image = req.body.image;
+        // Handle images
+        let primaryImage = null;
+        let imagesData = [];
+
+        if (req.files && req.files.length > 0) {
+            req.files.forEach((file, index) => {
+                const url = `${req.protocol}://${req.get('host')}/uploads/${file.filename}`;
+                if (index === 0) primaryImage = url;
+                imagesData.push({
+                    url,
+                    isPrimary: index === 0,
+                    order: index
+                });
+            });
+        } else if (req.body.image && typeof req.body.image === 'string' && req.body.image.trim() !== '') {
+            primaryImage = req.body.image;
+            imagesData.push({
+                url: req.body.image,
+                isPrimary: true,
+                order: 0
+            });
         }
 
         if (!name || !price) {
@@ -294,13 +328,27 @@ exports.createProduct = async (req, res) => {
             name,
             description,
             price: parseFloat(price),
-            image,
+            image: primaryImage,
             categoryId: (categoryId && typeof categoryId === 'string') ? categoryId : null,
             collectionId: (collectionId && typeof collectionId === 'string') ? collectionId : null,
             vendorId: req.user.id,
             stock: stock ? parseInt(stock) : 100,
             isNew: isNew === 'true' || isNew === true,
-            isBestseller: isBestseller === 'true' || isBestseller === true
+            isBestseller: isBestseller === 'true' || isBestseller === true,
+            lowStockThreshold: lowStockThreshold ? parseInt(lowStockThreshold) : 5,
+            images: {
+                create: imagesData
+            },
+            variants: {
+                create: Array.isArray(variants) ? variants.map(v => ({
+                  name: v.name,
+                  value: v.value,
+                  price: v.price ? parseFloat(v.price) : null,
+                  stock: v.stock ? parseInt(v.stock) : 0,
+                  lowStockThreshold: v.lowStockThreshold ? parseInt(v.lowStockThreshold) : 2,
+                  sku: v.sku || null
+                })) : []
+            }
         };
 
         const product = await prisma.product.create({
@@ -308,6 +356,8 @@ exports.createProduct = async (req, res) => {
             include: {
                 category: true,
                 collection: true,
+                images: true,
+                variants: true,
                 vendor: {
                     select: {
                         id: true,
@@ -366,42 +416,70 @@ exports.updateProduct = async (req, res) => {
             collectionId,
             stock,
             isNew,
-            isBestseller
+            isBestseller,
+            lowStockThreshold,
+            variants
         } = req.body;
+
+        const updateData = {};
+        
+        // Build updateData
+        if (name) updateData.name = name;
+        if (description !== undefined) updateData.description = description;
+        if (price) updateData.price = parseFloat(price);
+        if (categoryId) updateData.categoryId = categoryId;
+        if (collectionId) updateData.collectionId = collectionId;
+        if (stock) updateData.stock = parseInt(stock);
+        if (isNew !== undefined) updateData.isNew = isNew === 'true' || isNew === true;
+        if (isBestseller !== undefined) updateData.isBestseller = isBestseller === 'true' || isBestseller === true;
+        if (lowStockThreshold !== undefined) updateData.lowStockThreshold = parseInt(lowStockThreshold);
 
         console.log('=== UPDATE PRODUCT REQUEST ===');
         console.log('Product ID:', id);
         console.log('req.body:', JSON.stringify(req.body, null, 2));
         console.log('req.file:', req.file);
 
-        let image = undefined;
-        if (req.file) {
-            image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+        // Handle images
+        if (req.files && req.files.length > 0) {
+            const imagesData = req.files.map((file, index) => ({
+                url: `${req.protocol}://${req.get('host')}/uploads/${file.filename}`,
+                isPrimary: index === 0,
+                order: index
+            }));
+            
+            updateData.image = imagesData[0].url;
+            updateData.images = {
+                deleteMany: {},
+                create: imagesData
+            };
         } else if (typeof req.body.image === 'string' && req.body.image.trim() !== '') {
-            image = req.body.image;
+            updateData.image = req.body.image;
+            updateData.images = {
+                deleteMany: {},
+                create: [{ url: req.body.image, isPrimary: true, order: 0 }]
+            };
         } else if (req.body.image === null || req.body.image === 'null') {
-            image = null;
+            updateData.image = null;
+            updateData.images = {
+                deleteMany: {}
+            };
         }
 
-        const updateData = {};
-        if (name) updateData.name = name;
-        if (description !== undefined) updateData.description = description;
-        if (price) updateData.price = parseFloat(price);
-        if (image !== undefined) updateData.image = image;
-
-        // Handle categoryId - convert empty string to null
-        if (categoryId !== undefined) {
-            updateData.categoryId = (categoryId && categoryId.trim() !== '') ? categoryId : null;
+        // Handle variants update
+        if (variants !== undefined) {
+          const parsedVariants = Array.isArray(variants) ? variants : JSON.parse(variants || '[]');
+          updateData.variants = {
+            deleteMany: {},
+            create: parsedVariants.map(v => ({
+              name: v.name,
+              value: v.value,
+              price: v.price ? parseFloat(v.price) : null,
+              stock: v.stock ? parseInt(v.stock) : 0,
+              lowStockThreshold: v.lowStockThreshold ? parseInt(v.lowStockThreshold) : 2,
+              sku: v.sku || null
+            }))
+          };
         }
-
-        // Handle collectionId - convert empty string to null
-        if (collectionId !== undefined) {
-            updateData.collectionId = (collectionId && collectionId.trim() !== '') ? collectionId : null;
-        }
-
-        if (stock !== undefined) updateData.stock = parseInt(stock);
-        if (isNew !== undefined) updateData.isNew = isNew === 'true' || isNew === true;
-        if (isBestseller !== undefined) updateData.isBestseller = isBestseller === 'true' || isBestseller === true;
 
         const product = await prisma.product.update({
             where: { id },
@@ -409,6 +487,8 @@ exports.updateProduct = async (req, res) => {
             include: {
                 category: true,
                 collection: true,
+                images: true,
+                variants: true,
                 vendor: {
                     select: {
                         id: true,
@@ -651,12 +731,17 @@ exports.getAnalytics = async (req, res) => {
         }, 0);
 
         // Get low stock products
-        const lowStockProducts = await prisma.product.count({
-            where: {
-                vendorId,
-                stock: {
-                    lt: 10
-                }
+        const productsWithStock = await prisma.product.findMany({
+            where: { vendorId },
+            include: { variants: true }
+        });
+
+        let lowStockCount = 0;
+        productsWithStock.forEach(product => {
+            if (product.stock <= product.lowStockThreshold) {
+                lowStockCount++;
+            } else if (product.variants.some(v => v.stock <= v.lowStockThreshold)) {
+                lowStockCount++;
             }
         });
 
@@ -666,7 +751,7 @@ exports.getAnalytics = async (req, res) => {
                 productCount,
                 orderCount,
                 totalRevenue: totalRevenue.toFixed(2),
-                lowStockProducts
+                lowStockProducts: lowStockCount
             }
         });
     } catch (error) {

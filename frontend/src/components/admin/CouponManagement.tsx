@@ -26,6 +26,7 @@ const CouponManagement = () => {
     const [loading, setLoading] = useState(true);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [submitting, setSubmitting] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
 
     const [formData, setFormData] = useState({
         code: '',
@@ -60,24 +61,23 @@ const CouponManagement = () => {
         fetchCoupons();
     }, []);
 
-    const handleSubmit = async () => {
-        if (!formData.code || !formData.discountValue) {
-            toast({
-                title: 'Validation Error',
-                description: 'Code and Discount Value are required',
-                variant: 'destructive',
+    const handleOpenDialog = (coupon?: any) => {
+        if (coupon) {
+            setEditingId(coupon.id);
+            setFormData({
+                code: coupon.code,
+                description: coupon.description || '',
+                discountType: coupon.discountType,
+                discountValue: coupon.discountValue.toString(),
+                minOrderAmount: coupon.minOrderAmount.toString(),
+                maxDiscountAmount: coupon.maxDiscountAmount?.toString() || '',
+                startDate: new Date(coupon.startDate).toISOString().split('T')[0],
+                endDate: coupon.endDate ? new Date(coupon.endDate).toISOString().split('T')[0] : '',
+                usageLimit: coupon.usageLimit?.toString() || '',
+                isActive: coupon.isActive,
             });
-            return;
-        }
-
-        try {
-            setSubmitting(true);
-            await couponService.createCoupon(formData);
-            toast({
-                title: 'Success',
-                description: 'Coupon created successfully',
-            });
-            setIsDialogOpen(false);
+        } else {
+            setEditingId(null);
             setFormData({
                 code: '',
                 description: '',
@@ -90,15 +90,63 @@ const CouponManagement = () => {
                 usageLimit: '',
                 isActive: true,
             });
+        }
+        setIsDialogOpen(true);
+    };
+
+    const handleSubmit = async () => {
+        if (!formData.code || !formData.discountValue) {
+            toast({
+                title: 'Validation Error',
+                description: 'Code and Discount Value are required',
+                variant: 'destructive',
+            });
+            return;
+        }
+
+        try {
+            setSubmitting(true);
+            if (editingId) {
+                await couponService.updateCoupon(editingId, formData);
+                toast({
+                    title: 'Success',
+                    description: 'Coupon updated successfully',
+                });
+            } else {
+                await couponService.createCoupon(formData);
+                toast({
+                    title: 'Success',
+                    description: 'Coupon created successfully',
+                });
+            }
+            setIsDialogOpen(false);
             fetchCoupons();
         } catch (error: any) {
             toast({
                 title: 'Error',
-                description: error.response?.data?.message || 'Failed to create coupon',
+                description: error.response?.data?.message || `Failed to ${editingId ? 'update' : 'create'} coupon`,
                 variant: 'destructive',
             });
         } finally {
             setSubmitting(false);
+        }
+    };
+
+    const handleToggleStatus = async (id: string, currentStatus: boolean) => {
+        try {
+            await couponService.updateCoupon(id, { isActive: !currentStatus });
+            toast({
+                title: 'Status Updated',
+                description: 'Coupon status changed successfully',
+            });
+            // Update local state for immediate feedback
+            setCoupons(prev => prev.map(c => c.id === id ? { ...c, isActive: !currentStatus } : c));
+        } catch (error) {
+            toast({
+                title: 'Error',
+                description: 'Failed to update status',
+                variant: 'destructive',
+            });
         }
     };
 
@@ -126,7 +174,7 @@ const CouponManagement = () => {
             <div className="flex items-center justify-between p-4 border-b border-border">
                 <h2 className="text-lg font-semibold text-foreground">Coupon Management</h2>
                 <Button
-                    onClick={() => setIsDialogOpen(true)}
+                    onClick={() => handleOpenDialog()}
                     className="bg-kama-olive hover:bg-kama-olive-light text-kama-cream"
                 >
                     <Plus className="w-4 h-4 mr-2" /> Add Coupon
@@ -136,7 +184,7 @@ const CouponManagement = () => {
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle>Add New Coupon</DialogTitle>
+                        <DialogTitle>{editingId ? 'Edit Coupon' : 'Add New Coupon'}</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div>
@@ -260,7 +308,7 @@ const CouponManagement = () => {
                                 className="flex-1 bg-kama-olive hover:bg-kama-olive-light text-kama-cream"
                             >
                                 {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                                Create Coupon
+                                {editingId ? 'Update Coupon' : 'Create Coupon'}
                             </Button>
                             <Button
                                 variant="outline"
@@ -316,11 +364,21 @@ const CouponManagement = () => {
                                         </div>
                                     </td>
                                     <td className="p-4">
-                                        <Badge variant={coupon.isActive ? 'success' : 'destructive'} className="text-[10px]">
+                                        <Badge 
+                                            variant={coupon.isActive ? 'success' : 'destructive'} 
+                                            className="text-[10px] cursor-pointer"
+                                            onClick={() => handleToggleStatus(coupon.id, coupon.isActive)}
+                                        >
                                             {coupon.isActive ? 'Active' : 'Inactive'}
                                         </Badge>
                                     </td>
-                                    <td className="p-4 text-right">
+                                    <td className="p-4 text-right flex justify-end gap-1">
+                                        <button
+                                            onClick={() => handleOpenDialog(coupon)}
+                                            className="p-2 text-muted-foreground hover:text-kama-olive transition-colors"
+                                        >
+                                            <Tag className="w-4 h-4" />
+                                        </button>
                                         <button
                                             onClick={() => handleDelete(coupon.id, coupon.code)}
                                             className="p-2 text-muted-foreground hover:text-destructive transition-colors"

@@ -3,6 +3,7 @@ const Razorpay = require('razorpay');
 const crypto = require('crypto');
 const prisma = require('../config/database');
 const { auth: protect } = require('../middleware/auth');
+const emailService = require('../services/emailService');
 
 const router = express.Router();
 
@@ -168,6 +169,19 @@ router.post('/verify-payment', protect, async (req, res) => {
       message: 'Payment verified successfully',
       data: updatedOrder
     });
+
+    // Send order confirmation email
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: req.user.id },
+        select: { email: true, fullName: true }
+      });
+      if (user && user.email) {
+        await emailService.sendOrderConfirmationEmail(user.email, updatedOrder, user.fullName);
+      }
+    } catch (emailError) {
+      console.error('Failed to send order confirmation email:', emailError);
+    }
   } catch (error) {
     console.error('Verify payment error:', error);
     res.status(500).json({
@@ -243,6 +257,19 @@ router.post('/webhook', async (req, res) => {
               data: { stock: { decrement: item.quantity } }
             });
           }
+        }
+
+        // Send order confirmation email
+        try {
+          const user = await prisma.user.findUnique({
+            where: { id: order.userId },
+            select: { email: true, fullName: true }
+          });
+          if (user && user.email) {
+            await emailService.sendOrderConfirmationEmail(user.email, order, user.fullName);
+          }
+        } catch (emailError) {
+          console.error('Failed to send order confirmation email via webhook:', emailError);
         }
       }
     }

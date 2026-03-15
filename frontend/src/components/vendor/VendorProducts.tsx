@@ -19,13 +19,15 @@ export default function VendorProducts() {
         description: '',
         price: '',
         stock: '',
-        image: '',
+        images: [],
         categoryId: '',
         collectionId: '',
         isNew: false,
-        isBestseller: false
+        isBestseller: false,
+        lowStockThreshold: 5,
+        variants: []
     });
-    const [imageFile, setImageFile] = useState(null);
+    const [imageFiles, setImageFiles] = useState([]);
 
     useEffect(() => {
         fetchProducts();
@@ -72,14 +74,16 @@ export default function VendorProducts() {
             description: '',
             price: '',
             stock: '',
-            image: '',
+            images: [],
             categoryId: '',
             collectionId: '',
             isNew: false,
-            isBestseller: false
+            isBestseller: false,
+            lowStockThreshold: 5,
+            variants: []
         });
         setShowAddModal(true);
-        setImageFile(null);
+        setImageFiles([]);
     };
 
     const handleEditProduct = (product) => {
@@ -97,18 +101,20 @@ export default function VendorProducts() {
             description: product.description || '',
             price: product.price.toString(),
             stock: product.stock.toString(),
-            image: product.image || '',
+            images: product.images || [],
             // Handle both direct ID fields and nested objects
             categoryId: product.categoryId || product.category?.id || '',
             collectionId: product.collectionId || product.collection?.id || '',
             isNew: product.isNew || false,
-            isBestseller: product.isBestseller || false
+            isBestseller: product.isBestseller || false,
+            lowStockThreshold: product.lowStockThreshold || 5,
+            variants: product.variants || []
         };
 
         console.log('Setting form data to:', formValues);
         setFormData(formValues);
         setShowAddModal(true);
-        setImageFile(null);
+        setImageFiles([]);
     };
 
     const handleDeleteProduct = async (productId) => {
@@ -136,33 +142,35 @@ export default function VendorProducts() {
         console.log('=== FORM SUBMIT ===');
         console.log('Editing product:', editingProduct);
         console.log('Form data:', formData);
-        console.log('Image file:', imageFile);
+        console.log('Image files:', imageFiles);
 
         try {
             const data = new FormData();
 
-            // Append all fields except image
+            // Append all fields except image/images
             Object.keys(formData).forEach(key => {
-                if (key !== 'image') {
+                if (key !== 'image' && key !== 'images' && key !== 'variants') {
                     console.log(`Appending ${key}:`, formData[key]);
                     data.append(key, formData[key]);
                 }
             });
 
-            // Handle image separately - only append if we have a file or valid URL
-            if (imageFile) {
-                console.log('Appending image file:', imageFile.name);
-                data.append('image', imageFile);
-            } else if (formData.image && formData.image.trim() !== '') {
-                // Only send image URL if it's different from the original (for edit mode)
-                // or if we're creating a new product
-                if (!editingProduct || formData.image !== (editingProduct.image || '')) {
-                    console.log('Appending image URL:', formData.image);
-                    data.append('image', formData.image);
-                }
+            // Handle variants as JSON string
+            if (formData.variants && formData.variants.length > 0) {
+                data.append('variants', JSON.stringify(formData.variants));
             }
-            // If neither imageFile nor new image URL, don't append image field at all
-            // This preserves the existing image when editing
+
+            // Handle images separately
+            if (imageFiles && imageFiles.length > 0) {
+                imageFiles.forEach(file => {
+                    data.append('images', file);
+                });
+            } else if (formData.images && formData.images.length > 0) {
+                // Keep existing images (this is a simplified logic, ideally we'd allow reordering/deleting)
+                formData.images.forEach(img => {
+                    data.append('image', img.url); // Legacy support or URL support
+                });
+            }
 
             console.log('FormData entries:');
             for (let pair of data.entries()) {
@@ -263,6 +271,12 @@ export default function VendorProducts() {
                                         (e.target as HTMLImageElement).src = '/placeholder.svg';
                                     }}
                                 />
+                                {product.isLowStock && (
+                                    <div className="absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded-md text-[10px] font-bold flex items-center gap-1 shadow-md">
+                                        <Package className="w-3 h-3" />
+                                        LOW STOCK
+                                    </div>
+                                )}
                             </div>
                             <div className="p-4">
                                 <h3 className="font-semibold text-gray-900 mb-1">{product.name}</h3>
@@ -302,7 +316,7 @@ export default function VendorProducts() {
                                 {editingProduct ? 'Edit Product' : 'Add New Product'}
                             </h2>
 
-                            <form onSubmit={handleSubmit} className="space-y-4">
+                            <form onSubmit={handleSubmit} className="space-y-6">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                         Product Name *
@@ -352,6 +366,19 @@ export default function VendorProducts() {
                                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
                                         />
                                     </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Low Stock Threshold
+                                        </label>
+                                        <input
+                                            type="number"
+                                            value={formData.lowStockThreshold}
+                                            onChange={(e) => setFormData({ ...formData, lowStockThreshold: parseInt(e.target.value) || 0 })}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                        />
+                                        <p className="text-[10px] text-gray-500 mt-1">Alert when stock falls below this number</p>
+                                    </div>
                                 </div>
 
                                 <div>
@@ -359,32 +386,32 @@ export default function VendorProducts() {
                                         Product Image
                                     </label>
                                     <div className="space-y-3">
-                                        {formData.image && !imageFile && (
-                                            <div className="relative w-24 h-24 rounded-lg overflow-hidden border border-gray-200">
-                                                <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
-                                            </div>
-                                        )}
-                                        {imageFile && (
-                                            <div className="relative w-24 h-24 rounded-lg overflow-hidden border border-gray-200">
-                                                <img src={URL.createObjectURL(imageFile)} alt="Preview" className="w-full h-full object-cover" />
-                                            </div>
-                                        )}
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={(e) => setImageFile(e.target.files[0])}
-                                            className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
-                                        />
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-xs text-gray-400">OR</span>
-                                            <input
-                                                type="url"
-                                                value={formData.image}
-                                                onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                                                className="flex-1 px-3 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-green-500 outline-none"
-                                                placeholder="Paste image URL instead"
-                                            />
+                                    <div className="space-y-4">
+                                        <div className="flex flex-wrap gap-2">
+                                            {/* Existing/Stored Images */}
+                                            {formData.images && formData.images.map((img, idx) => (
+                                                <div key={idx} className="relative w-24 h-24 rounded-lg overflow-hidden border border-gray-200">
+                                                    <img src={img.url} alt="Preview" className="w-full h-full object-cover" />
+                                                </div>
+                                            ))}
+                                            {/* Newly Selected Files */}
+                                            {imageFiles.map((file, idx) => (
+                                                <div key={idx} className="relative w-24 h-24 rounded-lg overflow-hidden border border-gray-200">
+                                                    <img src={URL.createObjectURL(file)} alt="Preview" className="w-full h-full object-cover" />
+                                                </div>
+                                            ))}
                                         </div>
+                                        <div className="space-y-2">
+                                            <input
+                                                type="file"
+                                                multiple
+                                                accept="image/*"
+                                                onChange={(e) => setImageFiles(Array.from(e.target.files))}
+                                                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+                                            />
+                                            <p className="text-xs text-gray-500">You can select up to 5 images. The first one will be the primary image.</p>
+                                        </div>
+                                    </div>
                                     </div>
                                 </div>
 
@@ -422,6 +449,117 @@ export default function VendorProducts() {
                                     </div>
                                 </div>
 
+ 
+                                {/* Variants Section */}
+                                <div className="space-y-4 border-t border-b border-gray-100 py-6">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-lg font-medium text-gray-900">Product Variants</h3>
+                                        <button
+                                            type="button"
+                                            onClick={() => setFormData({
+                                                ...formData,
+                                                variants: [...formData.variants, { name: 'Size', value: '', price: '', stock: '', sku: '' }]
+                                            })}
+                                            className="text-sm text-green-700 hover:text-green-800 font-medium flex items-center gap-1"
+                                        >
+                                            <Plus className="w-4 h-4" /> Add Variant
+                                        </button>
+                                    </div>
+                                    
+                                    {formData.variants.length === 0 ? (
+                                        <p className="text-sm text-gray-500 italic">No variants added. This will be a simple product.</p>
+                                    ) : (
+                                        <div className="space-y-3">
+                                            {formData.variants.map((variant, idx) => (
+                                                <div key={idx} className="grid grid-cols-12 gap-2 items-end bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                                    <div className="col-span-3">
+                                                        <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Attr</label>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Size/Color"
+                                                            value={variant.name}
+                                                            onChange={(e) => {
+                                                                const newVariants = [...formData.variants];
+                                                                newVariants[idx].name = e.target.value;
+                                                                setFormData({ ...formData, variants: newVariants });
+                                                            }}
+                                                            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-green-500 outline-none"
+                                                        />
+                                                    </div>
+                                                    <div className="col-span-3">
+                                                        <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Value</label>
+                                                        <input
+                                                            type="text"
+                                                            placeholder="100ml/Red"
+                                                            value={variant.value}
+                                                            onChange={(e) => {
+                                                                const newVariants = [...formData.variants];
+                                                                newVariants[idx].value = e.target.value;
+                                                                setFormData({ ...formData, variants: newVariants });
+                                                            }}
+                                                            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-green-500 outline-none"
+                                                        />
+                                                    </div>
+                                                    <div className="col-span-2">
+                                                        <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Price</label>
+                                                        <input
+                                                            type="number"
+                                                            placeholder="Price"
+                                                            value={variant.price}
+                                                            onChange={(e) => {
+                                                                const newVariants = [...formData.variants];
+                                                                newVariants[idx].price = e.target.value;
+                                                                setFormData({ ...formData, variants: newVariants });
+                                                            }}
+                                                            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-green-500 outline-none"
+                                                        />
+                                                    </div>
+                                                    <div className="col-span-2">
+                                                        <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Stock</label>
+                                                        <input
+                                                            type="number"
+                                                            placeholder="Stock"
+                                                            value={variant.stock}
+                                                            onChange={(e) => {
+                                                                const newVariants = [...formData.variants];
+                                                                newVariants[idx].stock = e.target.value;
+                                                                setFormData({ ...formData, variants: newVariants });
+                                                            }}
+                                                            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-green-500 outline-none"
+                                                        />
+                                                    </div>
+                                                    <div className="col-span-1">
+                                                        <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Thrsh</label>
+                                                        <input
+                                                            type="number"
+                                                            placeholder="Alert"
+                                                            value={variant.lowStockThreshold || 2}
+                                                            onChange={(e) => {
+                                                                const newVariants = [...formData.variants];
+                                                                newVariants[idx].lowStockThreshold = e.target.value;
+                                                                setFormData({ ...formData, variants: newVariants });
+                                                            }}
+                                                            className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-green-500 outline-none"
+                                                        />
+                                                    </div>
+                                                    <div className="col-span-1 flex justify-end">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const newVariants = formData.variants.filter((_, i) => i !== idx);
+                                                                setFormData({ ...formData, variants: newVariants });
+                                                            }}
+                                                            className="p-1.5 text-red-500 hover:bg-red-50 rounded"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+ 
                                 <div className="flex gap-4">
                                     <label className="flex items-center gap-2">
                                         <input

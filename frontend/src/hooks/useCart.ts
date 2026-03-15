@@ -10,7 +10,7 @@ export const useCart = () => {
   const [error, setError] = useState(null);
 
   // Fetch cart
-  const fetchCart = async () => {
+  const fetchCart = async (pincode = null) => {
     if (!isAuthenticated) {
       setCart(null);
       return;
@@ -20,7 +20,7 @@ export const useCart = () => {
     setError(null);
 
     try {
-      const response = await cartService.getCart();
+      const response = await cartService.getCart(pincode);
       setCart(response.data);
     } catch (err) {
       setError(err);
@@ -31,14 +31,14 @@ export const useCart = () => {
   };
 
   // Add to cart
-  const addToCart = async (productId, quantity = 1) => {
+  const addToCart = async (productId, quantity = 1, variantId = null) => {
     if (!isAuthenticated) {
       toast.error('Please login to add items to cart');
       return;
     }
 
     try {
-      await cartService.addToCart(productId, quantity);
+      await cartService.addToCart(productId, quantity, variantId);
       toast.success('Item added to cart');
       await fetchCart(); // Refresh cart
     } catch (err) {

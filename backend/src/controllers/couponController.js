@@ -83,6 +83,7 @@ exports.validateCoupon = async (req, res) => {
 
         res.json({
             success: true,
+            message: 'Coupon applied successfully',
             data: {
                 id: coupon.id,
                 code: coupon.code,
@@ -94,7 +95,7 @@ exports.validateCoupon = async (req, res) => {
         });
 
     } catch (error) {
-        logger.logError(error, { context: 'validateCoupon' });
+        logger.error('Validate coupon error:', error);
         res.status(500).json({
             success: false,
             message: 'Error validating coupon',
@@ -186,6 +187,63 @@ exports.createCoupon = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Error creating coupon',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Update an existing coupon (Admin only)
+ * PUT /api/coupons/:id
+ */
+exports.updateCoupon = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const {
+            code,
+            description,
+            discountType,
+            discountValue,
+            minOrderAmount,
+            maxDiscountAmount,
+            startDate,
+            endDate,
+            usageLimit,
+            isActive
+        } = req.body;
+
+        const updateData = {};
+        if (code) updateData.code = code.toUpperCase();
+        if (description !== undefined) updateData.description = description;
+        if (discountType) updateData.discountType = discountType;
+        if (discountValue !== undefined) updateData.discountValue = parseFloat(discountValue);
+        if (minOrderAmount !== undefined) updateData.minOrderAmount = parseFloat(minOrderAmount);
+        if (maxDiscountAmount !== undefined) updateData.maxDiscountAmount = maxDiscountAmount ? parseFloat(maxDiscountAmount) : null;
+        if (startDate) updateData.startDate = new Date(startDate);
+        if (endDate !== undefined) updateData.endDate = endDate ? new Date(endDate) : null;
+        if (usageLimit !== undefined) updateData.usageLimit = usageLimit ? parseInt(usageLimit) : null;
+        if (isActive !== undefined) updateData.isActive = isActive;
+
+        const coupon = await prisma.coupon.update({
+            where: { id },
+            data: updateData
+        });
+
+        res.json({
+            success: true,
+            message: 'Coupon updated successfully',
+            data: coupon
+        });
+    } catch (error) {
+        if (error.code === 'P2002') {
+            return res.status(400).json({
+                success: false,
+                message: 'Coupon code already exists'
+            });
+        }
+        res.status(500).json({
+            success: false,
+            message: 'Error updating coupon',
             error: error.message
         });
     }

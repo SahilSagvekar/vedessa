@@ -2,13 +2,14 @@ import api from '../lib/api';
 
 export const cartService = {
   // Get user's cart
-  getCart: async () => {
-    return await api.get('/cart');
+  getCart: async (pincode = null) => {
+    const url = pincode ? `/cart?pincode=${pincode}` : '/cart';
+    return await api.get(url);
   },
 
   // Add item to cart
-  addToCart: async (productId, quantity = 1) => {
-    return await api.post('/cart', { productId, quantity });
+  addToCart: async (productId, quantity = 1, variantId = null) => {
+    return await api.post('/cart', { productId, quantity, variantId });
   },
 
   // Update cart item quantity

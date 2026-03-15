@@ -1,5 +1,6 @@
 const prisma = require('../config/database');
 const emailService = require('../services/emailService');
+const ekartService = require('../services/ekartService');
 
 /**
  * Generate unique order number
@@ -32,7 +33,10 @@ const createOrder = async (req, res) => {
     // Get cart items
     const cartItems = await prisma.cartItem.findMany({
       where: { userId: req.userId },
-      include: { product: true }
+      include: { 
+        product: true,
+        variant: true
+      }
     });
 
     if (cartItems.length === 0) {
@@ -44,22 +48,55 @@ const createOrder = async (req, res) => {
 
     // Check stock for all items
     for (const item of cartItems) {
-      if (item.product.stock < item.quantity) {
+      const stockAvailable = item.variant ? item.variant.stock : item.product.stock;
+      if (stockAvailable < item.quantity) {
         return res.status(400).json({
           success: false,
-          message: `Insufficient stock for ${item.product.name}. Only ${item.product.stock} available.`
+          message: `Insufficient stock for ${item.product.name}${item.variant ? ` (${item.variant.value})` : ''}. Only ${stockAvailable} available.`
         });
       }
     }
 
-    // Calculate totals
+    // Calculate totals and weight
     let subtotal = 0;
+    let totalWeight = 0;
     cartItems.forEach(item => {
-      subtotal += parseFloat(item.product.price) * item.quantity;
+      const itemPrice = item.variant?.price ? parseFloat(item.variant.price) : parseFloat(item.product.price);
+      subtotal += itemPrice * item.quantity;
+      
+      const itemWeight = item.variant?.weight ? parseFloat(item.variant.weight) : (item.product.weight ? parseFloat(item.product.weight) : 0.5);
+      totalWeight += itemWeight * item.quantity;
     });
 
     const taxAmount = subtotal * 0.18; // 18% tax
-    const shippingCost = subtotal > 1000 ? 0 : 50; // Free shipping over ₹1000
+    
+    // Calculate dynamic shipping cost via Ekart
+    let shippingCost = 0;
+    let estimatedDelivery = null;
+    
+    try {
+      const shippingInfo = await ekartService.calculateShippingRate({
+        destinationPincode: shippingAddress.pincode,
+        weight: totalWeight,
+        paymentMethod: paymentMethod
+      });
+      
+      if (shippingInfo.success) {
+        // Free shipping over ₹1000 logic can still apply if desired, or override with API rate
+        shippingCost = subtotal > 1000 ? 0 : (shippingInfo.rate || 50);
+        
+        if (shippingInfo.estimatedDays) {
+          estimatedDelivery = new Date();
+          estimatedDelivery.setDate(estimatedDelivery.getDate() + shippingInfo.estimatedDays);
+        }
+      } else {
+        shippingCost = subtotal > 1000 ? 0 : 50;
+      }
+    } catch (error) {
+      console.error('Shipping calculation error, falling back to default:', error);
+      shippingCost = subtotal > 1000 ? 0 : 50;
+    }
+
     const totalAmount = subtotal + taxAmount + shippingCost;
 
     // Create order and order items in a transaction
@@ -76,13 +113,15 @@ const createOrder = async (req, res) => {
           totalAmount,
           shippingAddress,
           paymentMethod,
+          estimatedDelivery,
           items: {
             create: cartItems.map(item => ({
               productId: item.productId,
+              variantId: item.variantId,
               productName: item.product.name,
               productImage: item.product.image,
               quantity: item.quantity,
-              price: item.product.price
+              price: item.variant?.price ? item.variant.price : item.product.price
             }))
           }
         },
@@ -95,16 +134,30 @@ const createOrder = async (req, res) => {
         }
       });
 
-      // Update product stock
+      // Update product/variant stock and check thresholds
       for (const item of cartItems) {
-        await tx.product.update({
-          where: { id: item.productId },
-          data: {
-            stock: {
-              decrement: item.quantity
-            }
+        if (item.variantId) {
+          const updatedVariant = await tx.productVariant.update({
+            where: { id: item.variantId },
+            data: { stock: { decrement: item.quantity } }
+          });
+          
+          // Trigger alert if low stock
+          if (updatedVariant.stock <= updatedVariant.lowStockThreshold) {
+            // In a real app, this might queue a job or send an email to the vendor
+            console.log(`LOW STOCK ALERT: Variant ${updatedVariant.id} of Product ${item.productId} is at ${updatedVariant.stock}`);
+            // Logic to notify vendor could go here
           }
-        });
+        } else {
+          const updatedProduct = await tx.product.update({
+            where: { id: item.productId },
+            data: { stock: { decrement: item.quantity } }
+          });
+
+          if (updatedProduct.stock <= updatedProduct.lowStockThreshold) {
+            console.log(`LOW STOCK ALERT: Product ${updatedProduct.id} is at ${updatedProduct.stock}`);
+          }
+        }
       }
 
       // Clear cart

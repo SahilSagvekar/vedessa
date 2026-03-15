@@ -30,8 +30,8 @@ router.put('/me', vendorController.updateMyProfile);
 
 // Vendor products
 router.get('/products', vendorController.getMyProducts);
-router.post('/products', upload.single('image'), vendorController.createProduct);
-router.put('/products/:id', upload.single('image'), vendorController.updateProduct);
+router.post('/products', upload.array('images', 5), vendorController.createProduct);
+router.put('/products/:id', upload.array('images', 5), vendorController.updateProduct);
 router.delete('/products/:id', vendorController.deleteProduct);
 
 // Vendor orders

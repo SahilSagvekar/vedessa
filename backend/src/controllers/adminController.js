@@ -1,4 +1,5 @@
 const prisma = require('../config/database');
+const emailService = require('../services/emailService');
 
 /**
  * Get all vendors with filtering and pagination
@@ -195,9 +196,12 @@ exports.approveVendor = async (req, res) => {
             }
         });
 
-        // TODO: Send approval email to vendor
-        // const emailService = require('../services/emailService');
-        // await emailService.sendVendorApprovalEmail(vendor.email, vendor.fullName);
+        // Send approval email to vendor
+        try {
+            await emailService.sendVendorApprovalEmail(updatedVendor.email, updatedVendor.fullName);
+        } catch (emailError) {
+            console.error('Failed to send vendor approval email:', emailError);
+        }
 
         res.json({
             success: true,
@@ -256,9 +260,12 @@ exports.rejectVendor = async (req, res) => {
             }
         });
 
-        // TODO: Send rejection email to vendor
-        // const emailService = require('../services/emailService');
-        // await emailService.sendVendorRejectionEmail(vendor.email, vendor.fullName, reason);
+        // Send rejection email to vendor
+        try {
+            await emailService.sendVendorRejectionEmail(updatedVendor.email, updatedVendor.fullName, reason);
+        } catch (emailError) {
+            console.error('Failed to send vendor rejection email:', emailError);
+        }
 
         res.json({
             success: true,

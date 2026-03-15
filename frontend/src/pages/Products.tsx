@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ChevronDown, Loader2, Grid3x3, LayoutGrid, SlidersHorizontal, X } from 'lucide-react';
+import { ChevronDown, Loader2, Grid3x3, LayoutGrid, SlidersHorizontal, X, Star } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import ProductCard from '@/components/products/ProductCard';
 import { useProducts } from '@/hooks/useProducts';
@@ -18,12 +19,14 @@ import {
 } from '@/components/ui/sheet';
 
 const Products = () => {
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedCollection, setSelectedCollection] = useState<string>('all');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchBarQuery = searchParams.get('search') || '';
+  
+  const [selectedCategory, setSelectedCategory] = useState<string>(searchParams.get('category') || 'all');
+  const [selectedCollection, setSelectedCollection] = useState<string>(searchParams.get('collection') || 'all');
   const [sortBy, setSortBy] = useState<string>('newest');
   const [priceRange, setPriceRange] = useState<string>('all');
-  const [selectedBrand, setSelectedBrand] = useState<string>('all');
-  const [selectedSize, setSelectedSize] = useState<string>('all');
+  const [minRating, setMinRating] = useState<number>(0);
   const [gridView, setGridView] = useState<number>(4); // 3 or 4 columns
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
@@ -38,10 +41,18 @@ const Products = () => {
     apiFilters.collection = selectedCollection;
   }
 
+  if (searchBarQuery) {
+    apiFilters.search = searchBarQuery;
+  }
+
   if (priceRange !== 'all') {
     const [min, max] = priceRange.split('-').map(Number);
     apiFilters.minPrice = min;
     apiFilters.maxPrice = max;
+  }
+
+  if (minRating > 0) {
+    apiFilters.minRating = minRating;
   }
 
   // Map sort options to backend format
@@ -244,32 +255,42 @@ const Products = () => {
         </div>
       </div>
 
-      {/* Size Filter */}
+      {/* Rating Filter */}
       <div className="pb-6">
         <button className="flex items-center justify-between w-full mb-3">
-          <span className="text-sm font-medium">Size</span>
+          <span className="text-sm font-medium">Customer Review</span>
           <ChevronDown className="w-4 h-4" />
         </button>
         <div className="space-y-2">
+          {[4, 3, 2, 1].map((rating) => (
+            <label key={rating} className="flex items-center gap-2 text-sm cursor-pointer">
+              <input 
+                type="radio" 
+                name="rating" 
+                checked={minRating === rating}
+                onChange={() => setMinRating(rating)}
+                className="border-gray-300" 
+              />
+              <div className="flex items-center gap-1">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star 
+                    key={i} 
+                    className={`w-3 h-3 ${i < rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} 
+                  />
+                ))}
+                <span className="ml-1 text-gray-600">& Up</span>
+              </div>
+            </label>
+          ))}
           <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input type="checkbox" className="rounded border-gray-300" />
-            <span>50g (8)</span>
-          </label>
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input type="checkbox" className="rounded border-gray-300" />
-            <span>100g (15)</span>
-          </label>
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input type="checkbox" className="rounded border-gray-300" />
-            <span>150ml (12)</span>
-          </label>
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input type="checkbox" className="rounded border-gray-300" />
-            <span>200ml (10)</span>
-          </label>
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input type="checkbox" className="rounded border-gray-300" />
-            <span>250ml (6)</span>
+            <input 
+              type="radio" 
+              name="rating" 
+              checked={minRating === 0}
+              onChange={() => setMinRating(0)}
+              className="border-gray-300" 
+            />
+            <span>All Ratings</span>
           </label>
         </div>
       </div>

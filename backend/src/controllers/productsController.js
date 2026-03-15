@@ -15,6 +15,7 @@ const getAllProducts = async (req, res) => {
       isBestseller,
       minPrice,
       maxPrice,
+      search,
       sort = 'created_at_desc',
       limit = 50,
       offset = 0
@@ -43,6 +44,15 @@ const getAllProducts = async (req, res) => {
       where.price = {};
       if (minPrice) where.price.gte = parseFloat(minPrice);
       if (maxPrice) where.price.lte = parseFloat(maxPrice);
+    }
+    
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+        { category: { name: { contains: search, mode: 'insensitive' } } },
+        { collection: { name: { contains: search, mode: 'insensitive' } } }
+      ];
     }
 
     // Build orderBy clause
@@ -78,7 +88,11 @@ const getAllProducts = async (req, res) => {
               name: true,
               slug: true
             }
-          }
+          },
+          images: {
+            orderBy: { order: 'asc' }
+          },
+          variants: true
         }
       }),
       prisma.product.count({ where })
@@ -103,7 +117,9 @@ const getAllProducts = async (req, res) => {
       category_slug: product.category?.slug || null,
       collection_id: product.collection?.id || null,
       collection_name: product.collection?.name || null,
-      collection_slug: product.collection?.slug || null
+      collection_slug: product.collection?.slug || null,
+      images: product.images || [],
+      variants: product.variants || []
     }));
 
     res.json({
@@ -124,6 +140,49 @@ const getAllProducts = async (req, res) => {
       success: false,
       message: 'Error fetching products',
       error: error.message
+    });
+  }
+};
+
+/**
+ * Get product suggestions for autocomplete
+ * GET /api/products/suggestions?q=term
+ */
+const getProductSuggestions = async (req, res) => {
+  try {
+    const { q } = req.query;
+
+    if (!q || q.length < 2) {
+      return res.json({ success: true, data: [] });
+    }
+
+    const products = await prisma.product.findMany({
+      where: {
+        OR: [
+          { name: { contains: q, mode: 'insensitive' } },
+          { category: { name: { contains: q, mode: 'insensitive' } } }
+        ]
+      },
+      take: 5,
+      select: {
+        id: true,
+        name: true,
+        image: true,
+        category: {
+          select: { name: true }
+        }
+      }
+    });
+
+    res.json({
+      success: true,
+      data: products
+    });
+  } catch (error) {
+    console.error('Get suggestions error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching suggestions'
     });
   }
 };
@@ -152,7 +211,11 @@ const getProductById = async (req, res) => {
             name: true,
             slug: true
           }
-        }
+        },
+        images: {
+            orderBy: { order: 'asc' }
+        },
+        variants: true
       }
     });
 
@@ -183,7 +246,9 @@ const getProductById = async (req, res) => {
         category_slug: product.category?.slug || null,
         collection_id: product.collection?.id || null,
         collection_name: product.collection?.name || null,
-        collection_slug: product.collection?.slug || null
+        collection_slug: product.collection?.slug || null,
+        images: product.images || [],
+        variants: product.variants || []
       }
     });
   } catch (error) {
@@ -218,19 +283,31 @@ const createProduct = async (req, res) => {
       reviews = 0,
       isNew = false,
       isBestseller = false,
-      stock = 100
+      stock = 100,
+      variants = []
     } = req.body;
 
-    // Handle image - ensure it's either a string or null, never an object
-    let image = null;
-    if (req.file) {
-      image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    // Handle images
+    let primaryImage = null;
+    let imagesData = [];
+
+    if (req.files && req.files.length > 0) {
+      req.files.forEach((file, index) => {
+        const url = `${req.protocol}://${req.get('host')}/uploads/${file.filename}`;
+        if (index === 0) primaryImage = url;
+        imagesData.push({
+          url,
+          isPrimary: index === 0,
+          order: index
+        });
+      });
     } else if (req.body.image && typeof req.body.image === 'string' && req.body.image.trim() !== '') {
-      image = req.body.image;
-    }
-    // Explicitly ignore if image is an object (empty or otherwise)
-    if (typeof image === 'object') {
-      image = null;
+      primaryImage = req.body.image;
+      imagesData.push({
+        url: req.body.image,
+        isPrimary: true,
+        order: 0
+      });
     }
 
     // Validation
@@ -245,14 +322,26 @@ const createProduct = async (req, res) => {
       name,
       description,
       price: parseFloat(price),
-      image,
+      image: primaryImage,
       categoryId: (categoryId && typeof categoryId === 'string' && categoryId.trim() !== '') ? categoryId : null,
       collectionId: (collectionId && typeof collectionId === 'string' && collectionId.trim() !== '') ? collectionId : null,
       rating: parseFloat(rating),
       reviews: parseInt(reviews),
       isNew: isNew === 'true' || isNew === true,
       isBestseller: isBestseller === 'true' || isBestseller === true,
-      stock: parseInt(stock)
+      stock: parseInt(stock),
+      images: {
+        create: imagesData
+      },
+      variants: {
+        create: Array.isArray(variants) ? variants.map(v => ({
+          name: v.name,
+          value: v.value,
+          price: v.price ? parseFloat(v.price) : null,
+          stock: v.stock ? parseInt(v.stock) : 0,
+          sku: v.sku || null
+        })) : []
+      }
     };
 
     console.log('Creating product with data:', JSON.stringify(productData, null, 2));
@@ -261,7 +350,11 @@ const createProduct = async (req, res) => {
       data: productData,
       include: {
         category: true,
-        collection: true
+        collection: true,
+        images: {
+          orderBy: { order: 'asc' }
+        },
+        variants: true
       }
     });
 
@@ -309,12 +402,47 @@ const updateProduct = async (req, res) => {
       }
     });
 
-    if (req.file) {
-      updateData.image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    if (req.files && req.files.length > 0) {
+      const imagesData = req.files.map((file, index) => ({
+        url: `${req.protocol}://${req.get('host')}/uploads/${file.filename}`,
+        isPrimary: index === 0,
+        order: index
+      }));
+      
+      // Update primary image URL for the product record
+      updateData.image = imagesData[0].url;
+      
+      // Update images relation (replace all)
+      updateData.images = {
+        deleteMany: {},
+        create: imagesData
+      };
     } else if (typeof req.body.image === 'string' && req.body.image.trim() !== '') {
       updateData.image = req.body.image;
+      updateData.images = {
+        deleteMany: {},
+        create: [{ url: req.body.image, isPrimary: true, order: 0 }]
+      };
     } else if (req.body.image === null || req.body.image === 'null') {
       updateData.image = null;
+      updateData.images = {
+        deleteMany: {}
+      };
+    }
+
+    // Handle variants update
+    if (req.body.variants !== undefined) {
+      const variants = Array.isArray(req.body.variants) ? req.body.variants : JSON.parse(req.body.variants || '[]');
+      updateData.variants = {
+        deleteMany: {}, // Replace all variants for simplicity, or implement partial update logic
+        create: variants.map(v => ({
+          name: v.name,
+          value: v.value,
+          price: v.price ? parseFloat(v.price) : null,
+          stock: v.stock ? parseInt(v.stock) : 0,
+          sku: v.sku || null
+        }))
+      };
     }
 
     if (Object.keys(updateData).length === 0) {
@@ -329,7 +457,11 @@ const updateProduct = async (req, res) => {
       data: updateData,
       include: {
         category: true,
-        collection: true
+        collection: true,
+        images: {
+          orderBy: { order: 'asc' }
+        },
+        variants: true
       }
     });
 
@@ -393,5 +525,6 @@ module.exports = {
   getProductById,
   createProduct,
   updateProduct,
-  deleteProduct
+  deleteProduct,
+  getProductSuggestions
 };

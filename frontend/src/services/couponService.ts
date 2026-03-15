@@ -23,6 +23,13 @@ const couponService = {
     },
 
     /**
+     * Update a coupon (Admin)
+     */
+    updateCoupon: async (id: string, couponData: any) => {
+        return api.put(`/coupons/${id}`, couponData);
+    },
+
+    /**
      * Delete a coupon (Admin)
      */
     deleteCoupon: async (id: string) => {

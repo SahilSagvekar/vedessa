@@ -1,4 +1,5 @@
 const prisma = require('../config/database');
+const ekartService = require('../services/ekartService');
 
 /**
  * Get user's cart
@@ -18,7 +19,8 @@ const getCart = async (req, res) => {
               select: { name: true, slug: true }
             }
           }
-        }
+        },
+        variant: true
       },
       orderBy: { createdAt: 'desc' }
     });
@@ -34,17 +36,51 @@ const getCart = async (req, res) => {
         product_id: item.product.id,
         product_name: item.product.name,
         product_image: item.product.image,
-        product_price: parseFloat(item.product.price),
+        product_price: item.variant?.price ? parseFloat(item.variant.price) : parseFloat(item.product.price),
         quantity: item.quantity,
-        item_total: itemTotal,
-        stock: item.product.stock,
+        item_total: (item.variant?.price ? parseFloat(item.variant.price) : parseFloat(item.product.price)) * item.quantity,
+        stock: item.variant ? item.variant.stock : item.product.stock,
         category: item.product.category?.name,
-        collection: item.product.collection?.name
+        collection: item.product.collection?.name,
+        variant: item.variant ? {
+          id: item.variant.id,
+          name: item.variant.name,
+          value: item.variant.value
+        } : null
       };
     });
 
     const tax = subtotal * 0.18; // 18% tax
-    const total = subtotal + tax;
+    const cartSummaryTotal = subtotal + tax;
+
+    const totalWeight = parseFloat(items.reduce((sum, item) => {
+      const weight = item.variant?.weight ? parseFloat(item.variant.weight) : (item.product?.weight ? parseFloat(item.product.weight) : 0.5);
+      return sum + (weight * item.quantity);
+    }, 0).toFixed(2));
+
+    let shippingEstimate = null;
+    let deliveryEstimate = null;
+
+    const { pincode } = req.query;
+    if (pincode && pincode.length === 6) {
+      try {
+        const rateInfo = await ekartService.calculateShippingRate({
+          destinationPincode: pincode,
+          weight: totalWeight
+        });
+
+        if (rateInfo.success) {
+          shippingEstimate = rateInfo.rate;
+          if (rateInfo.estimatedDays) {
+            const date = new Date();
+            date.setDate(date.getDate() + rateInfo.estimatedDays);
+            deliveryEstimate = date;
+          }
+        }
+      } catch (e) {
+        console.error('Shipping estimate error:', e);
+      }
+    }
 
     res.json({
       success: true,
@@ -55,7 +91,10 @@ const getCart = async (req, res) => {
           total_quantity: items.reduce((sum, item) => sum + item.quantity, 0),
           subtotal: parseFloat(subtotal.toFixed(2)),
           tax: parseFloat(tax.toFixed(2)),
-          total: parseFloat(total.toFixed(2))
+          total: parseFloat((cartSummaryTotal + (shippingEstimate || 0)).toFixed(2)),
+          total_weight: totalWeight,
+          shipping_estimate: shippingEstimate,
+          delivery_estimate: deliveryEstimate
         }
       }
     });
@@ -75,7 +114,7 @@ const getCart = async (req, res) => {
  */
 const addToCart = async (req, res) => {
   try {
-    const { productId, quantity = 1 } = req.body;
+    const { productId, quantity = 1, variantId = null } = req.body;
 
     // Validation
     if (!productId) {
@@ -105,19 +144,24 @@ const addToCart = async (req, res) => {
     }
 
     // Check stock
-    if (product.stock < quantity) {
+    const stockToCheck = variantId 
+      ? (await prisma.productVariant.findUnique({ where: { id: variantId } }))?.stock || 0
+      : product.stock;
+
+    if (stockToCheck < quantity) {
       return res.status(400).json({
         success: false,
-        message: `Only ${product.stock} items available in stock`
+        message: `Only ${stockToCheck} items available in stock`
       });
     }
 
     // Check if item already in cart
     const existingItem = await prisma.cartItem.findUnique({
       where: {
-        userId_productId: {
+        userId_productId_variantId: {
           userId: req.userId,
-          productId
+          productId,
+          variantId
         }
       }
     });
@@ -148,6 +192,7 @@ const addToCart = async (req, res) => {
         data: {
           userId: req.userId,
           productId,
+          variantId,
           quantity
         },
         include: {

@@ -10,12 +10,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import couponService from '@/services/couponService';
-import { Tag, X } from 'lucide-react';
+import { Tag, X, Calendar } from 'lucide-react';
 
 const Checkout = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
-  const { cart, loading: cartLoading } = useCart();
+  const { cart, loading: cartLoading, refreshCart } = useCart();
   const { initiatePayment, loading: paymentLoading } = useRazorpay();
   const { toast } = useToast();
 
@@ -39,6 +39,25 @@ const Checkout = () => {
       navigate('/auth');
     }
   }, [isAuthenticated, cartLoading, navigate]);
+
+  // Restore coupon from sessionStorage
+  useEffect(() => {
+    const savedCoupon = sessionStorage.getItem('appliedCoupon');
+    if (savedCoupon) {
+      try {
+        setAppliedCoupon(JSON.parse(savedCoupon));
+      } catch (e) {
+        sessionStorage.removeItem('appliedCoupon');
+      }
+    }
+  }, []);
+
+  // Fetch shipping rate when pincode is valid
+  useEffect(() => {
+    if (shippingAddress.pincode && shippingAddress.pincode.length === 6) {
+      refreshCart(shippingAddress.pincode);
+    }
+  }, [shippingAddress.pincode]);
 
   // Redirect if cart is empty (but wait for loading to finish first)
   useEffect(() => {
@@ -118,6 +137,7 @@ const Checkout = () => {
 
       if (response.success) {
         setAppliedCoupon(response.data);
+        sessionStorage.setItem('appliedCoupon', JSON.stringify(response.data));
         toast({
           title: 'Coupon Applied!',
           description: `You saved ₹${response.data.discountAmount}`,
@@ -138,6 +158,7 @@ const Checkout = () => {
   const handleRemoveCoupon = () => {
     setAppliedCoupon(null);
     setCouponCode('');
+    sessionStorage.removeItem('appliedCoupon');
   };
 
   const handlePlaceOrder = async () => {
@@ -191,8 +212,8 @@ const Checkout = () => {
     );
   }
 
-  const shippingCost = cart.summary.subtotal > 1000 ? 0 : 50;
-  const finalTotal = cart.summary.total + shippingCost;
+  const shippingCost = cart?.summary?.shipping_estimate !== null ? (cart?.summary?.shipping_estimate || 0) : (cart.summary.subtotal > 1000 ? 0 : 50);
+  const finalTotal = cart.summary.total; // total from backend already includes shipping
 
   return (
     <Layout>
@@ -304,7 +325,13 @@ const Checkout = () => {
               {cart.items.map((item) => (
                 <div key={item.id} className="flex justify-between text-sm">
                   <span className="text-muted-foreground">
-                    {item.product_name} x {item.quantity}
+                    {item.product_name}
+                    {item.variant && (
+                      <span className="ml-1 text-xs text-gray-500">
+                        ({item.variant.name}: {item.variant.value})
+                      </span>
+                    )}
+                    {" "}x {item.quantity}
                   </span>
                   <span className="text-foreground">₹{item.item_total.toFixed(2)}</span>
                 </div>
@@ -326,6 +353,23 @@ const Checkout = () => {
                   {shippingCost === 0 ? 'FREE' : `₹${shippingCost.toFixed(2)}`}
                 </span>
               </div>
+              {cart?.summary?.delivery_estimate && (
+                <div className="flex justify-between items-center bg-green-50 border border-green-100 rounded-md p-2 mt-2">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-green-700" />
+                    <div>
+                      <p className="text-[10px] uppercase font-bold text-green-800">Est. Delivery</p>
+                      <p className="text-xs text-green-700">
+                        {new Date(cart.summary.delivery_estimate).toLocaleDateString('en-IN', {
+                          day: 'numeric',
+                          month: 'short',
+                          weekday: 'short'
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
               {cart.summary.subtotal > 1000 && (
                 <p className="text-xs text-green-600">🎉 You get free shipping!</p>
               )}
