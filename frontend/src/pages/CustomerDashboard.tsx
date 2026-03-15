@@ -251,10 +251,10 @@ const CustomerDashboard = () => {
                             <div className="flex justify-between items-start mb-2">
                               <div>
                                 <p className="font-medium text-foreground">
-                                  Order #{order.order_number || order.orderNumber || 'N/A'}
+                                  Order #{order.order_number || 'N/A'}
                                 </p>
                                 <p className="text-sm text-muted-foreground">
-                                  {order.created_at || order.createdAt ? new Date(order.created_at || order.createdAt).toLocaleDateString() : 'N/A'}
+                                  {order.created_at ? new Date(order.created_at).toLocaleDateString() : 'N/A'}
                                 </p>
                               </div>
                               <span className={`px-3 py-1 rounded-full text-xs font-medium ${order.status === 'DELIVERED' ? 'bg-green-100 text-green-800' :
@@ -270,7 +270,7 @@ const CustomerDashboard = () => {
                                 {order.item_count || 0} {(order.item_count || 0) === 1 ? 'item' : 'items'}
                               </p>
                               <p className="font-semibold text-foreground">
-                                ₹{(order.total || order.totalAmount || 0).toFixed(2)}
+                                ₹{(order.total_amount || 0).toFixed(2)}
                               </p>
                             </div>
                           </div>

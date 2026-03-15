@@ -20,6 +20,13 @@ export interface TrackingResponse {
 
 const shippingService = {
     /**
+     * Create shipment for an order
+     */
+    createShipment: (orderId: string, weight?: number, dimensions?: any): Promise<any> => {
+        return api.post('/shipping/create', { orderId, weight, dimensions });
+    },
+
+    /**
      * Track a shipment by AWB number
      */
     trackShipment: (awbNumber: string): Promise<TrackingResponse> => {
@@ -27,12 +34,54 @@ const shippingService = {
     },
 
     /**
-     * Track a shipment by Order number (if we have an internal mapping or API support)
+     * Track a shipment by Order number
      */
     trackByOrderId: (orderNumber: string): Promise<TrackingResponse> => {
-        // For now, we'll assume the user enters the AWB in the same field, 
-        // but we could add a specific backend route if needed.
         return api.get(`/shipping/track/${orderNumber}`);
+    },
+
+    /**
+     * Calculate shipping rate
+     */
+    calculateRate: (destinationPincode: string, weight?: number, paymentMethod?: string): Promise<any> => {
+        return api.post('/shipping/calculate-rate', { 
+            destinationPincode, 
+            weight, 
+            paymentMethod 
+        });
+    },
+
+    /**
+     * Schedule pickup
+     */
+    schedulePickup: (pickupDate: string, orderIds: string[]): Promise<any> => {
+        return api.post('/shipping/schedule-pickup', { pickupDate, orderIds });
+    },
+
+    /**
+     * Cancel shipment
+     */
+    cancelShipment: (orderId: string): Promise<any> => {
+        return api.post(`/shipping/cancel/${orderId}`);
+    },
+
+    /**
+     * Generate shipping label
+     */
+    generateLabel: (orderId: string): Promise<any> => {
+        return api.get(`/shipping/label/${orderId}`);
+    },
+
+    /**
+     * Admin: Get all shipments
+     */
+    getAllShipments: (params: any = {}): Promise<any> => {
+        const queryParams = new URLSearchParams();
+        if (params.page) queryParams.append('page', params.page);
+        if (params.limit) queryParams.append('limit', params.limit);
+        if (params.status) queryParams.append('status', params.status);
+        
+        return api.get(`/shipping/all?${queryParams.toString()}`);
     }
 };
 

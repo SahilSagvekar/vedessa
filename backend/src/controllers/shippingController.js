@@ -1,5 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const ekartService = require('../services/ekartService');
+const shiprocketService = require('../services/shiprocketService');
 
 const prisma = new PrismaClient();
 
@@ -39,45 +40,67 @@ exports.createShipment = async (req, res) => {
 
         // Prepare shipment data
         const shipmentData = {
-            orderId: order.id,
+            orderNumber: order.orderNumber,
             customerName: order.shippingAddress?.fullName || order.user?.fullName || 'Customer',
             customerPhone: order.shippingAddress?.phone || order.user?.phone || '',
             customerEmail: order.user?.email || '',
             shippingAddress: order.shippingAddress,
             items: order.items.map(item => ({
-                name: item.product.name,
+                productName: item.product.name,
+                productId: item.productId,
                 quantity: item.quantity,
-                price: item.price
+                price: parseFloat(item.price)
             })),
+            subtotal: parseFloat(order.subtotal),
             totalAmount: parseFloat(order.totalAmount),
             paymentMethod: order.paymentMethod === 'COD' ? 'COD' : 'PREPAID',
             weight: weight || 0.5,
-            dimensions: dimensions || { length: 10, width: 10, height: 10 }
+            length: dimensions?.length || 10,
+            width: dimensions?.width || 10,
+            height: dimensions?.height || 10
         };
 
-        // Create shipment with Ekart
-        const shipment = await ekartService.createShipment(shipmentData);
+        // 1. Get Serviceability and find cheapest courier
+        const couriers = await shiprocketService.getServiceability(
+            process.env.SHIPROCKET_PICKUP_PINCODE || '400001', // Default pickup pincode
+            order.shippingAddress.pincode,
+            shipmentData.weight,
+            order.paymentMethod === 'COD' ? order.totalAmount : 0
+        );
+
+        const cheapestCourier = shiprocketService.getCheapestCourier(couriers);
+        
+        if (!cheapestCourier) {
+            return res.status(400).json({ message: 'No serviceability for this location' });
+        }
+
+        // 2. Create Order in Shiprocket
+        const srOrder = await shiprocketService.createOrder(shipmentData);
+        const { order_id: srOrderId, shipment_id: srShipmentId } = srOrder;
+
+        // 3. Generate AWB with the cheapest courier
+        const awbData = await shiprocketService.generateAWB(srShipmentId, cheapestCourier.courier_company_id);
 
         // Update order with shipping details
         const updatedOrder = await prisma.order.update({
             where: { id: orderId },
             data: {
-                awbNumber: shipment.awbNumber,
-                trackingUrl: shipment.trackingUrl,
-                shipmentId: shipment.shipmentId,
-                estimatedDelivery: shipment.estimatedDelivery ? new Date(shipment.estimatedDelivery) : null,
-                shippingStatus: 'SHIPMENT_CREATED',
+                awbNumber: awbData.response.data.awb_code,
+                shipmentId: srShipmentId.toString(),
+                trackingUrl: `https://shiprocket.co/tracking/${awbData.response.data.awb_code}`,
+                shippingStatus: `CREATED (${cheapestCourier.courier_name})`,
                 status: 'PROCESSING'
             }
         });
 
         res.json({
             success: true,
-            message: 'Shipment created successfully',
+            message: `Shipment created successfully via ${cheapestCourier.courier_name}`,
             shipment: {
-                awbNumber: shipment.awbNumber,
-                trackingUrl: shipment.trackingUrl,
-                estimatedDelivery: shipment.estimatedDelivery
+                awbNumber: awbData.response.data.awb_code,
+                courierName: cheapestCourier.courier_name,
+                rate: cheapestCourier.rate,
+                trackingUrl: `https://shiprocket.co/tracking/${awbData.response.data.awb_code}`
             },
             order: updatedOrder
         });
@@ -98,7 +121,7 @@ exports.trackShipment = async (req, res) => {
     try {
         const { awbNumber } = req.params;
 
-        const tracking = await ekartService.trackShipment(awbNumber);
+        const tracking = await shiprocketService.trackShipment(awbNumber);
 
         res.json({
             success: true,
@@ -125,15 +148,16 @@ exports.calculateRate = async (req, res) => {
             return res.status(400).json({ message: 'Destination pincode is required' });
         }
 
-        const rate = await ekartService.calculateShippingRate({
+        const couriers = await shiprocketService.getServiceability(
+            process.env.SHIPROCKET_PICKUP_PINCODE || '400001',
             destinationPincode,
-            weight: weight || 0.5,
-            paymentMethod: paymentMethod || 'PREPAID'
-        });
+            weight || 0.5,
+            paymentMethod === 'COD' ? 1 : 0
+        );
 
         res.json({
             success: true,
-            rate
+            couriers
         });
 
     } catch (error) {

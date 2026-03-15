@@ -4,6 +4,7 @@ import Layout from '@/components/layout/Layout';
 import { ChevronLeft, Package, Truck, CheckCircle, Clock, XCircle, Loader2, MapPin, ExternalLink } from 'lucide-react';
 import { useAuth } from '@/components/contexts/AuthContext';
 import ordersService from '@/services/ordersService';
+import shippingService from '@/services/shippingService';
 
 interface OrderItem {
     id: string;
@@ -55,6 +56,7 @@ export default function OrderDetail() {
     const navigate = useNavigate();
     const { isAuthenticated, loading: authLoading } = useAuth();
     const [order, setOrder] = useState<Order | null>(null);
+    const [trackingData, setTrackingData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -68,7 +70,18 @@ export default function OrderDetail() {
             try {
                 setLoading(true);
                 const response = await ordersService.getOrder(id);
-                setOrder(response.data);
+                const orderData = response.data;
+                setOrder(orderData);
+
+                // Fetch tracking if AWB exists
+                if (orderData.awb_number) {
+                    try {
+                        const trackingRes = await shippingService.trackShipment(orderData.awb_number);
+                        setTrackingData(trackingRes.tracking);
+                    } catch (trackErr) {
+                        console.error('Failed to fetch tracking:', trackErr);
+                    }
+                }
             } catch (err: any) {
                 setError(err.message || 'Failed to fetch order details');
             } finally {
@@ -194,6 +207,37 @@ export default function OrderDetail() {
                                                 </div>
                                             );
                                         })}
+                                    </div>
+                                 </div>
+                            )}
+
+                            {/* Tracking History */}
+                            {trackingData && trackingData.updates && trackingData.updates.length > 0 && (
+                                <div className="bg-white rounded-xl p-6 shadow-sm">
+                                    <h2 className="font-semibold text-gray-900 mb-6 flex items-center gap-2">
+                                        <Truck className="w-5 h-5 text-kama-olive" />
+                                        Tracking History
+                                    </h2>
+                                    <div className="relative space-y-8 before:absolute before:inset-0 before:ml-5 before:-translate-x-px before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-300 before:to-transparent">
+                                        {trackingData.updates.map((update: any, index: number) => (
+                                            <div key={index} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
+                                                <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-slate-300 group-[.is-active]:bg-kama-olive text-slate-500 group-[.is-active]:text-emerald-50 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
+                                                    <div className={`w-3 h-3 rounded-full ${index === 0 ? 'bg-kama-olive' : 'bg-gray-400'}`} />
+                                                </div>
+                                                <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded border border-slate-200 shadow">
+                                                    <div className="flex items-center justify-between space-x-2 mb-1">
+                                                        <div className="font-bold text-slate-900">{update.status}</div>
+                                                        <time className="font-serif italic text-kama-olive text-xs">
+                                                            {new Date(update.timestamp).toLocaleDateString()}
+                                                        </time>
+                                                    </div>
+                                                    <div className="text-slate-500 text-sm">
+                                                        {update.location && <span className="font-medium">{update.location}: </span>}
+                                                        {update.description}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
                             )}

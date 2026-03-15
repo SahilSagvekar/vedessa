@@ -8,6 +8,8 @@ import ordersService from '@/services/ordersService';
 import vendorService from '@/services/vendorService';
 import VendorManagement from '@/components/admin/VendorManagement';
 import CouponManagement from '@/components/admin/CouponManagement';
+import ShippingManagement from '@/components/admin/ShippingManagement';
+import shippingService from '@/services/shippingService';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -64,7 +66,7 @@ const Admin = () => {
   const [productList, setProductList] = useState<Product[]>([]);
   const [vendorList, setVendorList] = useState<any[]>([]);
   const [orderList, setOrderList] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'vendors' | 'coupons'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'vendors' | 'coupons' | 'shipping'>('products');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editProductId, setEditProductId] = useState<string | null>(null);
@@ -189,6 +191,26 @@ const Admin = () => {
         description: error.message || 'Failed to update status',
         variant: 'destructive',
       });
+    }
+  };
+ 
+  const handleCreateShipment = async (order: any) => {
+    try {
+      setLoading(true);
+      const response = await shippingService.createShipment(order.id, 0.5, { length: 15, width: 10, height: 5 });
+      toast({
+        title: 'Shipment Created',
+        description: `AWB: ${response.shipment.awbNumber}`,
+      });
+      fetchOrders();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.message || 'Failed to create shipment',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -446,6 +468,15 @@ const Admin = () => {
               }`}
           >
             Coupons
+          </button>
+          <button
+            onClick={() => setActiveTab('shipping')}
+            className={`pb-3 px-1 text-sm font-medium transition-colors ${activeTab === 'shipping'
+              ? 'text-foreground border-b-2 border-foreground'
+              : 'text-muted-foreground hover:text-foreground'
+              }`}
+          >
+            Shipping
           </button>
         </div>
 
@@ -748,23 +779,35 @@ const Admin = () => {
                             {order.status}
                           </Badge>
                         </td>
-                        <td className="p-4 text-right">
-                          <Select
-                            onValueChange={(value) => handleUpdateOrderStatus(order.id, value)}
-                            defaultValue={order.status}
-                          >
-                            <SelectTrigger className="w-32 ml-auto h-8 text-xs">
-                              <SelectValue placeholder="Update Status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="PENDING">Pending</SelectItem>
-                              <SelectItem value="PROCESSING">Processing</SelectItem>
-                              <SelectItem value="SHIPPED">Shipped</SelectItem>
-                              <SelectItem value="DELIVERED">Delivered</SelectItem>
-                              <SelectItem value="CANCELLED">Cancelled</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </td>
+                         <td className="p-4 text-right">
+                           <div className="flex items-center justify-end gap-2">
+                             {!order.awbNumber && order.status !== 'CANCELLED' && order.status !== 'DELIVERED' && (
+                               <Button 
+                                 size="sm" 
+                                 variant="outline" 
+                                 className="h-8 text-xs bg-kama-olive/10 text-kama-olive hover:bg-kama-olive hover:text-kama-cream"
+                                 onClick={() => handleCreateShipment(order)}
+                               >
+                                 Ship with Shiprocket
+                               </Button>
+                             )}
+                             <Select
+                               onValueChange={(value) => handleUpdateOrderStatus(order.id, value)}
+                               defaultValue={order.status}
+                             >
+                               <SelectTrigger className="w-32 h-8 text-xs">
+                                 <SelectValue placeholder="Update Status" />
+                               </SelectTrigger>
+                               <SelectContent>
+                                 <SelectItem value="PENDING">Pending</SelectItem>
+                                 <SelectItem value="PROCESSING">Processing</SelectItem>
+                                 <SelectItem value="SHIPPED">Shipped</SelectItem>
+                                 <SelectItem value="DELIVERED">Delivered</SelectItem>
+                                 <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                               </SelectContent>
+                             </Select>
+                           </div>
+                         </td>
                       </tr>
                     ))}
                   </tbody>
@@ -782,6 +825,11 @@ const Admin = () => {
         {/* Coupons Tab */}
         {activeTab === 'coupons' && (
           <CouponManagement />
+        )}
+
+        {/* Shipping Tab */}
+        {activeTab === 'shipping' && (
+          <ShippingManagement />
         )}
       </div>
     </Layout>
