@@ -6,45 +6,46 @@ import { Link } from "react-router-dom";
 
 const slides = [
   {
-    type: "image",
-    image: "banners/banner1.png",
-    title: "Ancient Wisdom, Modern Skin",
-    subtitle: "Artisanal Ayurvedic formulas crafted for your daily rituals.",
-    cta: "SHOP THE RITUAL",
-    link: "/products"
+    type: "video",
+    video: "/video/1.mp4",
+    title: "Discover Authentic Ayurveda",
+    subtitle: "Pure botanicals, ancient wisdom",
+    cta: "SHOP NOW",
+    // link: createPageUrl("Products")
   },
   {
     type: "image",
-    image: "banners/banner2.png",
-    title: "10% Off Your First Order",
-    subtitle: "Unlock your welcome gift with code: VEDESSA10",
-    cta: "COLLECT OFFER",
-    link: "/products"
+    image: "https://images.unsplash.com/photo-1596755389378-c31d21fd1273?w=1600&q=80",
+    title: "Eladhi Collection",
+    subtitle: "Hydrating formulas for radiant skin",
+    cta: "EXPLORE",
+    // link: createPageUrl("Products", "collection=eladhi")
   },
   {
     type: "image",
-    image: "banners/banner3.png",
-    title: "The Art of Hair Care",
-    subtitle: "Strengthening oils and herbs for lustrous, healthy hair.",
-    cta: "EXPLORE HAIR CARE",
-    link: "/products?category=hair-care"
+    image: "https://images.unsplash.com/photo-1571875257727-256c39da42af?w=1600&q=80",
+    title: "Bringaras Hair Care",
+    subtitle: "For healthy, lustrous hair",
+    cta: "DISCOVER",
+    // link: createPageUrl("Products", "collection=bringaras")
+  },
+  {
+    type: "image",
+    image: "https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=1600&q=80",
+    title: "Weekend Offer",
+    subtitle: "Complimentary minis worth up to ₹5640",
+    cta: "SHOP THE OFFER",
+    // link: createPageUrl("Products")
   }
 ];
 
 export default function HeroSection() {
-  // const [currentSlide, setCurrentSlide] = useState(0);
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [isInitialized, setIsInitialized] = useState(false);
-
-  useEffect(() => {
-    // Ensure we start on first slide
-    setIsInitialized(true);
-  }, []);
 
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 5000);
+    }, 6000);
     return () => clearInterval(timer);
   }, []);
 
@@ -62,13 +63,25 @@ export default function HeroSection() {
           transition={{ duration: 0.8 }}
           className="absolute inset-0"
         >
-          <img
-            src={slides[currentSlide].image}
-            alt={slides[currentSlide].title}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/20 to-transparent" />
-
+          {slides[currentSlide].type === 'video' ? (
+            <video
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="w-full h-full object-cover"
+            >
+              <source src={slides[currentSlide].video} type="video/mp4" />
+            </video>
+          ) : (
+            <img
+              src={slides[currentSlide].image}
+              alt={slides[currentSlide].title}
+              className="w-full h-full object-cover"
+            />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent" />
+          
           <div className="absolute inset-0 flex items-center">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
               <motion.div
@@ -77,14 +90,14 @@ export default function HeroSection() {
                 transition={{ delay: 0.3 }}
                 className="max-w-2xl"
               >
-                <h1 className="text-4xl md:text-7xl font-display text-white mb-6 leading-tight drop-shadow-lg">
+                <h1 className="text-4xl md:text-6xl font-serif text-white mb-4 leading-tight">
                   {slides[currentSlide].title}
                 </h1>
-                <p className="text-xl md:text-2xl text-white/95 mb-10 font-light max-w-lg drop-shadow">
+                <p className="text-xl text-white/90 mb-8 font-light">
                   {slides[currentSlide].subtitle}
                 </p>
                 <Link to={slides[currentSlide].link}>
-                  <button className="bg-kama-orange hover:bg-white hover:text-kama-olive text-white px-10 py-5 text-sm font-semibold tracking-widest uppercase transition-all duration-300 rounded-sm shadow-xl hover:scale-105 active:scale-95">
+                  <button className="bg-[#C17855] hover:bg-[#A66545] text-white px-10 py-4 text-sm font-medium tracking-wider uppercase transition-colors">
                     {slides[currentSlide].cta}
                   </button>
                 </Link>
@@ -114,8 +127,9 @@ export default function HeroSection() {
           <button
             key={index}
             onClick={() => setCurrentSlide(index)}
-            className={`w-2 h-2 rounded-full transition-all ${index === currentSlide ? "bg-white w-8" : "bg-white/50"
-              }`}
+            className={`w-2 h-2 rounded-full transition-all ${
+              index === currentSlide ? "bg-white w-8" : "bg-white/50"
+            }`}
           />
         ))}
       </div>
