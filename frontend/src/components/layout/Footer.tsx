@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Facebook, Instagram, Twitter, Youtube, MapPin, Phone, Mail } from 'lucide-react';
+import logo2 from '../../../dist/assets/1.png';
+import Image from 'next/image'
 
 const Footer = () => {
   return (
@@ -10,14 +12,15 @@ const Footer = () => {
           <div className="lg:col-span-1">
             <Link to="/" className="block mb-4">
               <img
-                src="/logo/2.png"
+                src='../../../dist/assets/1.png'
                 alt="Vedessa"
                 className="h-16 w-auto brightness-0 invert"
               />
             </Link>
             <p className="text-sm leading-relaxed mb-4">
-              Vedessa is built on the pride of making an exceptional products and experiences that
-              celebrate India's rich Ayurvedic traditions. Premium quality, style, and innovation.
+              Vedessa is built on the pride of making an exceptional products
+              and experiences that celebrate India's rich Ayurvedic traditions.
+              Premium quality, style, and innovation.
             </p>
             {/* App Download Badges */}
             {/* <div className="flex gap-2 mt-4">
@@ -45,30 +48,39 @@ const Footer = () => {
             </h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link to="/products" className="hover:text-white transition-colors">
+                <Link
+                  to="/products"
+                  className="hover:text-white transition-colors"
+                >
                   Search
                 </Link>
               </li>
               <li>
-                <Link to="/about" className="hover:text-white transition-colors">
+                <Link
+                  to="/about"
+                  className="hover:text-white transition-colors"
+                >
                   About Us
                 </Link>
               </li>
-              <li>
+              {/* <li>
                 <Link to="/blog" className="hover:text-white transition-colors">
                   Blog/News
                 </Link>
-              </li>
+              </li> */}
               <li>
-                <Link to="/delivery" className="hover:text-white transition-colors">
+                <Link
+                  to="/delivery-information"
+                  className="hover:text-white transition-colors"
+                >
                   Delivery Information
                 </Link>
               </li>
-              <li>
+              {/* <li>
                 <Link to="/sitemap" className="hover:text-white transition-colors">
                   Sitemap
                 </Link>
-              </li>
+              </li> */}
             </ul>
           </div>
 
@@ -79,22 +91,31 @@ const Footer = () => {
             </h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link to="/policy" className="hover:text-white transition-colors">
+                <Link
+                  to="/policy"
+                  className="hover:text-white transition-colors"
+                >
                   Policy for Buyer
                 </Link>
               </li>
               <li>
-                <Link to="/shipping" className="hover:text-white transition-colors">
+                <Link
+                  to="/shipping"
+                  className="hover:text-white transition-colors"
+                >
                   Shipping & Refund
                 </Link>
               </li>
-              <li>
+              {/* <li>
                 <Link to="/policy/seller" className="hover:text-white transition-colors">
                   Policy for Seller
                 </Link>
-              </li>
+              </li> */}
               <li>
-                <Link to="/terms" className="hover:text-white transition-colors">
+                <Link
+                  to="/terms"
+                  className="hover:text-white transition-colors"
+                >
                   Terms and Conditions
                 </Link>
               </li>
@@ -113,27 +134,39 @@ const Footer = () => {
             </h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link to="/track" className="hover:text-white transition-colors">
+                <Link
+                  to="/track"
+                  className="hover:text-white transition-colors"
+                >
                   Track Order
                 </Link>
               </li>
               <li>
-                <Link to="/about" className="hover:text-white transition-colors">
+                <Link
+                  to="/about"
+                  className="hover:text-white transition-colors"
+                >
                   About Us
                 </Link>
               </li>
-              <li>
+              {/* <li>
                 <Link to="/careers" className="hover:text-white transition-colors">
                   Careers
                 </Link>
-              </li>
+              </li> */}
               <li>
-                <Link to="/returns" className="hover:text-white transition-colors">
+                <Link
+                  to="/returns"
+                  className="hover:text-white transition-colors"
+                >
                   Returns
                 </Link>
               </li>
               <li>
-                <Link to="/delivery" className="hover:text-white transition-colors">
+                <Link
+                  to="/delivery"
+                  className="hover:text-white transition-colors"
+                >
                   Delivery Information
                 </Link>
               </li>
@@ -156,13 +189,19 @@ const Footer = () => {
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="w-4 h-4 flex-shrink-0 text-green-400" />
-                <a href="tel:+919876543210" className="hover:text-white transition-colors">
+                <a
+                  href="tel:+919876543210"
+                  className="hover:text-white transition-colors"
+                >
                   +91 8779989858
                 </a>
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="w-4 h-4 flex-shrink-0 text-green-400" />
-                <a href="mailto:vedessa0203@gmail.com" className="hover:text-white transition-colors">
+                <a
+                  href="mailto:vedessa0203@gmail.com"
+                  className="hover:text-white transition-colors"
+                >
                   vedessa0203@gmail.com
                 </a>
               </li>
@@ -207,7 +246,8 @@ const Footer = () => {
 
             {/* Copyright */}
             <p className="text-sm text-gray-500 text-center">
-              © 2025 Vedessa - Beauty Store Responsive eCommerce | Powered by Vedessa
+              © 2026 Vedessa - Beauty Store Responsive eCommerce | Powered by
+              Vedessa
             </p>
 
             {/* Payment Methods */}

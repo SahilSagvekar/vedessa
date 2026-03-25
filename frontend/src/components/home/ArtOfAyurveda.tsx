@@ -51,7 +51,7 @@ export default function ArtOfAyurveda() {
                 playsInline
                 className="w-full h-full object-cover"
               >
-                <source src="https://cdn.coverr.co/videos/coverr-a-woman-applying-moisturizer-on-her-face-8899/1080p.mp4" type="video/mp4" />
+                <source src="/video/2.mp4" type="video/mp4" />
               </video>
             </div>
           </motion.div>

@@ -27,7 +27,7 @@ export default function About() {
                     <div className="grid md:grid-cols-2 gap-12 items-center">
                         <div>
                             <img
-                                src="https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=800"
+                                src="https://images.pexels.com/photos/11284797/pexels-photo-11284797.jpeg"
                                 alt="Ayurvedic ingredients"
                                 className="rounded-2xl shadow-lg"
                             />
@@ -51,7 +51,7 @@ export default function About() {
             </section>
 
             {/* Values */}
-            <section className="py-16 bg-gray-50">
+            {/* <section className="py-16 bg-gray-50">
                 <div className="container mx-auto px-4">
                     <h2 className="text-3xl font-serif text-gray-900 text-center mb-12">Our Values</h2>
                     <div className="grid md:grid-cols-3 gap-8">
@@ -95,10 +95,10 @@ export default function About() {
                         ))}
                     </div>
                 </div>
-            </section>
+            </section> */}
 
             {/* Team */}
-            <section className="py-16 bg-white">
+            {/* <section className="py-16 bg-white">
                 <div className="container mx-auto px-4">
                     <h2 className="text-3xl font-serif text-gray-900 text-center mb-4">Meet Our Team</h2>
                     <p className="text-gray-600 text-center max-w-2xl mx-auto mb-12">
@@ -124,7 +124,7 @@ export default function About() {
                         ))}
                     </div>
                 </div>
-            </section>
+            </section> */}
 
             {/* CTA */}
             <section className="py-16 bg-green-700">
