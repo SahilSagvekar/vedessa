@@ -1,7 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Facebook, Instagram, Twitter, Youtube, MapPin, Phone, Mail } from 'lucide-react';
-import logo2 from '../../../dist/assets/1.png';
-import Image from 'next/image'
+import { Instagram, Youtube, MapPin, Phone, Mail } from 'lucide-react';
 
 const Footer = () => {
   return (
@@ -12,33 +10,37 @@ const Footer = () => {
           <div className="lg:col-span-1">
             <Link to="/" className="block mb-4">
               <img
-                src='../../../dist/assets/1.png'
+                src="/assets/1.png"
                 alt="Vedessa"
                 className="h-16 w-auto brightness-0 invert"
               />
             </Link>
             <p className="text-sm leading-relaxed mb-4">
-              Vedessa is built on the pride of making an exceptional products
+              Vedessa is built on the pride of making exceptional products
               and experiences that celebrate India's rich Ayurvedic traditions.
               Premium quality, style, and innovation.
             </p>
-            {/* App Download Badges */}
-            {/* <div className="flex gap-2 mt-4">
-              <a href="#" className="block">
-                <img
-                  src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Download_on_the_App_Store_Badge.svg/320px-Download_on_the_App_Store_Badge.svg.png"
-                  alt="App Store"
-                  className="h-10 w-auto"
-                />
+            {/* Social Icons */}
+            <div className="flex items-center gap-3 mt-4">
+              <a
+                href="https://www.instagram.com/vedessa_/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-9 h-9 rounded-full bg-gray-800 hover:bg-green-600 flex items-center justify-center transition-colors"
+                aria-label="Instagram"
+              >
+                <Instagram className="w-4 h-4" />
               </a>
-              <a href="#" className="block">
-                <img
-                  src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Google_Play_Store_badge_EN.svg/320px-Google_Play_Store_badge_EN.svg.png"
-                  alt="Google Play"
-                  className="h-10 w-auto"
-                />
+              <a
+                href="https://www.youtube.com/@Vedessa_hs"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-9 h-9 rounded-full bg-gray-800 hover:bg-green-600 flex items-center justify-center transition-colors"
+                aria-label="YouTube"
+              >
+                <Youtube className="w-4 h-4" />
               </a>
-            </div> */}
+            </div>
           </div>
 
           {/* Quick Links */}
@@ -48,39 +50,25 @@ const Footer = () => {
             </h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link
-                  to="/products"
-                  className="hover:text-white transition-colors"
-                >
-                  Search
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/about"
-                  className="hover:text-white transition-colors"
-                >
+                <Link to="/about" className="hover:text-white transition-colors">
                   About Us
                 </Link>
               </li>
-              {/* <li>
-                <Link to="/blog" className="hover:text-white transition-colors">
-                  Blog/News
-                </Link>
-              </li> */}
               <li>
-                <Link
-                  to="/delivery-information"
-                  className="hover:text-white transition-colors"
-                >
-                  Delivery Information
+                <Link to="/products" className="hover:text-white transition-colors">
+                  Shop
                 </Link>
               </li>
-              {/* <li>
-                <Link to="/sitemap" className="hover:text-white transition-colors">
-                  Sitemap
+              <li>
+                <Link to="/contact" className="hover:text-white transition-colors">
+                  Contact
                 </Link>
-              </li> */}
+              </li>
+              <li>
+                <Link to="/faq" className="hover:text-white transition-colors">
+                  FAQ
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -91,37 +79,13 @@ const Footer = () => {
             </h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link
-                  to="/policy"
-                  className="hover:text-white transition-colors"
-                >
-                  Policy for Buyer
+                <Link to="/terms" className="hover:text-white transition-colors">
+                  Terms & Conditions
                 </Link>
               </li>
               <li>
-                <Link
-                  to="/shipping"
-                  className="hover:text-white transition-colors"
-                >
-                  Shipping & Refund
-                </Link>
-              </li>
-              {/* <li>
-                <Link to="/policy/seller" className="hover:text-white transition-colors">
-                  Policy for Seller
-                </Link>
-              </li> */}
-              <li>
-                <Link
-                  to="/terms"
-                  className="hover:text-white transition-colors"
-                >
-                  Terms and Conditions
-                </Link>
-              </li>
-              <li>
-                <Link to="/faq" className="hover:text-white transition-colors">
-                  FAQs
+                <Link to="/privacy" className="hover:text-white transition-colors">
+                  Privacy Policy
                 </Link>
               </li>
             </ul>
@@ -134,40 +98,18 @@ const Footer = () => {
             </h4>
             <ul className="space-y-2 text-sm">
               <li>
-                <Link
-                  to="/track"
-                  className="hover:text-white transition-colors"
-                >
+                <Link to="/track-order" className="hover:text-white transition-colors">
                   Track Order
                 </Link>
               </li>
               <li>
-                <Link
-                  to="/about"
-                  className="hover:text-white transition-colors"
-                >
-                  About Us
-                </Link>
-              </li>
-              {/* <li>
-                <Link to="/careers" className="hover:text-white transition-colors">
-                  Careers
-                </Link>
-              </li> */}
-              <li>
-                <Link
-                  to="/returns"
-                  className="hover:text-white transition-colors"
-                >
-                  Returns
+                <Link to="/shipping" className="hover:text-white transition-colors">
+                  Shipping & Returns
                 </Link>
               </li>
               <li>
-                <Link
-                  to="/delivery"
-                  className="hover:text-white transition-colors"
-                >
-                  Delivery Information
+                <Link to="/refund" className="hover:text-white transition-colors">
+                  Refund Policy
                 </Link>
               </li>
             </ul>
@@ -190,7 +132,7 @@ const Footer = () => {
               <li className="flex items-center gap-2">
                 <Phone className="w-4 h-4 flex-shrink-0 text-green-400" />
                 <a
-                  href="tel:+919876543210"
+                  href="tel:+918779989858"
                   className="hover:text-white transition-colors"
                 >
                   +91 8779989858
@@ -211,54 +153,9 @@ const Footer = () => {
 
         {/* Bottom Section */}
         <div className="border-t border-gray-800 mt-12 pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            {/* Social Icons */}
-            <div className="flex items-center gap-4">
-              {/* <a
-                href="#"
-                className="w-8 h-8 rounded-full bg-gray-800 hover:bg-green-600 flex items-center justify-center transition-colors"
-                aria-label="Facebook"
-              >
-                <Facebook className="w-4 h-4" />
-              </a>
-              <a
-                href="#"
-                className="w-8 h-8 rounded-full bg-gray-800 hover:bg-green-600 flex items-center justify-center transition-colors"
-                aria-label="Twitter"
-              >
-                <Twitter className="w-4 h-4" />
-              </a>
-              <a
-                href="#"
-                className="w-8 h-8 rounded-full bg-gray-800 hover:bg-green-600 flex items-center justify-center transition-colors"
-                aria-label="Instagram"
-              >
-                <Instagram className="w-4 h-4" />
-              </a>
-              <a
-                href="#"
-                className="w-8 h-8 rounded-full bg-gray-800 hover:bg-green-600 flex items-center justify-center transition-colors"
-                aria-label="YouTube"
-              >
-                <Youtube className="w-4 h-4" />
-              </a> */}
-            </div>
-
-            {/* Copyright */}
-            <p className="text-sm text-gray-500 text-center">
-              © 2026 Vedessa - Beauty Store Responsive eCommerce | Powered by
-              Vedessa
-            </p>
-
-            {/* Payment Methods */}
-            <div className="flex items-center gap-2">
-              {/* <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/320px-Visa_Inc._logo.svg.png" alt="Visa" className="h-6" />
-              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/320px-Mastercard-logo.svg.png" alt="Mastercard" className="h-6" />
-              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/PayPal.svg/320px-PayPal.svg.png" alt="PayPal" className="h-6" />
-              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/American_Express_logo_%282018%29.svg/320px-American_Express_logo_%282018%29.svg.png" alt="Amex" className="h-6" />
-              <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Razorpay_logo.svg/320px-Razorpay_logo.svg.png" alt="Razorpay" className="h-6" /> */}
-            </div>
-          </div>
+          <p className="text-sm text-gray-500 text-center">
+            © {new Date().getFullYear()} Vedessa. All rights reserved.
+          </p>
         </div>
       </div>
     </footer>
