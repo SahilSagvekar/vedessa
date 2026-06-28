@@ -95,6 +95,13 @@ model Product {
   stock         Int         @default(100)
   lowStockThreshold Int     @default(5) @map("low_stock_threshold")
   weight        Decimal     @default(0.5) @db.Decimal(10, 2)
+  ingredients   String?     // Full ingredient list (INCI names)
+  countryOfOrigin String?   @map("country_of_origin")
+  manufacturedBy String?    @map("manufactured_by")
+  mfgDate       String?     @map("mfg_date")  // e.g. "MM/YYYY"
+  expiryDate    String?     @map("expiry_date") // e.g. "MM/YYYY" or "Best before X months"
+  netQuantity   String?     @map("net_quantity") // e.g. "100ml", "50g"
+  batchNo       String?     @map("batch_no")
   createdAt     DateTime    @default(now()) @map("created_at")
   updatedAt     DateTime    @updatedAt @map("updated_at")
 

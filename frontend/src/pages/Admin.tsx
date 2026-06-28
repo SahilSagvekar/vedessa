@@ -56,6 +56,13 @@ interface ProductFormData {
   isNew: boolean;
   isBestseller: boolean;
   stock: string;
+  ingredients: string;
+  countryOfOrigin: string;
+  manufacturedBy: string;
+  mfgDate: string;
+  expiryDate: string;
+  netQuantity: string;
+  batchNo: string;
 }
 
 const Admin = () => {
@@ -90,6 +97,13 @@ const Admin = () => {
     isNew: false,
     isBestseller: false,
     stock: '100',
+    ingredients: '',
+    countryOfOrigin: 'India',
+    manufacturedBy: '',
+    mfgDate: '',
+    expiryDate: '',
+    netQuantity: '',
+    batchNo: '',
   });
 
   const stats = [
@@ -225,6 +239,13 @@ const Admin = () => {
       isNew: false,
       isBestseller: false,
       stock: '100',
+      ingredients: '',
+      countryOfOrigin: 'India',
+      manufacturedBy: '',
+      mfgDate: '',
+      expiryDate: '',
+      netQuantity: '',
+      batchNo: '',
     });
     setIsEditMode(false);
     setEditProductId(null);
@@ -243,12 +264,19 @@ const Admin = () => {
       name: product.name,
       description: product.description,
       price: product.price.toString(),
-      image: product.image || '', // Ensure image is always a string
+      image: product.image || '',
       category: product.category,
       collection: product.collection,
       isNew: product.isNew,
       isBestseller: product.isBestseller,
       stock: product.stock.toString(),
+      ingredients: (product as any).ingredients || '',
+      countryOfOrigin: (product as any).countryOfOrigin || 'India',
+      manufacturedBy: (product as any).manufacturedBy || '',
+      mfgDate: (product as any).mfgDate || '',
+      expiryDate: (product as any).expiryDate || '',
+      netQuantity: (product as any).netQuantity || '',
+      batchNo: (product as any).batchNo || '',
     });
     setIsEditMode(true);
     setEditProductId(product.id);
@@ -592,6 +620,55 @@ const Admin = () => {
                             className="flex-1"
                           />
                         </div>
+                      </div>
+                    </div>
+
+                    {/* Legal / Compliance Fields */}
+                    <div className="border-t pt-4 space-y-4">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Legal & Compliance (Required by law)</p>
+
+                      <div>
+                        <Label htmlFor="netQuantity">Net Quantity *</Label>
+                        <Input id="netQuantity" value={formData.netQuantity} onChange={(e) => setFormData({ ...formData, netQuantity: e.target.value })} placeholder="e.g. 100ml, 50g" />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="ingredients">Ingredients (INCI names) *</Label>
+                        <textarea
+                          id="ingredients"
+                          value={formData.ingredients}
+                          onChange={(e) => setFormData({ ...formData, ingredients: e.target.value })}
+                          placeholder="e.g. Aqua, Aloe Barbadensis Leaf Juice, Glycerin..."
+                          rows={3}
+                          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="mfgDate">Mfg. Date</Label>
+                          <Input id="mfgDate" value={formData.mfgDate} onChange={(e) => setFormData({ ...formData, mfgDate: e.target.value })} placeholder="MM/YYYY" />
+                        </div>
+                        <div>
+                          <Label htmlFor="expiryDate">Expiry / Best Before</Label>
+                          <Input id="expiryDate" value={formData.expiryDate} onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })} placeholder="MM/YYYY or 24 months" />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="manufacturedBy">Manufactured By</Label>
+                          <Input id="manufacturedBy" value={formData.manufacturedBy} onChange={(e) => setFormData({ ...formData, manufacturedBy: e.target.value })} placeholder="Manufacturer name & address" />
+                        </div>
+                        <div>
+                          <Label htmlFor="countryOfOrigin">Country of Origin</Label>
+                          <Input id="countryOfOrigin" value={formData.countryOfOrigin} onChange={(e) => setFormData({ ...formData, countryOfOrigin: e.target.value })} placeholder="India" />
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="batchNo">Batch No.</Label>
+                        <Input id="batchNo" value={formData.batchNo} onChange={(e) => setFormData({ ...formData, batchNo: e.target.value })} placeholder="e.g. BT2024001" />
                       </div>
                     </div>
 

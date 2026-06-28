@@ -295,7 +295,14 @@ const createProduct = async (req, res) => {
       isNew = false,
       isBestseller = false,
       stock = 100,
-      variants = []
+      variants = [],
+      ingredients,
+      countryOfOrigin,
+      manufacturedBy,
+      mfgDate,
+      expiryDate,
+      netQuantity,
+      batchNo,
     } = req.body;
     
     console.log('Extracted body fields:', { name, price, categoryId, collectionId });
@@ -349,6 +356,13 @@ const createProduct = async (req, res) => {
       isNew: isNew === 'true' || isNew === true,
       isBestseller: isBestseller === 'true' || isBestseller === true,
       stock: parseInt(stock),
+      ingredients: ingredients || null,
+      countryOfOrigin: countryOfOrigin || null,
+      manufacturedBy: manufacturedBy || null,
+      mfgDate: mfgDate || null,
+      expiryDate: expiryDate || null,
+      netQuantity: netQuantity || null,
+      batchNo: batchNo || null,
       images: {
         create: imagesData
       },

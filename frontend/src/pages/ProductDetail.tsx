@@ -594,6 +594,59 @@ export default function ProductDetail() {
           </div>
         </div>
 
+        {/* Product Details / Legal Info */}
+        {(product.ingredients || product.netQuantity || product.manufacturedBy || product.countryOfOrigin || product.mfgDate || product.expiryDate) && (
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10 border-t border-gray-200 mt-4">
+            <h2 className="text-xl font-serif text-gray-900 mb-6">Product Information</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {product.ingredients && (
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wide">Ingredients</h3>
+                  <p className="text-sm text-gray-600 leading-relaxed">{product.ingredients}</p>
+                </div>
+              )}
+              <div className="space-y-3">
+                {product.netQuantity && (
+                  <div className="flex justify-between text-sm border-b border-gray-100 pb-2">
+                    <span className="text-gray-500">Net Quantity</span>
+                    <span className="text-gray-800 font-medium">{product.netQuantity}</span>
+                  </div>
+                )}
+                {product.countryOfOrigin && (
+                  <div className="flex justify-between text-sm border-b border-gray-100 pb-2">
+                    <span className="text-gray-500">Country of Origin</span>
+                    <span className="text-gray-800 font-medium">{product.countryOfOrigin}</span>
+                  </div>
+                )}
+                {product.manufacturedBy && (
+                  <div className="flex justify-between text-sm border-b border-gray-100 pb-2">
+                    <span className="text-gray-500">Manufactured By</span>
+                    <span className="text-gray-800 font-medium">{product.manufacturedBy}</span>
+                  </div>
+                )}
+                {product.mfgDate && (
+                  <div className="flex justify-between text-sm border-b border-gray-100 pb-2">
+                    <span className="text-gray-500">Mfg. Date</span>
+                    <span className="text-gray-800 font-medium">{product.mfgDate}</span>
+                  </div>
+                )}
+                {product.expiryDate && (
+                  <div className="flex justify-between text-sm border-b border-gray-100 pb-2">
+                    <span className="text-gray-500">Best Before</span>
+                    <span className="text-gray-800 font-medium">{product.expiryDate}</span>
+                  </div>
+                )}
+                {product.batchNo && (
+                  <div className="flex justify-between text-sm border-b border-gray-100 pb-2">
+                    <span className="text-gray-500">Batch No.</span>
+                    <span className="text-gray-800 font-medium">{product.batchNo}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Reviews Section */}
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 border-t border-gray-200 mt-12">
           <ProductReviews
