@@ -116,20 +116,28 @@ const Privacy = () => {
             </div>
             <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
               <p className="text-muted-foreground leading-relaxed mb-4">
-                We do not sell your data. We only share information with:
+                We do not sell your data. We only share information with trusted third-party service providers strictly necessary to operate our platform. Each provider is listed below along with the data they receive:
               </p>
-              <ul className="space-y-2 text-muted-foreground">
-                {/* <li className="flex gap-2">
-                  <span className="text-kama-olive font-bold">•</span>
-                  <span><strong>Logistics Partners:</strong> Ekart/Ecom Express for delivering your packages.</span>
-                </li> */}
+              <ul className="space-y-3 text-muted-foreground">
                 <li className="flex gap-2">
-                  <span className="text-kama-olive font-bold">•</span>
-                  <span><strong>Payment Processors:</strong> Razorpay for handling transactions.</span>
+                  <span className="text-kama-olive font-bold flex-shrink-0">•</span>
+                  <span><strong className="text-foreground">Razorpay</strong> — Payment processing. Receives your order amount, contact details, and billing information to process payments securely. Razorpay is PCI-DSS compliant. We do not store your card number or CVV. <a href="https://razorpay.com/privacy/" target="_blank" rel="noopener noreferrer" className="text-primary underline">Razorpay Privacy Policy</a>.</span>
                 </li>
                 <li className="flex gap-2">
-                  <span className="text-kama-olive font-bold">•</span>
-                  <span><strong>Cloud Services:</strong> Secure servers for database management.</span>
+                  <span className="text-kama-olive font-bold flex-shrink-0">•</span>
+                  <span><strong className="text-foreground">India Post</strong> — Shipping and delivery. Receives your name, delivery address, phone number, and order details to fulfil and track shipments.</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-kama-olive font-bold flex-shrink-0">•</span>
+                  <span><strong className="text-foreground">Cloudinary</strong> — Cloud media storage. Product images are stored and served via Cloudinary. No personal user data is shared with Cloudinary.</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-kama-olive font-bold flex-shrink-0">•</span>
+                  <span><strong className="text-foreground">Sentry</strong> — Error monitoring. Receives anonymised error logs and technical diagnostic data (browser type, page URL, crash reports) to help us fix bugs. Personal identifiers are stripped before transmission. <a href="https://sentry.io/privacy/" target="_blank" rel="noopener noreferrer" className="text-primary underline">Sentry Privacy Policy</a>.</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-kama-olive font-bold flex-shrink-0">•</span>
+                  <span><strong className="text-foreground">Legal &amp; Regulatory Authorities</strong> — We may disclose your information to law enforcement or government authorities when required by law or to protect the rights and safety of Vedessa and its users.</span>
                 </li>
               </ul>
             </div>
