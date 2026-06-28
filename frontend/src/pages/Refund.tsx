@@ -134,6 +134,18 @@ const Refund = () => {
             </div>
           </section>
 
+          {/* Cancellation Policy */}
+          <section className="mb-10">
+            <div className="flex items-center gap-3 mb-4">
+              <h2 className="text-2xl font-display text-foreground">5. Order Cancellation</h2>
+            </div>
+            <div className="bg-amber-50 border border-amber-100 rounded-xl p-6 text-muted-foreground leading-relaxed">
+              <p className="font-semibold text-foreground mb-2">All orders are final once placed.</p>
+              <p>We do not accept cancellation requests after an order has been confirmed and payment has been received. Please review your order carefully before completing checkout.</p>
+              <p className="mt-3">If you received a damaged, defective, or incorrect product, you are still eligible to raise a return or replacement request under our Return Policy above.</p>
+            </div>
+          </section>
+
           {/* Help */}
           <section className="mb-10">
             <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-8 border border-border text-center">

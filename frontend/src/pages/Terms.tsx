@@ -128,10 +128,15 @@ export default function Terms() {
                 </p>
               </div>
               <div>
-                <h3 className="font-semibold text-foreground mb-2">4.3 Order Cancellation</h3>
+                <h3 className="font-semibold text-foreground mb-2">4.3 Order Cancellation by Vedessa</h3>
                 <p className="text-muted-foreground leading-relaxed">
                   We reserve the right to refuse or cancel any order for reasons including but not limited to: product unavailability, pricing errors, suspected fraud, or quantity limits per customer.
                 </p>
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground mb-2">4.4 Customer Cancellation Policy</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  All orders are final once placed. We do not accept cancellation requests after an order has been confirmed. Please review your cart carefully before proceeding to payment. In the event of a damaged, defective, or incorrect product, you may raise a return request under our <a href="/refund" className="text-primary underline">Refund &amp; Return Policy</a>.</p>
               </div>
             </div>
           </section>
