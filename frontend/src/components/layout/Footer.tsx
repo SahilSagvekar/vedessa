@@ -152,9 +152,13 @@ const Footer = () => {
         </div>
 
         {/* Bottom Section */}
-        <div className="border-t border-gray-800 mt-12 pt-8">
+        <div className="border-t border-gray-800 mt-12 pt-8 space-y-2">
           <p className="text-sm text-gray-500 text-center">
             © {new Date().getFullYear()} Vedessa. All rights reserved.
+          </p>
+          <p className="text-xs text-gray-600 text-center">
+            Vedessa is a brand operated by <span className="text-gray-500">[Legal Entity Name — to be updated]</span>, registered in India.
+            Registered Address: Dahisar, Mumbai, Maharashtra 400068, India.
           </p>
         </div>
       </div>

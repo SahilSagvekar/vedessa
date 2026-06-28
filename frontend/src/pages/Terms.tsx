@@ -218,6 +218,25 @@ export default function Terms() {
 
           {/* Grievance Redressal */}
           <section className="mb-10">
+            <div className="bg-amber-50 rounded-2xl p-8 border border-amber-100">
+              <h2 className="text-2xl font-display text-foreground mb-4">Legal Entity Information</h2>
+              <p className="text-muted-foreground leading-relaxed mb-4">
+                As required under the Consumer Protection (E-Commerce) Rules, 2020 and the Information Technology Act, 2000, the following information about the entity operating this platform is disclosed:
+              </p>
+              <div className="space-y-2 text-foreground">
+                <p><span className="font-semibold">Brand Name:</span> Vedessa</p>
+                <p><span className="font-semibold">Legal Structure:</span> [To be updated upon registration — Sole Proprietorship / LLP / Private Limited]</p>
+                <p><span className="font-semibold">Registered Name:</span> [To be updated]</p>
+                <p><span className="font-semibold">Registered Address:</span> Dahisar, Mumbai, Maharashtra 400068, India</p>
+                <p><span className="font-semibold">Email:</span> vedessa0203@gmail.com</p>
+                <p className="text-muted-foreground text-sm mt-4">
+                  This platform is operated by the above-mentioned entity. All transactions, disputes, and legal matters are subject to the jurisdiction of courts in Mumbai, Maharashtra, India.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section className="mb-10">
             <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-8 border border-border">
               <h2 className="text-2xl font-display text-foreground mb-4">Grievance Redressal</h2>
               <p className="text-muted-foreground leading-relaxed mb-4">

@@ -63,6 +63,9 @@ app.use(cors({
   exposedHeaders: ['Content-Type', 'Authorization']
 }));
 
+// Raw body for Razorpay webhook signature verification (must come BEFORE express.json())
+app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
+
 // Body parser middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

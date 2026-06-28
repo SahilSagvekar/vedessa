@@ -19,7 +19,7 @@ const Checkout = () => {
   const { initiatePayment, loading: paymentLoading } = useRazorpay();
   const { toast } = useToast();
 
-  const [shippingAddress, setShippingAddress] = useState({
+  const [termsAccepted, setTermsAccepted] = useState(false);
     fullName: user?.fullName || '',
     email: user?.email || '',
     phone: '',
@@ -163,6 +163,15 @@ const Checkout = () => {
 
   const handlePlaceOrder = async () => {
     if (!validateForm()) return;
+
+    if (!termsAccepted) {
+      toast({
+        title: 'Please accept the Terms',
+        description: 'You must agree to our Terms & Conditions and Refund Policy before placing an order.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     const shippingCost = cart.summary.subtotal > 1000 ? 0 : 50;
     const discountAmount = appliedCoupon ? appliedCoupon.discountAmount : 0;
@@ -426,9 +435,25 @@ const Checkout = () => {
               </div>
             </div>
 
+            <div className="flex items-start gap-2 mt-4">
+              <input
+                id="checkout-consent"
+                type="checkbox"
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+                className="mt-1 h-4 w-4 rounded accent-kama-olive cursor-pointer"
+              />
+              <label htmlFor="checkout-consent" className="text-xs text-muted-foreground leading-snug cursor-pointer">
+                I agree to Vedessa's{' '}
+                <a href="/terms" target="_blank" className="underline hover:text-foreground">Terms &amp; Conditions</a>,{' '}
+                <a href="/refund" target="_blank" className="underline hover:text-foreground">Refund Policy</a>, and{' '}
+                <a href="/shipping" target="_blank" className="underline hover:text-foreground">Shipping Policy</a>.
+              </label>
+            </div>
+
             <Button
               onClick={handlePlaceOrder}
-              disabled={paymentLoading}
+              disabled={paymentLoading || !termsAccepted}
               className="w-full mt-6 bg-kama-olive hover:bg-kama-olive-light text-kama-cream"
             >
               {paymentLoading ? (

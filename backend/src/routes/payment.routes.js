@@ -201,22 +201,25 @@ router.post('/webhook', async (req, res) => {
     const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
     const signature = req.headers['x-razorpay-signature'];
 
+    // req.body is a raw Buffer here (express.raw middleware applied in server.js)
+    const rawBody = req.body;
+
     // Verify webhook signature
     const expectedSignature = crypto
       .createHmac('sha256', secret)
-      .update(JSON.stringify(req.body))
+      .update(rawBody)
       .digest('hex');
 
     if (expectedSignature !== signature) {
       return res.status(400).json({ success: false, message: 'Invalid webhook signature' });
     }
 
-    const event = req.body.event;
-    const payload = req.body.payload;
+    const payload = JSON.parse(rawBody.toString());
+    const event = payload.event;
 
     if (event === 'order.paid') {
-      const razorpayOrder = payload.order.entity;
-      const razorpayPaymentId = payload.payment.entity.id;
+      const razorpayOrder = payload.payload.order.entity;
+      const razorpayPaymentId = payload.payload.payment.entity.id;
 
       // Check if order exists in our DB
       const order = await prisma.order.findUnique({

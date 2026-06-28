@@ -18,7 +18,8 @@ const Auth = () => {
   const [fullName, setFullName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string; fullName?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string; fullName?: string; consent?: string }>({});
+  const [consentAccepted, setConsentAccepted] = useState(false);
 
   const { signIn, signUp, user, isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
@@ -46,6 +47,10 @@ const Auth = () => {
 
     if (!isLogin && !fullName.trim()) {
       newErrors.fullName = 'Full name is required';
+    }
+
+    if (!isLogin && !consentAccepted) {
+      newErrors.consent = 'You must agree to the Terms & Conditions and Privacy Policy to create an account.';
     }
 
     setErrors(newErrors);
@@ -188,6 +193,29 @@ const Auth = () => {
                 </div>
               )}
             </div>
+
+            {!isLogin && (
+              <div className="space-y-1">
+                <div className="flex items-start gap-2">
+                  <input
+                    id="consent"
+                    type="checkbox"
+                    checked={consentAccepted}
+                    onChange={(e) => setConsentAccepted(e.target.checked)}
+                    className="mt-1 h-4 w-4 rounded border-primary/30 accent-primary cursor-pointer"
+                  />
+                  <label htmlFor="consent" className="text-sm text-muted-foreground leading-snug cursor-pointer">
+                    I have read and agree to the{' '}
+                    <Link to="/terms" className="text-primary underline hover:text-primary/80" target="_blank">Terms & Conditions</Link>
+                    {' '}and{' '}
+                    <Link to="/privacy" className="text-primary underline hover:text-primary/80" target="_blank">Privacy Policy</Link>.
+                  </label>
+                </div>
+                {errors.consent && (
+                  <p className="text-sm text-destructive">{errors.consent}</p>
+                )}
+              </div>
+            )}
 
             <Button
               type="submit"
