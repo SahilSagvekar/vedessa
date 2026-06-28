@@ -454,6 +454,14 @@ export default function ProductDetail() {
               </p>
             </div>
 
+            {/* Ayurvedic Disclaimer */}
+            <div className="mb-6 flex gap-2.5 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
+              <span className="text-amber-500 text-base mt-0.5 flex-shrink-0">⚠</span>
+              <p className="text-xs text-amber-800 leading-relaxed">
+                This product is not intended to diagnose, treat, cure, or prevent any disease. Results may vary. Consult a qualified healthcare practitioner before use if you are pregnant, nursing, or have a medical condition. Keep out of reach of children.
+              </p>
+            </div>
+
             {/* Availability */}
             <div className="mb-6">
               <div className="flex items-center gap-2">
