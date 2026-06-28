@@ -117,15 +117,18 @@ export default function ProductCard({ product }: ProductCardProps) {
           )}
 
           {/* Price */}
-          <div className="flex items-baseline gap-2">
-            <span className="text-lg font-serif text-gray-900">
-              ₹{product.price.toFixed(2)}
-            </span>
-            {product.comparePrice && product.comparePrice > product.price && (
-              <span className="text-sm text-gray-400 line-through">
-                ₹{product.comparePrice.toFixed(2)}
+          <div className="flex flex-col gap-0.5">
+            <div className="flex items-baseline gap-2">
+              <span className="text-lg font-serif text-gray-900">
+                ₹{product.price.toFixed(2)}
               </span>
-            )}
+              {product.comparePrice && product.comparePrice > product.price && (
+                <span className="text-sm text-gray-400 line-through">
+                  ₹{product.comparePrice.toFixed(2)}
+                </span>
+              )}
+            </div>
+            <span className="text-[10px] text-gray-400">Inclusive of all taxes</span>
           </div>
         </div>
       </div>

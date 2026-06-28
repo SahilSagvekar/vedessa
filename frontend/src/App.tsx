@@ -30,6 +30,7 @@ import VendorRegistration from '@/pages/VendorRegistration';
 import VendorDashboard from '@/pages/VendorDashboard';
 import TrackOrder from '@/pages/TrackOrder';
 import ErrorBoundary from "@/components/common/ErrorBoundary";
+import CookieConsent from "@/components/common/CookieConsent";
 
 const queryClient = new QueryClient();
 
@@ -70,6 +71,7 @@ const App = () => (
                 <Route path="/vendor/dashboard" element={<VendorDashboard />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              <CookieConsent />
             </BrowserRouter>
           </CartProvider>
         </AuthProvider>
