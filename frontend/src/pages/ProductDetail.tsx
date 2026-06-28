@@ -1,7 +1,7 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import Layout from '@/components/layout/Layout';
-import { Loader2, Plus, Minus, Heart, Share2, Star, Check, ChevronLeft } from 'lucide-react';
+import { Loader2, Plus, Minus, Heart, Share2, Star, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
 import { useWishlist } from '@/hooks/useWishlist';
 import { useAuth } from '@/components/contexts/AuthContext';
@@ -276,14 +276,50 @@ export default function ProductDetail() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
         <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
           {/* Left Side - Images */}
-          <div className="space-y-4">
-            {/* Main Image */}
-            <div className="relative aspect-square bg-gray-50 rounded-lg overflow-hidden">
+          <div className="space-y-3">
+            {/* Main Image with arrow navigation */}
+            <div className="relative aspect-square bg-gray-50 rounded-lg overflow-hidden group">
               <img
                 src={product.images?.[selectedImage]?.url || product.images?.[0]?.url}
                 alt={product.name}
                 className="w-full h-full object-cover"
               />
+
+              {/* Left Arrow */}
+              {product.images && product.images.length > 1 && (
+                <button
+                  onClick={() => setSelectedImage(i => (i - 1 + product.images.length) % product.images.length)}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white shadow-md rounded-full w-9 h-9 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  aria-label="Previous image"
+                >
+                  <ChevronLeft className="w-5 h-5 text-gray-700" />
+                </button>
+              )}
+
+              {/* Right Arrow */}
+              {product.images && product.images.length > 1 && (
+                <button
+                  onClick={() => setSelectedImage(i => (i + 1) % product.images.length)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white shadow-md rounded-full w-9 h-9 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  aria-label="Next image"
+                >
+                  <ChevronRight className="w-5 h-5 text-gray-700" />
+                </button>
+              )}
+
+              {/* Dot indicators */}
+              {product.images && product.images.length > 1 && (
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                  {product.images.map((_: any, index: number) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedImage(index)}
+                      className={`w-1.5 h-1.5 rounded-full transition-all ${selectedImage === index ? 'bg-white w-3' : 'bg-white/60'}`}
+                      aria-label={`Go to image ${index + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
 
               {/* Badges */}
               <div className="absolute top-4 left-4 flex flex-col gap-2">
@@ -307,17 +343,17 @@ export default function ProductDetail() {
               )}
             </div>
 
-            {/* Thumbnail Images */}
+            {/* Thumbnail strip */}
             {product.images && product.images.length > 1 && (
-              <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 sm:gap-3">
+              <div className="flex gap-2 overflow-x-auto pb-1">
                 {product.images.map((image: any, index: number) => (
                   <button
                     key={index}
                     onClick={() => setSelectedImage(index)}
-                    className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${selectedImage === index
+                    className={`flex-shrink-0 w-16 h-16 rounded-md overflow-hidden border-2 transition-all ${selectedImage === index
                       ? 'border-green-700 ring-2 ring-green-200'
-                      : 'border-gray-200 hover:border-gray-300'
-                      }`}
+                      : 'border-gray-200 hover:border-gray-400'
+                    }`}
                   >
                     <img
                       src={image.url}

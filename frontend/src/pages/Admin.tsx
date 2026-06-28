@@ -73,7 +73,7 @@ const Admin = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
 
   // Stats
   const [totalOrders, setTotalOrders] = useState(0);
@@ -229,7 +229,7 @@ const Admin = () => {
     setIsEditMode(false);
     setEditProductId(null);
     setEditingProduct(null);
-    setImageFile(null);
+    setImageFiles([]);
   };
 
   const openAddDialog = () => {
@@ -252,7 +252,7 @@ const Admin = () => {
     });
     setIsEditMode(true);
     setEditProductId(product.id);
-    setImageFile(null);
+    setImageFiles([]);
     setIsDialogOpen(true);
   };
 
@@ -299,18 +299,14 @@ const Admin = () => {
         }
       });
 
-      // Handle image separately - only append if we have a file or valid URL
-      if (imageFile) {
-        productData.append('images', imageFile);
+      // Handle images - append each file under the 'images' field
+      if (imageFiles.length > 0) {
+        imageFiles.forEach((file) => productData.append('images', file));
       } else if (formData.image && formData.image.trim() !== '') {
-        // Only send image URL if it's different from the original (for edit mode)
-        // or if we're creating a new product
         if (!isEditMode || !editingProduct || formData.image !== (editingProduct.image || '')) {
           productData.append('image', formData.image);
         }
       }
-      // If neither imageFile nor new image URL, don't append image field at all
-      // This preserves the existing image when editing
 
       // Add default values for rating and reviews if creating
       if (!isEditMode) {
@@ -548,25 +544,44 @@ const Admin = () => {
                     </div>
 
                     <div>
-                      <Label htmlFor="image">Product Image</Label>
+                      <Label>Product Images</Label>
                       <div className="mt-2 space-y-3">
-                        {formData.image && !imageFile && (
-                          <div className="relative w-24 h-24 rounded-md overflow-hidden border">
-                            <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
+                        {/* Previews of selected files */}
+                        {imageFiles.length > 0 && (
+                          <div className="flex flex-wrap gap-2">
+                            {imageFiles.map((file, idx) => (
+                              <div key={idx} className="relative w-24 h-24 rounded-md overflow-hidden border group">
+                                <img src={URL.createObjectURL(file)} alt={`Preview ${idx + 1}`} className="w-full h-full object-cover" />
+                                <button
+                                  type="button"
+                                  onClick={() => setImageFiles(imageFiles.filter((_, i) => i !== idx))}
+                                  className="absolute top-1 right-1 bg-black/60 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                >✕</button>
+                                {idx === 0 && <span className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[10px] text-center py-0.5">Primary</span>}
+                              </div>
+                            ))}
                           </div>
                         )}
-                        {imageFile && (
+                        {/* Existing image preview in edit mode */}
+                        {formData.image && imageFiles.length === 0 && (
                           <div className="relative w-24 h-24 rounded-md overflow-hidden border">
-                            <img src={URL.createObjectURL(imageFile)} alt="Preview" className="w-full h-full object-cover" />
+                            <img src={formData.image} alt="Current" className="w-full h-full object-cover" />
+                            <span className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[10px] text-center py-0.5">Current</span>
                           </div>
                         )}
                         <Input
-                          id="imageFile"
+                          id="imageFiles"
                           type="file"
                           accept="image/*"
-                          onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                          multiple
+                          onChange={(e) => {
+                            const files = Array.from(e.target.files || []);
+                            setImageFiles(prev => [...prev, ...files]);
+                            e.target.value = '';
+                          }}
                           className="cursor-pointer"
                         />
+                        <p className="text-xs text-muted-foreground">You can select multiple images. The first one becomes the primary image.</p>
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-muted-foreground uppercase">OR Paste URL</span>
                           <Input

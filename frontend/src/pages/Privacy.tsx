@@ -263,7 +263,7 @@ const Privacy = () => {
                 If you wish to access, correct, or delete your personal data, or have concerns about your privacy, please contact our Grievance Officer:
               </p>
               <div className="space-y-2 text-foreground">
-                <p><span className="font-semibold">Grievance Officer:</span> Customer Support Team</p>
+                <p><span className="font-semibold">Grievance Officer:</span> Hiren Patel</p>
                 <p><span className="font-semibold">Email:</span> vedessa0203@gmail.com</p>
                 <p><span className="font-semibold">Address:</span> Dahisar, Mumbai, Maharashtra 400068, India</p>
                 <p className="text-muted-foreground text-sm mt-4">
