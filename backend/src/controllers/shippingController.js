@@ -1,8 +1,6 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../config/database');
 const ekartService = require('../services/ekartService');
 const shiprocketService = require('../services/shiprocketService');
-
-const prisma = new PrismaClient();
 
 /**
  * Create shipment for an order

@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const compression = require('compression');
 const sentry = require('./config/sentry');
 const logger = require('./config/logger');
 
@@ -65,6 +66,9 @@ app.use(cors({
 
 // Raw body for Razorpay webhook signature verification (must come BEFORE express.json())
 app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
+
+// Compress JSON responses (product/order lists can be large)
+app.use(compression());
 
 // Body parser middleware
 app.use(express.json());

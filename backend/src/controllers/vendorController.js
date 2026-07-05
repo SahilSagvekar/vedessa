@@ -699,42 +699,44 @@ exports.getAnalytics = async (req, res) => {
     try {
         const vendorId = req.user.id;
 
-        // Get product count
-        const productCount = await prisma.product.count({
-            where: { vendorId }
-        });
-
-        // Get total orders
-        const orderCount = await prisma.order.count({
-            where: {
-                items: {
-                    some: {
-                        product: { vendorId }
+        // Run independent queries in parallel instead of sequentially
+        const [productCount, orderCount, orderItems, productsWithStock] = await Promise.all([
+            prisma.product.count({ where: { vendorId } }),
+            prisma.order.count({
+                where: {
+                    items: {
+                        some: {
+                            product: { vendorId }
+                        }
                     }
                 }
-            }
-        });
-
-        // Get revenue (sum of order items)
-        const orderItems = await prisma.orderItem.findMany({
-            where: {
-                product: { vendorId }
-            },
-            select: {
-                price: true,
-                quantity: true
-            }
-        });
+            }),
+            prisma.orderItem.findMany({
+                where: {
+                    product: { vendorId }
+                },
+                select: {
+                    price: true,
+                    quantity: true
+                }
+            }),
+            // Only pull the columns needed for the low-stock check, not full rows
+            prisma.product.findMany({
+                where: { vendorId },
+                select: {
+                    id: true,
+                    stock: true,
+                    lowStockThreshold: true,
+                    variants: {
+                        select: { stock: true, lowStockThreshold: true }
+                    }
+                }
+            })
+        ]);
 
         const totalRevenue = orderItems.reduce((sum, item) => {
             return sum + (parseFloat(item.price) * item.quantity);
         }, 0);
-
-        // Get low stock products
-        const productsWithStock = await prisma.product.findMany({
-            where: { vendorId },
-            include: { variants: true }
-        });
 
         let lowStockCount = 0;
         productsWithStock.forEach(product => {

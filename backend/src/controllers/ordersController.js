@@ -134,31 +134,26 @@ const createOrder = async (req, res) => {
         }
       });
 
-      // Update product/variant stock and check thresholds
-      for (const item of cartItems) {
-        if (item.variantId) {
-          const updatedVariant = await tx.productVariant.update({
-            where: { id: item.variantId },
-            data: { stock: { decrement: item.quantity } }
-          });
-          
-          // Trigger alert if low stock
-          if (updatedVariant.stock <= updatedVariant.lowStockThreshold) {
-            // In a real app, this might queue a job or send an email to the vendor
-            console.log(`LOW STOCK ALERT: Variant ${updatedVariant.id} of Product ${item.productId} is at ${updatedVariant.stock}`);
-            // Logic to notify vendor could go here
-          }
-        } else {
-          const updatedProduct = await tx.product.update({
-            where: { id: item.productId },
-            data: { stock: { decrement: item.quantity } }
-          });
+      // Update product/variant stock and check thresholds (parallel, not sequential)
+      const updatedStocks = await Promise.all(cartItems.map(item => (
+        item.variantId
+          ? tx.productVariant.update({
+              where: { id: item.variantId },
+              data: { stock: { decrement: item.quantity } }
+            })
+          : tx.product.update({
+              where: { id: item.productId },
+              data: { stock: { decrement: item.quantity } }
+            })
+      )));
 
-          if (updatedProduct.stock <= updatedProduct.lowStockThreshold) {
-            console.log(`LOW STOCK ALERT: Product ${updatedProduct.id} is at ${updatedProduct.stock}`);
-          }
+      updatedStocks.forEach((updated, idx) => {
+        if (updated.stock <= updated.lowStockThreshold) {
+          const item = cartItems[idx];
+          const label = item.variantId ? `Variant ${updated.id} of Product ${item.productId}` : `Product ${updated.id}`;
+          console.log(`LOW STOCK ALERT: ${label} is at ${updated.stock}`);
         }
-      }
+      });
 
       // Clear cart
       await tx.cartItem.deleteMany({
@@ -406,19 +401,13 @@ const cancelOrder = async (req, res) => {
         data: { status: 'CANCELLED' }
       });
 
-      // Restore product stock
-      for (const item of order.items) {
-        if (item.productId) {
-          await tx.product.update({
-            where: { id: item.productId },
-            data: {
-              stock: {
-                increment: item.quantity
-              }
-            }
-          });
-        }
-      }
+      // Restore product stock (parallel, not sequential)
+      await Promise.all(order.items.filter(item => item.productId).map(item => (
+        tx.product.update({
+          where: { id: item.productId },
+          data: { stock: { increment: item.quantity } }
+        })
+      )));
     });
 
     res.json({
