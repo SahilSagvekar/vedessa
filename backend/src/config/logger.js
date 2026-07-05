@@ -53,8 +53,9 @@ transports.push(
     })
 );
 
-// File transports (only in production or if explicitly enabled)
-if (process.env.NODE_ENV === 'production' || process.env.ENABLE_FILE_LOGGING === 'true') {
+// File transports (opt-in only — most free hosts have ephemeral/small disks,
+// so disk-writing logs by default would add I/O latency and can fill quota)
+if (process.env.ENABLE_FILE_LOGGING === 'true') {
     // Error log file
     transports.push(
         new DailyRotateFile({

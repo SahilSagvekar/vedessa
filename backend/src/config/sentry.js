@@ -1,5 +1,4 @@
 const Sentry = require('@sentry/node');
-const { ProfilingIntegration } = require('@sentry/profiling-node');
 
 /**
  * Initialize Sentry for error tracking
@@ -19,13 +18,9 @@ const initSentry = (app) => {
             new Sentry.Integrations.Http({ tracing: true }),
             // Enable Express.js middleware tracing
             new Sentry.Integrations.Express({ app }),
-            // Enable profiling
-            new ProfilingIntegration(),
         ],
         // Performance Monitoring
         tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
-        // Profiling
-        profilesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
         // Release tracking
         release: process.env.npm_package_version,
         // Before send hook to filter sensitive data

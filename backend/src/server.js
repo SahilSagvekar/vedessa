@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const compression = require('compression');
+const rateLimit = require('express-rate-limit');
 const sentry = require('./config/sentry');
 const logger = require('./config/logger');
 
@@ -69,6 +70,14 @@ app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
 
 // Compress JSON responses (product/order lists can be large)
 app.use(compression());
+
+// Rate limit — protects a small free-tier instance from being overwhelmed
+app.use(rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+}));
 
 // Body parser middleware
 app.use(express.json());

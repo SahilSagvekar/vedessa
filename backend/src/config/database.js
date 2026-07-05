@@ -1,9 +1,19 @@
 const { PrismaClient } = require('@prisma/client');
 
+// Cap pool size so a small free-tier Postgres (Neon free tier: ~a handful of
+// concurrent connections) doesn't get exhausted by this single instance.
+const withConnectionLimit = (url) => {
+  if (!url) return url;
+  return url.includes('connection_limit=') ? url : `${url}${url.includes('?') ? '&' : '?'}connection_limit=5`;
+};
+
 // Initialize Prisma Client with logging
 const prisma = new PrismaClient({
-  log: process.env.NODE_ENV === 'development' 
-    ? ['query', 'info', 'warn', 'error'] 
+  datasources: {
+    db: { url: withConnectionLimit(process.env.DATABASE_URL) },
+  },
+  log: process.env.NODE_ENV === 'development'
+    ? ['query', 'info', 'warn', 'error']
     : ['error'],
 });
 

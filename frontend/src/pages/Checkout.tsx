@@ -20,6 +20,7 @@ const Checkout = () => {
   const { toast } = useToast();
 
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [shippingAddress, setShippingAddress] = useState({
     fullName: user?.fullName || '',
     email: user?.email || '',
     phone: '',

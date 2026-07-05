@@ -1,19 +1,14 @@
-const { JSDOM } = require('jsdom');
-const createDOMPurify = require('dompurify');
+const sanitizeHtmlLib = require('sanitize-html');
 const validator = require('validator');
-
-// Create a JSDOM window for DOMPurify to use in Node.js
-const window = new JSDOM('').window;
-const DOMPurify = createDOMPurify(window);
 
 /**
  * Sanitize HTML content to prevent XSS attacks
  */
 const sanitizeHTML = (dirty) => {
     if (typeof dirty !== 'string') return dirty;
-    return DOMPurify.sanitize(dirty, {
-        ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'p', 'br', 'ul', 'ol', 'li'],
-        ALLOWED_ATTR: []
+    return sanitizeHtmlLib(dirty, {
+        allowedTags: ['b', 'i', 'em', 'strong', 'p', 'br', 'ul', 'ol', 'li'],
+        allowedAttributes: {}
     });
 };
 
@@ -22,9 +17,9 @@ const sanitizeHTML = (dirty) => {
  */
 const sanitizeText = (text) => {
     if (typeof text !== 'string') return text;
-    return DOMPurify.sanitize(text, {
-        ALLOWED_TAGS: [],
-        ALLOWED_ATTR: []
+    return sanitizeHtmlLib(text, {
+        allowedTags: [],
+        allowedAttributes: {}
     });
 };
 
