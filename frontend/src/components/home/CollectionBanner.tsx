@@ -5,7 +5,7 @@ const CollectionBanner = () => {
   return (
     <section className="relative h-[500px] my-16 overflow-hidden">
         <img
-          src="https://images.unsplash.com/photo-1571875257727-256c39da42af?w=1600&q=80"
+          src="https://res.cloudinary.com/dmigevbpo/image/upload/v1783836607/vedessa/products/media-1783836607030-241493810.png"
           alt="Featured"
           className="w-full h-full object-cover"
         />

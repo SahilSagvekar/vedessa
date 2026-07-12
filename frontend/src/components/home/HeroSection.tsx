@@ -15,7 +15,7 @@ const slides = [
   },
   {
     type: "image",
-    image: "https://images.unsplash.com/photo-1596755389378-c31d21fd1273?w=1600&q=80",
+    image: "https://res.cloudinary.com/dmigevbpo/image/upload/v1783836269/vedessa/products/media-1783836267271-777821741.png",
     title: "Eladhi Collection",
     subtitle: "Hydrating formulas for radiant skin",
     cta: "EXPLORE",
@@ -29,14 +29,14 @@ const slides = [
     cta: "DISCOVER",
     // link: createPageUrl("Products", "collection=bringaras")
   },
-  {
-    type: "image",
-    image: "https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=1600&q=80",
-    title: "Weekend Offer",
-    subtitle: "Complimentary minis worth up to ₹5640",
-    cta: "SHOP THE OFFER",
-    // link: createPageUrl("Products")
-  }
+  // {
+  //   type: "image",
+  //   image: "https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=1600&q=80",
+  //   title: "Weekend Offer",
+  //   subtitle: "Complimentary minis worth up to ₹5640",
+  //   cta: "SHOP THE OFFER",
+  //   // link: createPageUrl("Products")
+  // }
 ];
 
 export default function HeroSection() {
