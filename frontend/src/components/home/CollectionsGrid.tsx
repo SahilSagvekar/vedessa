@@ -6,12 +6,12 @@ import { motion } from "framer-motion";
 const categories = [
   {
     name: "Skincare",
-    image: "https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=600&q=80",
+    image: "https://res.cloudinary.com/dmigevbpo/image/upload/v1782666110/vedessa/products/product-1782666102552-salicylic-acid-face-wash-7dn.png",
     link: "/products?category=skincare"
   },
   {
     name: "HairCare",
-    image: "https://images.unsplash.com/photo-1522338140262-f46f5913618a?w=600&q=80",
+    image: "https://res.cloudinary.com/dmigevbpo/image/upload/v1783836778/vedessa/products/media-1783836777490-633743091.png",
     link: "/products?category=haircare"
   },
   {
@@ -31,7 +31,7 @@ const categories = [
   },
   {
     name: "Kumkumadi Collection",
-    image: "https://images.unsplash.com/photo-1570554886111-e80fcca6a029?w=600&q=80",
+    image: "https://res.cloudinary.com/dmigevbpo/image/upload/v1783835716/vedessa/products/media-1783835715750-973968203.png",
     link: "/products?collection=kumkumadi"
   },
   {
@@ -51,7 +51,7 @@ const categories = [
   },
   {
     name: "Shop All",
-    image: "https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=600&q=80",
+    image: "https://res.cloudinary.com/dmigevbpo/image/upload/v1782665528/vedessa/products/product-1782665524841-aloevera-face-wash-ht.png",
     link: "/products"
   }
 ];

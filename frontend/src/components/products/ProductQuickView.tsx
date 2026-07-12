@@ -1,6 +1,6 @@
 // components/products/ProductQuickView.tsx
 import React, { useState } from 'react';
-import { X, Plus, Minus, Heart, Share2, Star, Check, Loader2 } from 'lucide-react';
+import { X, Plus, Minus, Heart, Share2, Star, Check, Loader2, ChevronLeft, ChevronRight, PlayCircle } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   Dialog,
@@ -30,6 +30,11 @@ export default function ProductQuickView({ product, open, onClose }: ProductQuic
   const [quantity, setQuantity] = useState(1);
   const [isWishlisted, setIsWishlisted] = useState(product ? isInWishlist(product.id) : false);
   const [addingToCart, setAddingToCart] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(0);
+
+  const images = (product?.images && product.images.length > 0)
+    ? product.images
+    : (product?.image ? [{ url: product.image, type: 'IMAGE' }] : []);
 
   const incrementQuantity = () => setQuantity(prev => prev + 1);
   const decrementQuantity = () => setQuantity(prev => Math.max(1, prev - 1));
@@ -168,17 +173,64 @@ export default function ProductQuickView({ product, open, onClose }: ProductQuic
 
           <div className="grid md:grid-cols-2 gap-6 md:gap-8 p-6 sm:p-8 md:p-10">
             {/* Left Side - Images */}
-            <div className="space-y-4">
-              {/* Main Image */}
-              <div className="relative aspect-square bg-gray-50 rounded-lg overflow-hidden">
-                <img
-                  src={product.image || '/placeholder.svg'}
-                  alt={product.name}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/placeholder.svg';
-                  }}
-                />
+            <div className="space-y-3">
+              {/* Main Image with arrow navigation */}
+              <div className="relative aspect-square bg-gray-50 rounded-lg overflow-hidden group">
+                {images[selectedImage]?.type === 'VIDEO' ? (
+                  <video
+                    key={images[selectedImage].url}
+                    src={images[selectedImage].url}
+                    controls
+                    muted
+                    playsInline
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <img
+                    src={images[selectedImage]?.url || '/placeholder.svg'}
+                    alt={product.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/placeholder.svg';
+                    }}
+                  />
+                )}
+
+                {/* Left Arrow */}
+                {images.length > 1 && (
+                  <button
+                    onClick={() => setSelectedImage(i => (i - 1 + images.length) % images.length)}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white shadow-md rounded-full w-9 h-9 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    aria-label="Previous image"
+                  >
+                    <ChevronLeft className="w-5 h-5 text-gray-700" />
+                  </button>
+                )}
+
+                {/* Right Arrow */}
+                {images.length > 1 && (
+                  <button
+                    onClick={() => setSelectedImage(i => (i + 1) % images.length)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white shadow-md rounded-full w-9 h-9 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    aria-label="Next image"
+                  >
+                    <ChevronRight className="w-5 h-5 text-gray-700" />
+                  </button>
+                )}
+
+                {/* Dot indicators */}
+                {images.length > 1 && (
+                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                    {images.map((_: any, index: number) => (
+                      <button
+                        key={index}
+                        onClick={() => setSelectedImage(index)}
+                        className={`w-1.5 h-1.5 rounded-full transition-all ${selectedImage === index ? 'bg-white w-3' : 'bg-white/60'}`}
+                        aria-label={`Go to image ${index + 1}`}
+                      />
+                    ))}
+                  </div>
+                )}
 
                 {/* Sale Badge */}
                 {product.comparePrice && product.comparePrice > product.price && (
@@ -194,6 +246,35 @@ export default function ProductQuickView({ product, open, onClose }: ProductQuic
                   </div>
                 )}
               </div>
+
+              {/* Thumbnail strip */}
+              {images.length > 1 && (
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {images.map((image: any, index: number) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedImage(index)}
+                      className={`relative flex-shrink-0 w-16 h-16 rounded-md overflow-hidden border-2 transition-all ${selectedImage === index
+                        ? 'border-green-700 ring-2 ring-green-200'
+                        : 'border-gray-200 hover:border-gray-400'
+                      }`}
+                    >
+                      {image.type === 'VIDEO' ? (
+                        <>
+                          <video src={image.url} className="w-full h-full object-cover" muted />
+                          <PlayCircle className="absolute inset-0 m-auto w-5 h-5 text-white drop-shadow" />
+                        </>
+                      ) : (
+                        <img
+                          src={image.url}
+                          alt={`${product.name} ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Right Side - Product Details */}
