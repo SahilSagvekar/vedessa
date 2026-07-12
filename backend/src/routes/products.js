@@ -10,22 +10,23 @@ const {
 } = require('../controllers/productsController');
 const { auth, isAdmin } = require('../middleware/auth');
 const upload = require('../middleware/upload');
+const { cacheControl } = require('../middleware/cache');
 
 // Public routes
 // GET /api/products/suggestions - Get product name suggestions
-router.get('/suggestions', getProductSuggestions);
+router.get('/suggestions', cacheControl(60), getProductSuggestions);
 // GET /api/products - Get all products with filters
-router.get('/', getAllProducts);
+router.get('/', cacheControl(60), getAllProducts);
 
 // GET /api/products/:id - Get single product
-router.get('/:id', getProductById);
+router.get('/:id', cacheControl(60), getProductById);
 
 // Admin routes (require authentication + admin role)
 // POST /api/products - Create product (admin only)
-router.post('/', auth, isAdmin, upload.array('images', 5), createProduct);
+router.post('/', auth, isAdmin, upload.array('media', 8), createProduct);
 
 // PUT /api/products/:id - Update product (admin only)
-router.put('/:id', auth, isAdmin, upload.array('images', 5), updateProduct);
+router.put('/:id', auth, isAdmin, upload.array('media', 8), updateProduct);
 
 // DELETE /api/products/:id - Delete product (admin only)
 router.delete('/:id', auth, isAdmin, deleteProduct);

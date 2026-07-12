@@ -1,7 +1,7 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import Layout from '@/components/layout/Layout';
-import { Loader2, Plus, Minus, Heart, Share2, Star, Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Loader2, Plus, Minus, Heart, Share2, Star, Check, ChevronLeft, ChevronRight, PlayCircle } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
 import { useWishlist } from '@/hooks/useWishlist';
 import { useAuth } from '@/components/contexts/AuthContext';
@@ -59,9 +59,9 @@ export default function ProductDetail() {
             collection: productData.collection_name ? { name: productData.collection_name } : null,
             tags: ['Natural', 'Ayurvedic'],
             image: productData.image,
-            images: productData.images && productData.images.length > 0 
-              ? productData.images.map((img: any) => ({ url: img.url, alt: productData.name }))
-              : (productData.image ? [{ url: productData.image, alt: productData.name }] : []),
+            images: productData.images && productData.images.length > 0
+              ? productData.images.map((img: any) => ({ url: img.url, type: img.type || 'IMAGE', alt: productData.name }))
+              : (productData.image ? [{ url: productData.image, type: 'IMAGE', alt: productData.name }] : []),
             variants: productData.variants || []
           });
 
@@ -279,11 +279,22 @@ export default function ProductDetail() {
           <div className="space-y-3">
             {/* Main Image with arrow navigation */}
             <div className="relative aspect-square bg-gray-50 rounded-lg overflow-hidden group">
-              <img
-                src={product.images?.[selectedImage]?.url || product.images?.[0]?.url}
-                alt={product.name}
-                className="w-full h-full object-cover"
-              />
+              {product.images?.[selectedImage]?.type === 'VIDEO' ? (
+                <video
+                  key={product.images[selectedImage].url}
+                  src={product.images[selectedImage].url}
+                  controls
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <img
+                  src={product.images?.[selectedImage]?.url || product.images?.[0]?.url}
+                  alt={product.name}
+                  className="w-full h-full object-cover"
+                />
+              )}
 
               {/* Left Arrow */}
               {product.images && product.images.length > 1 && (
@@ -350,16 +361,23 @@ export default function ProductDetail() {
                   <button
                     key={index}
                     onClick={() => setSelectedImage(index)}
-                    className={`flex-shrink-0 w-16 h-16 rounded-md overflow-hidden border-2 transition-all ${selectedImage === index
+                    className={`relative flex-shrink-0 w-16 h-16 rounded-md overflow-hidden border-2 transition-all ${selectedImage === index
                       ? 'border-green-700 ring-2 ring-green-200'
                       : 'border-gray-200 hover:border-gray-400'
                     }`}
                   >
-                    <img
-                      src={image.url}
-                      alt={`${product.name} ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
+                    {image.type === 'VIDEO' ? (
+                      <>
+                        <video src={image.url} className="w-full h-full object-cover" muted />
+                        <PlayCircle className="absolute inset-0 m-auto w-5 h-5 text-white drop-shadow" />
+                      </>
+                    ) : (
+                      <img
+                        src={image.url}
+                        alt={`${product.name} ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    )}
                   </button>
                 ))}
               </div>

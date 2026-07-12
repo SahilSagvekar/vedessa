@@ -283,17 +283,23 @@ model Coupon {
 
 // Product Image model
 model ProductImage {
-  id        String   @id @default(uuid())
-  productId String   @map("product_id")
+  id        String    @id @default(uuid())
+  productId String    @map("product_id")
   url       String
-  isPrimary Boolean  @default(false) @map("is_primary")
-  order     Int      @default(0) // For sorting display order
-  createdAt DateTime @default(now()) @map("created_at")
+  type      MediaType @default(IMAGE)
+  isPrimary Boolean   @default(false) @map("is_primary")
+  order     Int       @default(0) // For sorting display order
+  createdAt DateTime  @default(now()) @map("created_at")
 
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@index([productId])
   @@map("product_images")
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
 }
  
 // Product Variant model

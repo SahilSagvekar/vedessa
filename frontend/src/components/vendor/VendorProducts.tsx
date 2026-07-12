@@ -3,6 +3,7 @@ import { Loader2, Plus, Edit2, Trash2, Search, Package } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import vendorService from '@/services/vendorService';
 import productsService from '@/services/productsService';
+import ProductMediaEditor, { MediaOrderEntry } from '@/components/products/ProductMediaEditor';
 
 export default function VendorProducts() {
     const { toast } = useToast();
@@ -27,7 +28,8 @@ export default function VendorProducts() {
         lowStockThreshold: 5,
         variants: []
     });
-    const [imageFiles, setImageFiles] = useState([]);
+    const [imageFiles, setImageFiles] = useState<File[]>([]);
+    const [mediaOrder, setMediaOrder] = useState<MediaOrderEntry[]>([]);
 
     useEffect(() => {
         fetchProducts();
@@ -84,6 +86,7 @@ export default function VendorProducts() {
         });
         setShowAddModal(true);
         setImageFiles([]);
+        setMediaOrder([]);
     };
 
     const handleEditProduct = (product) => {
@@ -115,6 +118,7 @@ export default function VendorProducts() {
         setFormData(formValues);
         setShowAddModal(true);
         setImageFiles([]);
+        setMediaOrder((product.images || []).map((img) => ({ kind: 'existing' as const, id: img.id })));
     };
 
     const handleDeleteProduct = async (productId) => {
@@ -160,17 +164,12 @@ export default function VendorProducts() {
                 data.append('variants', JSON.stringify(formData.variants));
             }
 
-            // Handle images separately
-            if (imageFiles && imageFiles.length > 0) {
-                imageFiles.forEach(file => {
-                    data.append('images', file);
-                });
-            } else if (formData.images && formData.images.length > 0) {
-                // Keep existing images (this is a simplified logic, ideally we'd allow reordering/deleting)
-                formData.images.forEach(img => {
-                    data.append('image', img.url); // Legacy support or URL support
-                });
-            }
+            // Handle media (images + videos) - order manifest carries both
+            // kept existing items and newly uploaded files, in display order
+            imageFiles.forEach(file => {
+                data.append('media', file);
+            });
+            data.append('order', JSON.stringify(mediaOrder));
 
             console.log('FormData entries:');
             for (let pair of data.entries()) {
@@ -383,36 +382,17 @@ export default function VendorProducts() {
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Product Image
+                                        Product Images &amp; Videos
                                     </label>
-                                    <div className="space-y-3">
-                                    <div className="space-y-4">
-                                        <div className="flex flex-wrap gap-2">
-                                            {/* Existing/Stored Images */}
-                                            {formData.images && formData.images.map((img, idx) => (
-                                                <div key={idx} className="relative w-24 h-24 rounded-lg overflow-hidden border border-gray-200">
-                                                    <img src={img.url} alt="Preview" className="w-full h-full object-cover" />
-                                                </div>
-                                            ))}
-                                            {/* Newly Selected Files */}
-                                            {imageFiles.map((file, idx) => (
-                                                <div key={idx} className="relative w-24 h-24 rounded-lg overflow-hidden border border-gray-200">
-                                                    <img src={URL.createObjectURL(file)} alt="Preview" className="w-full h-full object-cover" />
-                                                </div>
-                                            ))}
-                                        </div>
-                                        <div className="space-y-2">
-                                            <input
-                                                type="file"
-                                                multiple
-                                                accept="image/*"
-                                                onChange={(e) => setImageFiles(Array.from(e.target.files))}
-                                                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
-                                            />
-                                            <p className="text-xs text-gray-500">You can select up to 5 images. The first one will be the primary image.</p>
-                                        </div>
-                                    </div>
-                                    </div>
+                                    <ProductMediaEditor
+                                        existingMedia={formData.images || []}
+                                        newFiles={imageFiles}
+                                        order={mediaOrder}
+                                        onChange={({ newFiles, order }) => {
+                                            setImageFiles(newFiles);
+                                            setMediaOrder(order);
+                                        }}
+                                    />
                                 </div>
 
                                 <div className="grid md:grid-cols-2 gap-4">

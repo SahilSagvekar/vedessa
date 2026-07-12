@@ -30,6 +30,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import ProductMediaEditor, { ExistingMediaItem, MediaOrderEntry } from '@/components/products/ProductMediaEditor';
 
 interface Product {
   id: string;
@@ -37,6 +38,7 @@ interface Product {
   description: string;
   price: number;
   image: string;
+  images?: ExistingMediaItem[];
   category: string;
   collection: string;
   isNew: boolean;
@@ -81,6 +83,7 @@ const Admin = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [mediaOrder, setMediaOrder] = useState<MediaOrderEntry[]>([]);
 
   // Stats
   const [totalOrders, setTotalOrders] = useState(0);
@@ -251,6 +254,7 @@ const Admin = () => {
     setEditProductId(null);
     setEditingProduct(null);
     setImageFiles([]);
+    setMediaOrder([]);
   };
 
   const openAddDialog = () => {
@@ -281,6 +285,7 @@ const Admin = () => {
     setIsEditMode(true);
     setEditProductId(product.id);
     setImageFiles([]);
+    setMediaOrder((product.images || []).map((img) => ({ kind: 'existing' as const, id: img.id })));
     setIsDialogOpen(true);
   };
 
@@ -327,14 +332,10 @@ const Admin = () => {
         }
       });
 
-      // Handle images - append each file under the 'images' field
-      if (imageFiles.length > 0) {
-        imageFiles.forEach((file) => productData.append('images', file));
-      } else if (formData.image && formData.image.trim() !== '') {
-        if (!isEditMode || !editingProduct || formData.image !== (editingProduct.image || '')) {
-          productData.append('image', formData.image);
-        }
-      }
+      // Handle media (images + videos) - order manifest carries both kept
+      // existing items and newly uploaded files, in display order
+      imageFiles.forEach((file) => productData.append('media', file));
+      productData.append('order', JSON.stringify(mediaOrder));
 
       // Add default values for rating and reviews if creating
       if (!isEditMode) {
@@ -572,54 +573,17 @@ const Admin = () => {
                     </div>
 
                     <div>
-                      <Label>Product Images</Label>
-                      <div className="mt-2 space-y-3">
-                        {/* Previews of selected files */}
-                        {imageFiles.length > 0 && (
-                          <div className="flex flex-wrap gap-2">
-                            {imageFiles.map((file, idx) => (
-                              <div key={idx} className="relative w-24 h-24 rounded-md overflow-hidden border group">
-                                <img src={URL.createObjectURL(file)} alt={`Preview ${idx + 1}`} className="w-full h-full object-cover" />
-                                <button
-                                  type="button"
-                                  onClick={() => setImageFiles(imageFiles.filter((_, i) => i !== idx))}
-                                  className="absolute top-1 right-1 bg-black/60 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                                >✕</button>
-                                {idx === 0 && <span className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[10px] text-center py-0.5">Primary</span>}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                        {/* Existing image preview in edit mode */}
-                        {formData.image && imageFiles.length === 0 && (
-                          <div className="relative w-24 h-24 rounded-md overflow-hidden border">
-                            <img src={formData.image} alt="Current" className="w-full h-full object-cover" />
-                            <span className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[10px] text-center py-0.5">Current</span>
-                          </div>
-                        )}
-                        <Input
-                          id="imageFiles"
-                          type="file"
-                          accept="image/*"
-                          multiple
-                          onChange={(e) => {
-                            const files = Array.from(e.target.files || []);
-                            setImageFiles(prev => [...prev, ...files]);
-                            e.target.value = '';
+                      <Label>Product Images &amp; Videos</Label>
+                      <div className="mt-2">
+                        <ProductMediaEditor
+                          existingMedia={editingProduct?.images || []}
+                          newFiles={imageFiles}
+                          order={mediaOrder}
+                          onChange={({ newFiles, order }) => {
+                            setImageFiles(newFiles);
+                            setMediaOrder(order);
                           }}
-                          className="cursor-pointer"
                         />
-                        <p className="text-xs text-muted-foreground">You can select multiple images. The first one becomes the primary image.</p>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground uppercase">OR Paste URL</span>
-                          <Input
-                            id="image"
-                            value={formData.image}
-                            onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                            placeholder="https://example.com/image.jpg"
-                            className="flex-1"
-                          />
-                        </div>
                       </div>
                     </div>
 

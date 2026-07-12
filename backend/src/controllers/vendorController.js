@@ -2,6 +2,7 @@ const prisma = require('../config/database');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const emailService = require('../services/emailService');
+const { mergeOrderedMedia, getExistingMedia, getLegacyPrimaryUrl } = require('../services/productMediaService');
 
 // Register new vendor
 exports.registerVendor = async (req, res) => {
@@ -221,6 +222,9 @@ exports.getMyProducts = async (req, res) => {
                 include: {
                     category: true,
                     collection: true,
+                    images: {
+                        orderBy: { order: 'asc' }
+                    },
                     variants: true
                 },
                 orderBy: { createdAt: 'desc' }
@@ -294,28 +298,21 @@ exports.createProduct = async (req, res) => {
             variants = []
         } = req.body;
 
-        // Handle images
-        let primaryImage = null;
-        let imagesData = [];
-
-        if (req.files && req.files.length > 0) {
-            req.files.forEach((file, index) => {
-                const url = `${req.protocol}://${req.get('host')}/uploads/${file.filename}`;
-                if (index === 0) primaryImage = url;
-                imagesData.push({
-                    url,
-                    isPrimary: index === 0,
-                    order: index
-                });
-            });
-        } else if (req.body.image && typeof req.body.image === 'string' && req.body.image.trim() !== '') {
-            primaryImage = req.body.image;
-            imagesData.push({
-                url: req.body.image,
-                isPrimary: true,
-                order: 0
-            });
+        // Handle media (images + videos)
+        let order;
+        try {
+            order = req.body.order ? JSON.parse(req.body.order) : undefined;
+        } catch {
+            order = undefined;
         }
+
+        let imagesData = mergeOrderedMedia({ files: req.files || [], order });
+
+        if (imagesData.length === 0 && req.body.image && typeof req.body.image === 'string' && req.body.image.trim() !== '') {
+            imagesData = [{ url: req.body.image, type: 'IMAGE', isPrimary: true, order: 0 }];
+        }
+
+        const primaryImage = getLegacyPrimaryUrl(imagesData);
 
         if (!name || !price) {
             return res.status(400).json({
@@ -356,7 +353,9 @@ exports.createProduct = async (req, res) => {
             include: {
                 category: true,
                 collection: true,
-                images: true,
+                images: {
+                    orderBy: { order: 'asc' }
+                },
                 variants: true,
                 vendor: {
                     select: {
@@ -439,15 +438,19 @@ exports.updateProduct = async (req, res) => {
         console.log('req.body:', JSON.stringify(req.body, null, 2));
         console.log('req.file:', req.file);
 
-        // Handle images
-        if (req.files && req.files.length > 0) {
-            const imagesData = req.files.map((file, index) => ({
-                url: `${req.protocol}://${req.get('host')}/uploads/${file.filename}`,
-                isPrimary: index === 0,
-                order: index
-            }));
-            
-            updateData.image = imagesData[0].url;
+        // Handle media (images + videos)
+        let order;
+        try {
+            order = req.body.order ? JSON.parse(req.body.order) : undefined;
+        } catch {
+            order = undefined;
+        }
+
+        if ((req.files && req.files.length > 0) || order !== undefined) {
+            const existingMedia = await getExistingMedia(id);
+            const imagesData = mergeOrderedMedia({ existingMedia, files: req.files || [], order });
+
+            updateData.image = getLegacyPrimaryUrl(imagesData);
             updateData.images = {
                 deleteMany: {},
                 create: imagesData
@@ -456,7 +459,7 @@ exports.updateProduct = async (req, res) => {
             updateData.image = req.body.image;
             updateData.images = {
                 deleteMany: {},
-                create: [{ url: req.body.image, isPrimary: true, order: 0 }]
+                create: [{ url: req.body.image, type: 'IMAGE', isPrimary: true, order: 0 }]
             };
         } else if (req.body.image === null || req.body.image === 'null') {
             updateData.image = null;
@@ -487,7 +490,9 @@ exports.updateProduct = async (req, res) => {
             include: {
                 category: true,
                 collection: true,
-                images: true,
+                images: {
+                    orderBy: { order: 'asc' }
+                },
                 variants: true,
                 vendor: {
                     select: {
