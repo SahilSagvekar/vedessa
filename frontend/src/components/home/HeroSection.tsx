@@ -23,7 +23,7 @@ const slides = [
   },
   {
     type: "image",
-    image: "https://images.unsplash.com/photo-1571875257727-256c39da42af?w=1600&q=80",
+    image: "https://res.cloudinary.com/dmigevbpo/image/upload/v1783836607/vedessa/products/media-1783836607030-241493810.png",
     title: "Bringaras Hair Care",
     subtitle: "For healthy, lustrous hair",
     cta: "DISCOVER",
