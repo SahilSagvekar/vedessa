@@ -174,7 +174,7 @@ const Checkout = () => {
       return;
     }
 
-    const shippingCost = cart.summary.subtotal > 1000 ? 0 : 50;
+    const shippingCost = 0; // TEMP: shipping disabled
     const discountAmount = appliedCoupon ? appliedCoupon.discountAmount : 0;
 
     // Prepare order data
@@ -222,7 +222,7 @@ const Checkout = () => {
     );
   }
 
-  const shippingCost = cart?.summary?.shipping_estimate !== null ? (cart?.summary?.shipping_estimate || 0) : (cart.summary.subtotal > 1000 ? 0 : 50);
+  const shippingCost = 0; // TEMP: shipping disabled
   const finalTotal = cart.summary.total; // total from backend already includes shipping
 
   return (

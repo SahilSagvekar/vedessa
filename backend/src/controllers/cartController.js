@@ -1,5 +1,4 @@
 const prisma = require('../config/database');
-const ekartService = require('../services/ekartService');
 
 /**
  * Get user's cart
@@ -58,29 +57,9 @@ const getCart = async (req, res) => {
       return sum + (weight * item.quantity);
     }, 0).toFixed(2));
 
-    let shippingEstimate = null;
+    // TEMP: shipping disabled, flat 0 for all orders
+    let shippingEstimate = 0;
     let deliveryEstimate = null;
-
-    const { pincode } = req.query;
-    if (pincode && pincode.length === 6) {
-      try {
-        const rateInfo = await ekartService.calculateShippingRate({
-          destinationPincode: pincode,
-          weight: totalWeight
-        });
-
-        if (rateInfo.success) {
-          shippingEstimate = rateInfo.rate;
-          if (rateInfo.estimatedDays) {
-            const date = new Date();
-            date.setDate(date.getDate() + rateInfo.estimatedDays);
-            deliveryEstimate = date;
-          }
-        }
-      } catch (e) {
-        console.error('Shipping estimate error:', e);
-      }
-    }
 
     res.json({
       success: true,
