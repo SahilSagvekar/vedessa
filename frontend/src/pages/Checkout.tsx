@@ -380,9 +380,7 @@ const Checkout = () => {
                   </div>
                 </div>
               )}
-              {cart.summary.subtotal > 1000 && (
-                <p className="text-xs text-green-600">🎉 You get free shipping!</p>
-              )}
+              <p className="text-xs text-green-600">🎉 You get free shipping!</p>
 
               {/* Coupon UI */}
               <div className="pt-4 border-t border-border">

@@ -105,8 +105,8 @@ const Cart = () => {
     navigate('/checkout');
   };
 
-  // Calculate shipping (free over ₹1000, else ₹50)
-  const shippingCost = subtotal > 1000 ? 0 : 50;
+  // TEMP: shipping disabled (kept in sync with Checkout.tsx)
+  const shippingCost = 0;
   const finalTotal = total + shippingCost;
 
   return (
@@ -218,17 +218,9 @@ const Cart = () => {
                 </span>
               </div>
 
-              {subtotal > 1000 && shippingCost === 0 && (
-                <p className="text-xs text-green-600">
-                  ✓ Free shipping on orders over ₹1,000
-                </p>
-              )}
-
-              {subtotal < 1000 && (
-                <p className="text-xs text-muted-foreground">
-                  Add ₹{(1000 - subtotal).toFixed(2)} more for free shipping
-                </p>
-              )}
+              <p className="text-xs text-green-600">
+                ✓ Free shipping on all orders
+              </p>
             </div>
 
             <div className="border-t border-border pt-4 mb-6">
