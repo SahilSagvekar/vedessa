@@ -1,6 +1,5 @@
 const prisma = require('../config/database');
 const emailService = require('../services/emailService');
-const ekartService = require('../services/ekartService');
 
 /**
  * Generate unique order number
@@ -69,33 +68,10 @@ const createOrder = async (req, res) => {
     });
 
     const taxAmount = subtotal * 0.18; // 18% tax
-    
-    // Calculate dynamic shipping cost via Ekart
+
+    // TEMP: shipping disabled, flat 0 for all orders
     let shippingCost = 0;
     let estimatedDelivery = null;
-    
-    try {
-      const shippingInfo = await ekartService.calculateShippingRate({
-        destinationPincode: shippingAddress.pincode,
-        weight: totalWeight,
-        paymentMethod: paymentMethod
-      });
-      
-      if (shippingInfo.success) {
-        // Free shipping over ₹1000 logic can still apply if desired, or override with API rate
-        shippingCost = subtotal > 1000 ? 0 : (shippingInfo.rate || 50);
-        
-        if (shippingInfo.estimatedDays) {
-          estimatedDelivery = new Date();
-          estimatedDelivery.setDate(estimatedDelivery.getDate() + shippingInfo.estimatedDays);
-        }
-      } else {
-        shippingCost = subtotal > 1000 ? 0 : 50;
-      }
-    } catch (error) {
-      console.error('Shipping calculation error, falling back to default:', error);
-      shippingCost = subtotal > 1000 ? 0 : 50;
-    }
 
     const totalAmount = subtotal + taxAmount + shippingCost;
 
