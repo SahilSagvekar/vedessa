@@ -171,10 +171,9 @@ model Order {
   razorpayPaymentId String?   @map("razorpay_payment_id")
   razorpaySignature String?   @map("razorpay_signature")
   
-  // Ekart Shipping Fields
+  // Shipping Fields (manually entered — no live courier API)
   awbNumber       String?     @map("awb_number")
   trackingUrl     String?     @map("tracking_url")
-  shipmentId      String?     @map("shipment_id")
   estimatedDelivery DateTime? @map("estimated_delivery")
   shippingStatus  String?     @default("NOT_SHIPPED") @map("shipping_status")
   

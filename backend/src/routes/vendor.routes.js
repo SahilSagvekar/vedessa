@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const vendorController = require('../controllers/vendorController');
+const vendorAuthController = require('../controllers/vendorAuthController');
+const vendorProfileController = require('../controllers/vendorProfileController');
+const vendorProductController = require('../controllers/vendorProductController');
+const vendorOrderController = require('../controllers/vendorOrderController');
+const vendorAdminController = require('../controllers/vendorAdminController');
 const { auth } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 
@@ -18,31 +22,31 @@ const restrictTo = (...roles) => {
 };
 
 // Public routes
-router.post('/register', vendorController.registerVendor);
+router.post('/register', vendorAuthController.registerVendor);
 
 // Protected routes - Vendor only
 router.use(auth);
 router.use(restrictTo('VENDOR', 'ADMIN'));
 
 // Vendor profile
-router.get('/me', vendorController.getMyProfile);
-router.put('/me', vendorController.updateMyProfile);
+router.get('/me', vendorProfileController.getMyProfile);
+router.put('/me', vendorProfileController.updateMyProfile);
 
 // Vendor products
-router.get('/products', vendorController.getMyProducts);
-router.post('/products', upload.array('media', 8), vendorController.createProduct);
-router.put('/products/:id', upload.array('media', 8), vendorController.updateProduct);
-router.delete('/products/:id', vendorController.deleteProduct);
+router.get('/products', vendorProductController.getMyProducts);
+router.post('/products', upload.array('media', 8), vendorProductController.createProduct);
+router.put('/products/:id', upload.array('media', 8), vendorProductController.updateProduct);
+router.delete('/products/:id', vendorProductController.deleteProduct);
 
 // Vendor orders
-router.get('/orders', vendorController.getMyOrders);
-router.put('/orders/:id/fulfill', vendorController.fulfillOrder);
+router.get('/orders', vendorOrderController.getMyOrders);
+router.put('/orders/:id/fulfill', vendorOrderController.fulfillOrder);
 
 // Analytics
-router.get('/analytics', vendorController.getAnalytics);
+router.get('/analytics', vendorOrderController.getAnalytics);
 
 // Admin only routes
-router.get('/admin/all', restrictTo('ADMIN'), vendorController.getAllVendors);
-router.put('/admin/:id/approve', restrictTo('ADMIN'), vendorController.approveVendor);
+router.get('/admin/all', restrictTo('ADMIN'), vendorAdminController.getAllVendors);
+router.put('/admin/:id/approve', restrictTo('ADMIN'), vendorAdminController.approveVendor);
 
 module.exports = router;

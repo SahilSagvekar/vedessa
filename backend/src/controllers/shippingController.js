@@ -1,246 +1,130 @@
 const prisma = require('../config/database');
-const ekartService = require('../services/ekartService');
-const shiprocketService = require('../services/shiprocketService');
 
 /**
- * Create shipment for an order
- * POST /api/shipping/create
+ * Shipping is tracked manually — an admin/vendor enters the AWB number and
+ * tracking URL once a courier is booked outside the app (no live courier
+ * API integration).
  */
-exports.createShipment = async (req, res) => {
-    try {
-        const { orderId, weight, dimensions } = req.body;
 
-        // Get order details
-        const order = await prisma.order.findUnique({
-            where: { id: orderId },
-            include: {
-                items: {
-                    include: {
-                        product: true
-                    }
-                },
-                user: true
+// Build a simple tracking payload from what's stored on the order.
+// Keeps the same response shape the frontend already expects
+// (status / updates / estimatedDelivery) so TrackOrder.tsx needs no rework.
+function buildTrackingPayload(order) {
+    const status = order.shippingStatus || order.status;
+
+    return {
+        status,
+        location: null,
+        estimatedDelivery: null,
+        updates: [
+            {
+                timestamp: order.updatedAt,
+                status,
+                location: '',
+                description: order.trackingUrl
+                    ? `Tracking available at ${order.trackingUrl}`
+                    : 'Awaiting carrier update'
+            }
+        ]
+    };
+}
+
+/**
+ * Track shipment by AWB number or order number
+ * GET /api/shipping/track/:reference
+ */
+exports.trackShipment = async (req, res) => {
+    try {
+        const { reference } = req.params;
+
+        const order = await prisma.order.findFirst({
+            where: {
+                OR: [
+                    { awbNumber: reference },
+                    { orderNumber: reference }
+                ]
             }
         });
 
         if (!order) {
-            return res.status(404).json({ message: 'Order not found' });
-        }
-
-        // Check if shipment already exists
-        if (order.awbNumber) {
-            return res.status(400).json({
-                message: 'Shipment already created for this order',
-                awbNumber: order.awbNumber,
-                trackingUrl: order.trackingUrl
+            return res.status(404).json({
+                success: false,
+                message: 'No shipment found with this number'
             });
         }
 
-        // Prepare shipment data
-        const shipmentData = {
-            orderNumber: order.orderNumber,
-            customerName: order.shippingAddress?.fullName || order.user?.fullName || 'Customer',
-            customerPhone: order.shippingAddress?.phone || order.user?.phone || '',
-            customerEmail: order.user?.email || '',
-            shippingAddress: order.shippingAddress,
-            items: order.items.map(item => ({
-                productName: item.product.name,
-                productId: item.productId,
-                quantity: item.quantity,
-                price: parseFloat(item.price)
-            })),
-            subtotal: parseFloat(order.subtotal),
-            totalAmount: parseFloat(order.totalAmount),
-            paymentMethod: order.paymentMethod === 'COD' ? 'COD' : 'PREPAID',
-            weight: weight || 0.5,
-            length: dimensions?.length || 10,
-            width: dimensions?.width || 10,
-            height: dimensions?.height || 10
-        };
-
-        // 1. Get Serviceability and find cheapest courier
-        const couriers = await shiprocketService.getServiceability(
-            process.env.SHIPROCKET_PICKUP_PINCODE || '400001', // Default pickup pincode
-            order.shippingAddress.pincode,
-            shipmentData.weight,
-            order.paymentMethod === 'COD' ? order.totalAmount : 0
-        );
-
-        const cheapestCourier = shiprocketService.getCheapestCourier(couriers);
-        
-        if (!cheapestCourier) {
-            return res.status(400).json({ message: 'No serviceability for this location' });
-        }
-
-        // 2. Create Order in Shiprocket
-        const srOrder = await shiprocketService.createOrder(shipmentData);
-        const { order_id: srOrderId, shipment_id: srShipmentId } = srOrder;
-
-        // 3. Generate AWB with the cheapest courier
-        const awbData = await shiprocketService.generateAWB(srShipmentId, cheapestCourier.courier_company_id);
-
-        // Update order with shipping details
-        const updatedOrder = await prisma.order.update({
-            where: { id: orderId },
-            data: {
-                awbNumber: awbData.response.data.awb_code,
-                shipmentId: srShipmentId.toString(),
-                trackingUrl: `https://shiprocket.co/tracking/${awbData.response.data.awb_code}`,
-                shippingStatus: `CREATED (${cheapestCourier.courier_name})`,
-                status: 'PROCESSING'
-            }
-        });
-
         res.json({
             success: true,
-            message: `Shipment created successfully via ${cheapestCourier.courier_name}`,
-            shipment: {
-                awbNumber: awbData.response.data.awb_code,
-                courierName: cheapestCourier.courier_name,
-                rate: cheapestCourier.rate,
-                trackingUrl: `https://shiprocket.co/tracking/${awbData.response.data.awb_code}`
-            },
-            order: updatedOrder
+            tracking: buildTrackingPayload(order)
         });
-
-    } catch (error) {
-        console.error('Create shipment error:', error);
-        res.status(500).json({
-            message: error.message || 'Failed to create shipment'
-        });
-    }
-};
-
-/**
- * Track shipment
- * GET /api/shipping/track/:awbNumber
- */
-exports.trackShipment = async (req, res) => {
-    try {
-        const { awbNumber } = req.params;
-
-        const tracking = await shiprocketService.trackShipment(awbNumber);
-
-        res.json({
-            success: true,
-            tracking
-        });
-
     } catch (error) {
         console.error('Track shipment error:', error);
         res.status(500).json({
+            success: false,
             message: error.message || 'Failed to track shipment'
         });
     }
 };
 
 /**
- * Calculate shipping rate
- * POST /api/shipping/calculate-rate
+ * Manually set/update an order's shipping details (Admin)
+ * PUT /api/shipping/:orderId
  */
-exports.calculateRate = async (req, res) => {
+exports.updateShipping = async (req, res) => {
     try {
-        const { destinationPincode, weight, paymentMethod } = req.body;
+        const { orderId } = req.params;
+        const { awbNumber, trackingUrl, shippingStatus, markShipped } = req.body;
 
-        if (!destinationPincode) {
-            return res.status(400).json({ message: 'Destination pincode is required' });
-        }
+        const order = await prisma.order.findUnique({ where: { id: orderId } });
 
-        const couriers = await shiprocketService.getServiceability(
-            process.env.SHIPROCKET_PICKUP_PINCODE || '400001',
-            destinationPincode,
-            weight || 0.5,
-            paymentMethod === 'COD' ? 1 : 0
-        );
-
-        res.json({
-            success: true,
-            couriers
-        });
-
-    } catch (error) {
-        console.error('Calculate rate error:', error);
-        res.status(500).json({
-            message: error.message || 'Failed to calculate shipping rate'
-        });
-    }
-};
-
-/**
- * Schedule pickup
- * POST /api/shipping/schedule-pickup
- */
-exports.schedulePickup = async (req, res) => {
-    try {
-        const { pickupDate, orderIds } = req.body;
-
-        if (!pickupDate || !orderIds || orderIds.length === 0) {
-            return res.status(400).json({
-                message: 'Pickup date and order IDs are required'
+        if (!order) {
+            return res.status(404).json({
+                success: false,
+                message: 'Order not found'
             });
         }
 
-        // Get AWB numbers for the orders
-        const orders = await prisma.order.findMany({
-            where: {
-                id: { in: orderIds },
-                awbNumber: { not: null }
-            },
-            select: {
-                awbNumber: true
+        const updatedOrder = await prisma.order.update({
+            where: { id: orderId },
+            data: {
+                ...(awbNumber !== undefined && { awbNumber }),
+                ...(trackingUrl !== undefined && { trackingUrl }),
+                ...(shippingStatus !== undefined && { shippingStatus }),
+                ...(markShipped && { status: 'SHIPPED' })
             }
         });
 
-        const awbNumbers = orders.map(order => order.awbNumber).filter(Boolean);
-
-        if (awbNumbers.length === 0) {
-            return res.status(400).json({
-                message: 'No valid shipments found for the selected orders'
-            });
-        }
-
-        const pickup = await ekartService.schedulePickup({
-            pickupDate,
-            awbNumbers,
-            numberOfPieces: awbNumbers.length
-        });
-
         res.json({
             success: true,
-            pickup
+            message: 'Shipping details updated',
+            data: updatedOrder
         });
-
     } catch (error) {
-        console.error('Schedule pickup error:', error);
+        console.error('Update shipping error:', error);
         res.status(500).json({
-            message: error.message || 'Failed to schedule pickup'
+            success: false,
+            message: error.message || 'Failed to update shipping details'
         });
     }
 };
 
 /**
- * Cancel shipment
- * POST /api/shipping/cancel/:orderId
+ * Cancel a shipment (Admin) — clears the manual tracking status
+ * PUT /api/shipping/cancel/:orderId
  */
 exports.cancelShipment = async (req, res) => {
     try {
         const { orderId } = req.params;
 
-        const order = await prisma.order.findUnique({
-            where: { id: orderId }
-        });
+        const order = await prisma.order.findUnique({ where: { id: orderId } });
 
         if (!order) {
-            return res.status(404).json({ message: 'Order not found' });
+            return res.status(404).json({
+                success: false,
+                message: 'Order not found'
+            });
         }
 
-        if (!order.awbNumber) {
-            return res.status(400).json({ message: 'No shipment found for this order' });
-        }
-
-        await ekartService.cancelShipment(order.awbNumber);
-
-        // Update order
         await prisma.order.update({
             where: { id: orderId },
             data: {
@@ -253,52 +137,17 @@ exports.cancelShipment = async (req, res) => {
             success: true,
             message: 'Shipment cancelled successfully'
         });
-
     } catch (error) {
         console.error('Cancel shipment error:', error);
         res.status(500).json({
+            success: false,
             message: error.message || 'Failed to cancel shipment'
         });
     }
 };
 
 /**
- * Generate shipping label
- * GET /api/shipping/label/:orderId
- */
-exports.generateLabel = async (req, res) => {
-    try {
-        const { orderId } = req.params;
-
-        const order = await prisma.order.findUnique({
-            where: { id: orderId }
-        });
-
-        if (!order) {
-            return res.status(404).json({ message: 'Order not found' });
-        }
-
-        if (!order.awbNumber) {
-            return res.status(400).json({ message: 'No shipment found for this order' });
-        }
-
-        const label = await ekartService.generateShippingLabel(order.awbNumber);
-
-        res.json({
-            success: true,
-            label
-        });
-
-    } catch (error) {
-        console.error('Generate label error:', error);
-        res.status(500).json({
-            message: error.message || 'Failed to generate shipping label'
-        });
-    }
-};
-
-/**
- * Get all shipments (Admin)
+ * Get all shipped/tracked orders (Admin)
  * GET /api/shipping/all
  */
 exports.getAllShipments = async (req, res) => {
@@ -341,13 +190,11 @@ exports.getAllShipments = async (req, res) => {
                 pages: Math.ceil(total / parseInt(limit))
             }
         });
-
     } catch (error) {
         console.error('Get shipments error:', error);
         res.status(500).json({
+            success: false,
             message: error.message || 'Failed to fetch shipments'
         });
     }
 };
-
-module.exports = exports;
