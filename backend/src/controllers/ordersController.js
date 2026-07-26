@@ -1,5 +1,6 @@
 const prisma = require('../config/database');
 const emailService = require('../services/emailService');
+const { generateInvoicePdf } = require('../services/invoiceService');
 
 /**
  * Generate unique order number
@@ -145,16 +146,22 @@ const createOrder = async (req, res) => {
       data: order
     });
 
-    // Send order confirmation email asynchronously
+    // Send order confirmation email + invoice asynchronously
     try {
       const user = await prisma.user.findUnique({
         where: { id: req.userId },
         select: { email: true, fullName: true }
       });
 
+      const pdfBuffer = await generateInvoicePdf(order, user).catch((pdfError) => {
+        console.error('Failed to generate invoice PDF:', pdfError);
+        return null;
+      });
+
       if (user && user.email) {
-        await emailService.sendOrderConfirmationEmail(user.email, order, user.fullName);
+        await emailService.sendOrderConfirmationEmail(user.email, order, user.fullName, pdfBuffer);
       }
+      await emailService.sendInvoiceToAdmin(order, user?.fullName, pdfBuffer);
     } catch (emailError) {
       console.error('Failed to send order confirmation email:', emailError);
     }

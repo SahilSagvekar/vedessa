@@ -260,6 +260,56 @@ const emailTemplates = {
     `
   }),
 
+  adminNewOrder: (order, userName) => ({
+    subject: `New Order Placed - #${order.orderNumber} - Vedessa`,
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #2d5016 0%, #4a7c2c 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+          .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+          .order-item { background: white; padding: 15px; margin: 10px 0; border-radius: 5px; }
+          .total { font-size: 18px; font-weight: bold; color: #2d5016; margin-top: 20px; }
+          .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>New Order Placed</h1>
+          </div>
+          <div class="content">
+            <p>A new order has been placed by <strong>${userName || 'a customer'}</strong>.</p>
+            <h3>Order #${order.orderNumber}</h3>
+            <p>Order Date: ${new Date(order.createdAt).toLocaleDateString()}</p>
+            <p>Payment Method: ${order.paymentMethod || 'N/A'}</p>
+
+            <h3>Items Ordered:</h3>
+            ${order.items.map(item => `
+              <div class="order-item">
+                <strong>${item.productName}</strong><br>
+                Quantity: ${item.quantity} × ₹${item.price} = ₹${(item.quantity * parseFloat(item.price)).toFixed(2)}
+              </div>
+            `).join('')}
+
+            <div class="total">
+              Total: ₹${order.totalAmount}
+            </div>
+
+            <p style="margin-top: 30px;">The invoice for this order is attached.</p>
+          </div>
+          <div class="footer">
+            <p>© ${new Date().getFullYear()} Vedessa. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `
+  }),
+
   collaborationRequest: (formData) => ({
     subject: `New Collaboration Request from ${formData.fullName}`,
     html: `
@@ -369,17 +419,19 @@ const emailTemplates = {
   })
 };
 
-// Send email function
-const sendEmail = async (to, template, data) => {
+// Send email function. `args` is always an array of the positional
+// arguments the chosen template function expects, e.g. [order, userName].
+const sendEmail = async (to, template, args, attachments = []) => {
   try {
     const transporter = createTransporter();
-    const emailContent = template(data);
+    const emailContent = template(...args);
 
     const mailOptions = {
       from: `"Vedessa" <${process.env.EMAIL_USER || process.env.SMTP_USER}>`,
       to,
       subject: emailContent.subject,
-      html: emailContent.html
+      html: emailContent.html,
+      ...(attachments.length > 0 && { attachments })
     };
 
     const info = await transporter.sendMail(mailOptions);
@@ -395,23 +447,34 @@ const sendEmail = async (to, template, data) => {
 module.exports = {
   sendPasswordResetEmail: async (email, resetToken, userName) => {
     const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
-    return await sendEmail(email, emailTemplates.passwordReset, resetUrl, userName);
+    return await sendEmail(email, emailTemplates.passwordReset, [resetUrl, userName]);
   },
 
-  sendOrderConfirmationEmail: async (email, order, userName) => {
-    return await sendEmail(email, emailTemplates.orderConfirmation, { order, userName });
+  sendOrderConfirmationEmail: async (email, order, userName, pdfBuffer = null) => {
+    const attachments = pdfBuffer
+      ? [{ filename: `Invoice-${order.orderNumber}.pdf`, content: pdfBuffer, contentType: 'application/pdf' }]
+      : [];
+    return await sendEmail(email, emailTemplates.orderConfirmation, [order, userName], attachments);
+  },
+
+  sendInvoiceToAdmin: async (order, userName, pdfBuffer) => {
+    const adminEmail = process.env.ADMIN_EMAIL || 'vedessa0203@gmail.com';
+    const attachments = pdfBuffer
+      ? [{ filename: `Invoice-${order.orderNumber}.pdf`, content: pdfBuffer, contentType: 'application/pdf' }]
+      : [];
+    return await sendEmail(adminEmail, emailTemplates.adminNewOrder, [order, userName], attachments);
   },
 
   sendVendorApprovalEmail: async (email, vendorName, companyName) => {
-    return await sendEmail(email, emailTemplates.vendorApproval, { vendorName, companyName });
+    return await sendEmail(email, emailTemplates.vendorApproval, [vendorName, companyName]);
   },
 
   sendVendorRejectionEmail: async (email, vendorName, reason) => {
-    return await sendEmail(email, emailTemplates.vendorRejection, { vendorName, reason });
+    return await sendEmail(email, emailTemplates.vendorRejection, [vendorName, reason]);
   },
 
   sendOrderShippedEmail: async (email, order, trackingNumber) => {
-    return await sendEmail(email, emailTemplates.orderShipped, { order, trackingNumber });
+    return await sendEmail(email, emailTemplates.orderShipped, [order, trackingNumber]);
   },
 
   // Test email function
@@ -432,11 +495,11 @@ module.exports = {
 
   sendCollaborationEmail: async (formData) => {
     const adminEmail = process.env.ADMIN_EMAIL || 'vedessa0203@gmail.com';
-    return await sendEmail(adminEmail, emailTemplates.collaborationRequest, formData);
+    return await sendEmail(adminEmail, emailTemplates.collaborationRequest, [formData]);
   },
 
   sendSupportEmail: async (formData) => {
     const adminEmail = process.env.ADMIN_EMAIL || 'vedessa0203@gmail.com';
-    return await sendEmail(adminEmail, emailTemplates.supportRequest, formData);
+    return await sendEmail(adminEmail, emailTemplates.supportRequest, [formData]);
   }
 };

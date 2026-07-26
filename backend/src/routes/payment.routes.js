@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const prisma = require('../config/database');
 const { auth: protect } = require('../middleware/auth');
 const emailService = require('../services/emailService');
+const { generateInvoicePdf } = require('../services/invoiceService');
 
 const router = express.Router();
 
@@ -176,9 +177,16 @@ router.post('/verify-payment', protect, async (req, res) => {
         where: { id: req.user.id },
         select: { email: true, fullName: true }
       });
+
+      const pdfBuffer = await generateInvoicePdf(updatedOrder, user).catch((pdfError) => {
+        console.error('Failed to generate invoice PDF:', pdfError);
+        return null;
+      });
+
       if (user && user.email) {
-        await emailService.sendOrderConfirmationEmail(user.email, updatedOrder, user.fullName);
+        await emailService.sendOrderConfirmationEmail(user.email, updatedOrder, user.fullName, pdfBuffer);
       }
+      await emailService.sendInvoiceToAdmin(updatedOrder, user?.fullName, pdfBuffer);
     } catch (emailError) {
       console.error('Failed to send order confirmation email:', emailError);
     }
@@ -268,9 +276,16 @@ router.post('/webhook', async (req, res) => {
             where: { id: order.userId },
             select: { email: true, fullName: true }
           });
+
+          const pdfBuffer = await generateInvoicePdf(order, user).catch((pdfError) => {
+            console.error('Failed to generate invoice PDF:', pdfError);
+            return null;
+          });
+
           if (user && user.email) {
-            await emailService.sendOrderConfirmationEmail(user.email, order, user.fullName);
+            await emailService.sendOrderConfirmationEmail(user.email, order, user.fullName, pdfBuffer);
           }
+          await emailService.sendInvoiceToAdmin(order, user?.fullName, pdfBuffer);
         } catch (emailError) {
           console.error('Failed to send order confirmation email via webhook:', emailError);
         }
