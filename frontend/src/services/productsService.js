@@ -26,15 +26,11 @@ export const productsService = {
 
   // Create product (admin only)
   createProduct: async (productData) => {
-    return await api.post('/products', productData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
+    return await api.post('/products', productData);
   },
 
   updateProduct: async (id, productData) => {
-    return await api.put(`/products/${id}`, productData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
+    return await api.put(`/products/${id}`, productData);
   },
 
   // Delete product (admin only)

@@ -5,10 +5,8 @@ const LOGO_PATH = path.join(__dirname, '../assets/vedessa-logo.png');
 
 const BUSINESS = {
     name: process.env.BUSINESS_NAME || 'Vedessa',
-    addressLine1: process.env.BUSINESS_ADDRESS_LINE1 || 'A/201, Dev Niketan Co-op Hsg Soc, Sant Mirabai Road',
-    addressLine2: process.env.BUSINESS_ADDRESS_LINE2 || 'Dahisar East, Mumbai, Maharashtra 400068',
     phone: process.env.BUSINESS_PHONE || '8097460676',
-    email: process.env.BUSINESS_EMAIL || 'hirenp1201@gmail.com',
+    email: process.env.BUSINESS_EMAIL || 'vedessa0203@gmail.com',
     gstin: process.env.BUSINESS_GSTIN || null // not registered — omit the line entirely if blank
 };
 
@@ -44,9 +42,7 @@ function generateInvoicePdf(order, user) {
                 .text(BUSINESS.name, headerTextX, doc.page.margins.top, { width: pageWidth - 75 });
 
             doc.font('Helvetica').fontSize(9).fillColor('#444')
-                .text(BUSINESS.addressLine1, headerTextX, doc.y + 2, { width: pageWidth - 75 })
-                .text(BUSINESS.addressLine2, headerTextX, doc.y, { width: pageWidth - 75 })
-                .text(`Phone: ${BUSINESS.phone}  |  Email: ${BUSINESS.email}`, headerTextX, doc.y, { width: pageWidth - 75 });
+                .text(`Phone: ${BUSINESS.phone}  |  Email: ${BUSINESS.email}`, headerTextX, doc.y + 2, { width: pageWidth - 75 });
 
             if (BUSINESS.gstin) {
                 doc.text(`GSTIN: ${BUSINESS.gstin}`, headerTextX, doc.y, { width: pageWidth - 75 });
