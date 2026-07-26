@@ -49,7 +49,7 @@ const getCart = async (req, res) => {
       };
     });
 
-    const tax = subtotal * 0.18; // 18% tax
+    const tax = 0; // Tax removed
     const cartSummaryTotal = subtotal + tax;
 
     const totalWeight = parseFloat(items.reduce((sum, item) => {

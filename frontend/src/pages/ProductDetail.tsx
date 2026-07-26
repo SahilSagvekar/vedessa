@@ -463,8 +463,6 @@ export default function ProductDetail() {
                 </>
               )}
             </div>
-            <p className="text-xs text-gray-400 -mt-4 mb-6">Inclusive of all taxes</p>
-
             {/* Description */}
             <div className="mb-6">
               <p className="text-base text-gray-700 leading-relaxed">

@@ -206,11 +206,6 @@ const Cart = () => {
                 <span>₹{subtotal.toFixed(2)}</span>
               </div>
 
-              <div className="flex justify-between text-foreground">
-                <span>Tax (18%)</span>
-                <span>₹{tax.toFixed(2)}</span>
-              </div>
-
               <div className="flex justify-between text-muted-foreground">
                 <span>Shipping</span>
                 <span>

@@ -354,10 +354,6 @@ const Checkout = () => {
                 <span className="text-foreground">₹{cart.summary.subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Tax (18%)</span>
-                <span className="text-foreground">₹{cart.summary.tax.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Shipping</span>
                 <span className="text-foreground">
                   {shippingCost === 0 ? 'FREE' : `₹${shippingCost.toFixed(2)}`}

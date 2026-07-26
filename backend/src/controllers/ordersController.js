@@ -68,7 +68,7 @@ const createOrder = async (req, res) => {
       totalWeight += itemWeight * item.quantity;
     });
 
-    const taxAmount = subtotal * 0.18; // 18% tax
+    const taxAmount = 0; // Tax removed
 
     // TEMP: shipping disabled, flat 0 for all orders
     let shippingCost = 0;

@@ -285,10 +285,6 @@ export default function OrderDetail() {
                                         <span className="text-gray-900">₹{order.subtotal?.toFixed(2) || '0.00'}</span>
                                     </div>
                                     <div className="flex justify-between">
-                                        <span className="text-gray-600">Tax</span>
-                                        <span className="text-gray-900">₹{order.tax?.toFixed(2) || '0.00'}</span>
-                                    </div>
-                                    <div className="flex justify-between">
                                         <span className="text-gray-600">Shipping</span>
                                         <span className="text-gray-900">
                                             {order.shipping_cost === 0 ? 'Free' : `₹${order.shipping_cost?.toFixed(2)}`}

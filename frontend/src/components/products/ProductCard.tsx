@@ -128,7 +128,6 @@ export default function ProductCard({ product }: ProductCardProps) {
                 </span>
               )}
             </div>
-            <span className="text-[10px] text-gray-400">Inclusive of all taxes</span>
           </div>
         </div>
       </div>
