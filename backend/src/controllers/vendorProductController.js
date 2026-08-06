@@ -24,7 +24,7 @@ exports.getMyProducts = async (req, res) => {
                 skip,
                 take: parseInt(limit),
                 include: {
-                    category: true,
+                    categories: true,
                     collection: true,
                     images: {
                         orderBy: { order: 'asc' }
@@ -93,7 +93,6 @@ exports.createProduct = async (req, res) => {
             name,
             description,
             price,
-            categoryId,
             collectionId,
             stock,
             isNew,
@@ -101,6 +100,20 @@ exports.createProduct = async (req, res) => {
             lowStockThreshold,
             variants = []
         } = req.body;
+
+        // categoryIds arrives as a JSON string array; falls back to the
+        // legacy singular categoryId field if that's what's sent instead.
+        let categoryIds = [];
+        try {
+            categoryIds = req.body.categoryIds ? JSON.parse(req.body.categoryIds) : [];
+        } catch {
+            categoryIds = [];
+        }
+        if (!Array.isArray(categoryIds)) categoryIds = [];
+        if (categoryIds.length === 0 && typeof req.body.categoryId === 'string' && req.body.categoryId.trim() !== '') {
+            categoryIds = [req.body.categoryId.trim()];
+        }
+        categoryIds = categoryIds.filter(id => typeof id === 'string' && id.trim() !== '');
 
         // Handle media (images + videos)
         let order;
@@ -130,7 +143,9 @@ exports.createProduct = async (req, res) => {
             description,
             price: parseFloat(price),
             image: primaryImage,
-            categoryId: (categoryId && typeof categoryId === 'string') ? categoryId : null,
+            categories: {
+                connect: categoryIds.map(id => ({ id }))
+            },
             collectionId: (collectionId && typeof collectionId === 'string') ? collectionId : null,
             vendorId: req.user.id,
             stock: stock ? parseInt(stock) : 100,
@@ -155,7 +170,7 @@ exports.createProduct = async (req, res) => {
         const product = await prisma.product.create({
             data: productData,
             include: {
-                category: true,
+                categories: true,
                 collection: true,
                 images: {
                     orderBy: { order: 'asc' }
@@ -214,7 +229,6 @@ exports.updateProduct = async (req, res) => {
             name,
             description,
             price,
-            categoryId,
             collectionId,
             stock,
             isNew,
@@ -228,12 +242,28 @@ exports.updateProduct = async (req, res) => {
         if (name) updateData.name = name;
         if (description !== undefined) updateData.description = description;
         if (price) updateData.price = parseFloat(price);
-        if (categoryId) updateData.categoryId = categoryId;
         if (collectionId) updateData.collectionId = collectionId;
         if (stock) updateData.stock = parseInt(stock);
         if (isNew !== undefined) updateData.isNew = isNew === 'true' || isNew === true;
         if (isBestseller !== undefined) updateData.isBestseller = isBestseller === 'true' || isBestseller === true;
         if (lowStockThreshold !== undefined) updateData.lowStockThreshold = parseInt(lowStockThreshold);
+
+        // categoryIds (JSON string array) replaces the product's full set of
+        // categories when provided. Falls back to legacy singular categoryId.
+        if (req.body.categoryIds !== undefined || req.body.categoryId !== undefined) {
+            let categoryIds = [];
+            try {
+                categoryIds = req.body.categoryIds ? JSON.parse(req.body.categoryIds) : [];
+            } catch {
+                categoryIds = [];
+            }
+            if (!Array.isArray(categoryIds)) categoryIds = [];
+            if (categoryIds.length === 0 && typeof req.body.categoryId === 'string' && req.body.categoryId.trim() !== '') {
+                categoryIds = [req.body.categoryId.trim()];
+            }
+            categoryIds = categoryIds.filter(id => typeof id === 'string' && id.trim() !== '');
+            updateData.categories = { set: categoryIds.map(id => ({ id })) };
+        }
 
         // Handle media (images + videos)
         let order;
@@ -285,7 +315,7 @@ exports.updateProduct = async (req, res) => {
             where: { id },
             data: updateData,
             include: {
-                category: true,
+                categories: true,
                 collection: true,
                 images: {
                     orderBy: { order: 'asc' }

@@ -24,6 +24,9 @@ const Products = () => {
   const searchBarQuery = searchParams.get('search') || '';
   
   const [selectedCategory, setSelectedCategory] = useState<string>(searchParams.get('category') || 'all');
+  // 'group' has no sidebar control of its own — it's the entry point from the
+  // Skin Care / Hair Care nav mega-menu, so we just read it once from the URL.
+  const groupParam = searchParams.get('group') || '';
   const [selectedCollection, setSelectedCollection] = useState<string>(searchParams.get('collection') || 'all');
   const [sortBy, setSortBy] = useState<string>('newest');
   const [priceRange, setPriceRange] = useState<string>('all');
@@ -58,6 +61,8 @@ const Products = () => {
   
   if (selectedCategory !== 'all') {
     apiFilters.category = selectedCategory;
+  } else if (groupParam) {
+    apiFilters.group = groupParam;
   }
   
   if (selectedCollection !== 'all') {
@@ -360,18 +365,6 @@ const Products = () => {
 
   return (
     <Layout>
-      {/* Hero Section - Fully Responsive */}
-      {/* <div className="bg-[#f7f6f0] text-gray-800 py-12 md:py-16 lg:py-20">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center max-w-6xl">
-          <p className="text-gray-400 text-xs sm:text-sm font-light tracking-[0.15em] sm:tracking-[0.2em] uppercase mb-4 sm:mb-6">
-            Our Product
-          </p>
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-[7rem] font-serif text-gray-900 tracking-tight leading-[0.9] font-extralight px-4">
-            Elegance Awaits You
-          </h1>
-        </div>
-      </div> */}
-
       <div className="bg-kama-olive text-kama-cream py-8">
         <div className="container mx-auto px-4">
           <h1 className="text-4xl font-display mb-2">Our Products</h1>

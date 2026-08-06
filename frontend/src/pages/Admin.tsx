@@ -4,9 +4,11 @@ import { Package, ShoppingCart, TrendingUp, Clock, Plus, Pencil, Trash2, Loader2
 import Layout from '@/components/layout/Layout';
 import { useAuth } from '@/components/contexts/AuthContext';
 import productsService from '@/services/productsService';
+import categoriesService from '@/services/categoriesService';
 import ordersService from '@/services/ordersService';
 import vendorService from '@/services/vendorService';
 import VendorManagement from '@/components/admin/VendorManagement';
+import CategoryManagement from '@/components/admin/CategoryManagement';
 import CouponManagement from '@/components/admin/CouponManagement';
 import ShippingManagement from '@/components/admin/ShippingManagement';
 import shippingService from '@/services/shippingService';
@@ -39,7 +41,7 @@ interface Product {
   price: number;
   image: string;
   images?: ExistingMediaItem[];
-  category: string;
+  categories: { id: string; name: string; slug: string; group?: string | null }[];
   collection: string;
   isNew: boolean;
   isBestseller: boolean;
@@ -53,7 +55,7 @@ interface ProductFormData {
   description: string;
   price: string;
   image: string;
-  category: string;
+  categoryIds: string[];
   collection: string;
   isNew: boolean;
   isBestseller: boolean;
@@ -73,9 +75,10 @@ const Admin = () => {
   const { toast } = useToast();
 
   const [productList, setProductList] = useState<Product[]>([]);
+  const [categoriesList, setCategoriesList] = useState<any[]>([]);
   const [vendorList, setVendorList] = useState<any[]>([]);
   const [orderList, setOrderList] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'products' | 'orders' | 'vendors' | 'coupons' | 'shipping'>('products');
+  const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'orders' | 'vendors' | 'coupons' | 'shipping'>('products');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editProductId, setEditProductId] = useState<string | null>(null);
@@ -95,7 +98,7 @@ const Admin = () => {
     description: '',
     price: '',
     image: '',
-    category: 'skincare',
+    categoryIds: [],
     collection: 'bringaras',
     isNew: false,
     isBestseller: false,
@@ -132,11 +135,21 @@ const Admin = () => {
   useEffect(() => {
     if (isAdmin) {
       fetchProducts();
+      fetchCategoriesList();
       fetchStats();
       fetchVendors();
       fetchOrders();
     }
   }, [isAdmin]);
+
+  const fetchCategoriesList = async () => {
+    try {
+      const response = await categoriesService.getCategories();
+      setCategoriesList(response.data || []);
+    } catch (error) {
+      console.error('Failed to fetch categories:', error);
+    }
+  };
 
   const fetchVendors = async () => {
     try {
@@ -237,7 +250,7 @@ const Admin = () => {
       description: '',
       price: '',
       image: '',
-      category: 'skincare',
+      categoryIds: [],
       collection: 'bringaras',
       isNew: false,
       isBestseller: false,
@@ -269,7 +282,7 @@ const Admin = () => {
       description: product.description,
       price: product.price.toString(),
       image: product.image || '',
-      category: product.category,
+      categoryIds: Array.isArray(product.categories) ? product.categories.map((c) => c.id) : [],
       collection: product.collection,
       isNew: product.isNew,
       isBestseller: product.isBestseller,
@@ -325,12 +338,14 @@ const Admin = () => {
     try {
       const productData = new FormData();
 
-      // Append all fields except image
+      // Append all fields except image/categoryIds (categoryIds needs
+      // JSON.stringify, not the default array-to-string coercion)
       Object.keys(formData).forEach(key => {
-        if (key !== 'image') {
+        if (key !== 'image' && key !== 'categoryIds') {
           productData.append(key, (formData as any)[key]);
         }
       });
+      productData.append('categoryIds', JSON.stringify(formData.categoryIds || []));
 
       // Handle media (images + videos) - order manifest carries both kept
       // existing items and newly uploaded files, in display order
@@ -392,16 +407,6 @@ const Admin = () => {
         variant: 'destructive',
       });
     }
-  };
-
-  const getCategoryLabel = (category: string) => {
-    const labels: Record<string, string> = {
-      skincare: 'Skincare',
-      haircare: 'Haircare',
-      bath_body: 'Bath & Body',
-      gifting: 'Gifting',
-    };
-    return labels[category] || category;
   };
 
   const handleApproveVendor = async (id: string, approve: boolean) => {
@@ -466,6 +471,15 @@ const Admin = () => {
               }`}
           >
             Products
+          </button>
+          <button
+            onClick={() => setActiveTab('categories')}
+            className={`pb-3 px-1 text-sm font-medium transition-colors ${activeTab === 'categories'
+              ? 'text-foreground border-b-2 border-foreground'
+              : 'text-muted-foreground hover:text-foreground'
+              }`}
+          >
+            Categories
           </button>
           <button
             onClick={() => setActiveTab('orders')}
@@ -636,25 +650,36 @@ const Admin = () => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="category">Category *</Label>
-                        <Select
-                          value={formData.category}
-                          onValueChange={(value) => setFormData({ ...formData, category: value })}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select category" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="skincare">Skincare</SelectItem>
-                            <SelectItem value="haircare">Haircare</SelectItem>
-                            <SelectItem value="bath_body">Bath & Body</SelectItem>
-                            <SelectItem value="gifting">Gifting</SelectItem>
-                          </SelectContent>
-                        </Select>
+                    <div>
+                      <Label>Categories *</Label>
+                      <div className="border border-input rounded-md max-h-40 overflow-y-auto p-2 space-y-1 mt-1">
+                        {categoriesList.length === 0 ? (
+                          <p className="text-xs text-muted-foreground px-1 py-1">No categories yet — add some in the Categories tab</p>
+                        ) : (
+                          categoriesList.map((cat) => (
+                            <label key={cat.id} className="flex items-center gap-2 text-sm px-1 py-1 cursor-pointer hover:bg-muted rounded">
+                              <input
+                                type="checkbox"
+                                checked={formData.categoryIds.includes(cat.id)}
+                                onChange={(e) => {
+                                  setFormData({
+                                    ...formData,
+                                    categoryIds: e.target.checked
+                                      ? [...formData.categoryIds, cat.id]
+                                      : formData.categoryIds.filter((id) => id !== cat.id),
+                                  });
+                                }}
+                                className="rounded border-gray-300"
+                              />
+                              <span>{cat.name}</span>
+                            </label>
+                          ))
+                        )}
                       </div>
+                      <p className="text-xs text-muted-foreground mt-1">A product can belong to multiple categories</p>
+                    </div>
 
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="collection">Collection *</Label>
                         <Select
@@ -743,10 +768,16 @@ const Admin = () => {
                       <p className="text-sm text-muted-foreground">
                         ₹{product.price.toFixed(2)} • Stock: {product.stock}
                       </p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="secondary" className="text-xs">
-                          {getCategoryLabel(product.category)}
-                        </Badge>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        {(product.categories || []).length === 0 ? (
+                          <Badge variant="outline" className="text-xs">Uncategorized</Badge>
+                        ) : (
+                          product.categories.map((cat) => (
+                            <Badge key={cat.id} variant="secondary" className="text-xs">
+                              {cat.name}
+                            </Badge>
+                          ))
+                        )}
                         {product.isNew && (
                           <Badge className="bg-kama-orange text-accent-foreground text-xs">
                             New
@@ -871,6 +902,11 @@ const Admin = () => {
               </div>
             )}
           </div>
+        )}
+
+        {/* Categories Tab */}
+        {activeTab === 'categories' && (
+          <CategoryManagement />
         )}
 
         {/* Vendors Tab */}

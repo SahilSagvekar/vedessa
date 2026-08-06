@@ -7,12 +7,12 @@ const categories = [
   {
     name: "Skincare",
     image: "https://res.cloudinary.com/dmigevbpo/image/upload/v1782666110/vedessa/products/product-1782666102552-salicylic-acid-face-wash-7dn.png",
-    link: "/products?category=skincare"
+    link: "/products?group=skincare"
   },
   {
     name: "HairCare",
     image: "https://res.cloudinary.com/dmigevbpo/image/upload/v1783836778/vedessa/products/media-1783836777490-633743091.png",
-    link: "/products?category=haircare"
+    link: "/products?group=haircare"
   },
   {
     name: "Bringaras Collection",
@@ -90,38 +90,3 @@ export default function CollectionsGrid() {
     </div>
   );
 }
-
-
-
-// import { Link } from 'react-router-dom';
-// import { collections } from '@/data/products';
-
-// const CollectionsGrid = () => {
-//   return (
-//     <section className="py-12">
-//       <div className="container mx-auto px-4">
-//         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-//           {collections.map((collection) => (
-//             <Link
-//               key={collection.id}
-//               to={`/products?collection=${collection.id}`}
-//               className="relative aspect-square rounded-lg overflow-hidden group"
-//             >
-//               <img
-//                 src={collection.image}
-//                 alt={collection.name}
-//                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-//               />
-//               <div className="absolute inset-0 bg-gradient-to-t from-foreground/60 to-transparent" />
-//               <div className="absolute bottom-4 left-4 right-4">
-//                 <span className="text-sm font-medium text-card">{collection.name}</span>
-//               </div>
-//             </Link>
-//           ))}
-//         </div>
-//       </div>
-//     </section>
-//   );
-// };
-
-// export default CollectionsGrid;

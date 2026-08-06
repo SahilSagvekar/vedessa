@@ -6,6 +6,7 @@ export const productsService = {
     const queryParams = new URLSearchParams();
     
     if (params.category) queryParams.append('category', params.category);
+    if (params.group) queryParams.append('group', params.group);
     if (params.collection) queryParams.append('collection', params.collection);
     if (params.isNew !== undefined) queryParams.append('isNew', params.isNew);
     if (params.isBestseller !== undefined) queryParams.append('isBestseller', params.isBestseller);

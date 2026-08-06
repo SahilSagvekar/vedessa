@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Heart, User, ShoppingBag, LogOut, Menu, ChevronDown, Truck } from 'lucide-react';
+import { Search, Heart, User, ShoppingBag, LogOut, Menu, Truck } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
 import { useWishlist } from '@/hooks/useWishlist';
 import { useAuth } from '@/components/contexts/AuthContext';
 import SearchModal from '@/components/search/SearchModal';
+import { categoriesService } from '@/services/categoriesService';
+import { productsService } from '@/services/productsService';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +22,17 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 
+interface NavCategory {
+  name: string;
+  slug: string;
+}
+
+interface NewArrivalProduct {
+  id: string;
+  name: string;
+  image: string | null;
+}
+
 const Header = () => {
   const { itemCount } = useCart();
   const { count: wishlistCount } = useWishlist();
@@ -27,37 +40,71 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
+  // Which desktop nav item's hover mega-menu is currently open
+  const [openMenu, setOpenMenu] = useState<'new' | 'skin' | 'hair' | null>(null);
+
+  // Data that drives the Skin Care / Hair Care / New & Related mega-menus.
+  // Fetched once — shared by both the desktop hover menus and the mobile sheet.
+  const [skincareCategories, setSkincareCategories] = useState<NavCategory[]>([]);
+  const [haircareCategories, setHaircareCategories] = useState<NavCategory[]>([]);
+  const [newArrivals, setNewArrivals] = useState<NewArrivalProduct[]>([]);
+
+  useEffect(() => {
+    const fetchNavData = async () => {
+      try {
+        const [categoriesRes, newArrivalsRes] = await Promise.all([
+          categoriesService.getCategories(),
+          productsService.getProducts({ isNew: 'true', limit: 4 }),
+        ]);
+
+        const categories = categoriesRes?.data || [];
+        setSkincareCategories(
+          categories
+            .filter((cat: any) => cat.group === 'SKINCARE')
+            .map((cat: any) => ({ name: cat.name, slug: cat.slug }))
+        );
+        setHaircareCategories(
+          categories
+            .filter((cat: any) => cat.group === 'HAIRCARE')
+            .map((cat: any) => ({ name: cat.name, slug: cat.slug }))
+        );
+
+        const products = newArrivalsRes?.data?.products || [];
+        setNewArrivals(
+          products.map((p: any) => ({ id: p.id, name: p.name, image: p.image }))
+        );
+      } catch (err) {
+        console.error('Failed to load nav menu data:', err);
+      }
+    };
+
+    fetchNavData();
+  }, []);
+
   const closeMenu = () => setIsMenuOpen(false);
 
+  // Shared nav config — drives both the mobile sheet and (indirectly) the
+  // desktop hover menus below, so the two never drift out of sync.
   const menuItems = [
     {
-      title: 'ALL',
+      title: 'NEW & RELATED',
       link: '/products',
     },
     {
-      title: 'SKIN',
-      link: '/products?category=skincare',
+      title: 'SKIN CARE',
+      link: '/products?group=skincare',
+      submenu: skincareCategories.map((cat) => ({
+        title: cat.name,
+        link: `/products?category=${cat.slug}`,
+      })),
     },
     {
-      title: 'HAIR',
-      link: '/products?category=haircare',
-    },
-    {
-      title: 'BATH & BODY',
-      link: '/products?category=bath_body',
-    },
-    {
-      title: 'COLLECTIONS',
-      submenu: [
-        { title: 'Bringaras', link: '/products?collection=bringaras' },
-        { title: 'Eladhi', link: '/products?collection=eladhi' },
-        { title: 'Ashwaras', link: '/products?collection=ashwaras' },
-        { title: 'Kumkumadi', link: '/products?collection=kumkumadi' },
-      ],
-    },
-    {
-      title: 'GIFTING',
-      link: '/products?category=gifting',
+      title: 'HAIR CARE',
+      link: '/products?group=haircare',
+      submenu: haircareCategories.map((cat) => ({
+        title: cat.name,
+        link: `/products?category=${cat.slug}`,
+      })),
     },
     {
       title: 'BEST SELLER',
@@ -106,9 +153,13 @@ const Header = () => {
                       <div key={index}>
                         {item.submenu ? (
                           <div className="py-2">
-                            <div className="font-semibold text-foreground mb-2 px-4">
+                            <Link
+                              to={item.link}
+                              onClick={closeMenu}
+                              className="block font-semibold text-foreground mb-2 px-4 hover:text-kama-olive transition-colors"
+                            >
                               {item.title}
-                            </div>
+                            </Link>
                             <div className="pl-6 space-y-1">
                               {item.submenu.map((subitem, subindex) => (
                                 <Link
@@ -188,53 +239,131 @@ const Header = () => {
 
               {/* Center-Right: Navigation Links (Hidden on small screens) */}
               <div className="hidden xl:flex items-center space-x-6 flex-1 justify-center">
-                <Link to="/products" className="text-sm font-medium text-foreground hover:text-kama-olive transition-colors">
-                  ALL
-                </Link>
-                <Link to="/products?category=skincare" className="text-sm font-medium text-foreground hover:text-kama-olive transition-colors">
-                  SKIN
-                </Link>
-                <Link to="/products?category=haircare" className="text-sm font-medium text-foreground hover:text-kama-olive transition-colors">
-                  HAIR
-                </Link>
-                <Link to="/products?category=bath_body" className="text-sm font-medium text-foreground hover:text-kama-olive transition-colors">
-                  BATH & BODY
-                </Link>
+                {/* New & Related */}
+                <div
+                  className="relative"
+                  onMouseEnter={() => setOpenMenu('new')}
+                  onMouseLeave={() => setOpenMenu(null)}
+                >
+                  <Link
+                    to="/products"
+                    className="text-sm font-medium text-foreground hover:text-kama-olive transition-colors"
+                  >
+                    NEW & RELATED
+                  </Link>
+                  {openMenu === 'new' && (
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 pt-3 z-50">
+                      <div className="bg-card border border-border rounded-md shadow-lg p-4 w-72">
+                        <p className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wide">
+                          New Arrivals
+                        </p>
+                        {newArrivals.length === 0 ? (
+                          <p className="text-sm text-muted-foreground">Check back soon</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {newArrivals.map((product) => (
+                              <Link
+                                key={product.id}
+                                to={`/products/${product.id}`}
+                                className="flex items-center gap-3 p-1 rounded-md hover:bg-muted transition-colors"
+                              >
+                                {product.image && (
+                                  <img
+                                    src={product.image}
+                                    alt={product.name}
+                                    className="w-10 h-10 object-cover rounded flex-shrink-0"
+                                  />
+                                )}
+                                <span className="text-sm text-foreground">{product.name}</span>
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                        <Link
+                          to="/products?isNew=true"
+                          className="block mt-3 pt-3 border-t border-border text-xs font-medium text-kama-olive hover:underline"
+                        >
+                          View all new arrivals &rarr;
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+                </div>
 
-                {/* Collections Dropdown */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="flex items-center space-x-1 text-sm font-medium text-foreground hover:text-kama-olive transition-colors">
-                    <span>COLLECTIONS</span>
-                    <ChevronDown className="w-4 h-4" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem asChild>
-                      <Link to="/products?collection=bringaras" className="cursor-pointer">
-                        Bringaras
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/products?collection=eladhi" className="cursor-pointer">
-                        Eladhi
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/products?collection=ashwaras" className="cursor-pointer">
-                        Ashwaras
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/products?collection=kumkumadi" className="cursor-pointer">
-                        Kumkumadi
-                      </Link>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                {/* Skin Care */}
+                <div
+                  className="relative"
+                  onMouseEnter={() => setOpenMenu('skin')}
+                  onMouseLeave={() => setOpenMenu(null)}
+                >
+                  <Link
+                    to="/products?group=skincare"
+                    className="text-sm font-medium text-foreground hover:text-kama-olive transition-colors"
+                  >
+                    SKIN CARE
+                  </Link>
+                  {openMenu === 'skin' && (
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 pt-3 z-50">
+                      <div className="bg-card border border-border rounded-md shadow-lg p-4 w-56">
+                        {skincareCategories.length === 0 ? (
+                          <p className="text-sm text-muted-foreground">Loading...</p>
+                        ) : (
+                          <div className="space-y-1">
+                            {skincareCategories.map((cat) => (
+                              <Link
+                                key={cat.slug}
+                                to={`/products?category=${cat.slug}`}
+                                className="block py-1.5 text-sm text-foreground hover:text-kama-olive transition-colors"
+                              >
+                                {cat.name}
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
 
-                <Link to="/products?category=gifting" className="text-sm font-medium text-foreground hover:text-kama-olive transition-colors">
-                  GIFTING
-                </Link>
-                <Link to="/products?filter=bestseller" className="text-sm font-medium text-foreground hover:text-kama-olive transition-colors">
+                {/* Hair Care */}
+                <div
+                  className="relative"
+                  onMouseEnter={() => setOpenMenu('hair')}
+                  onMouseLeave={() => setOpenMenu(null)}
+                >
+                  <Link
+                    to="/products?group=haircare"
+                    className="text-sm font-medium text-foreground hover:text-kama-olive transition-colors"
+                  >
+                    HAIR CARE
+                  </Link>
+                  {openMenu === 'hair' && (
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 pt-3 z-50">
+                      <div className="bg-card border border-border rounded-md shadow-lg p-4 w-56">
+                        {haircareCategories.length === 0 ? (
+                          <p className="text-sm text-muted-foreground">Loading...</p>
+                        ) : (
+                          <div className="space-y-1">
+                            {haircareCategories.map((cat) => (
+                              <Link
+                                key={cat.slug}
+                                to={`/products?category=${cat.slug}`}
+                                className="block py-1.5 text-sm text-foreground hover:text-kama-olive transition-colors"
+                              >
+                                {cat.name}
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <Link
+                  to="/products?filter=bestseller"
+                  className="text-sm font-medium text-foreground hover:text-kama-olive transition-colors"
+                >
                   BEST SELLER
                 </Link>
               </div>

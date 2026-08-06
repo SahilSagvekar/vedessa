@@ -55,7 +55,8 @@ export default function ProductDetail() {
             reviewCount: productData.reviews || 0,
             brand: 'Vedessa',
             vendor: 'Vedessa Ayurveda',
-            category: productData.category_name ? { name: productData.category_name } : null,
+            categories: productData.categories || [],
+            // category: productData.category_name ? { name: productData.category_name } : null,
             collection: productData.collection_name ? { name: productData.collection_name } : null,
             tags: ['Natural', 'Ayurvedic'],
             image: productData.image,
@@ -573,11 +574,19 @@ export default function ProductDetail() {
                 </div>
               )}
 
-              {product.category && (
+              {/* {product.category && (
                 <div className="flex gap-2">
                   <span className="text-gray-500 min-w-[100px]">Category:</span>
                   <span className="text-gray-900 font-medium">
                     {typeof product.category === 'string' ? product.category : product.category.name}
+                  </span>
+                </div>
+              )} */}
+              {product.categories && product.categories.length > 0 && (
+                <div className="flex gap-2">
+                  <span className="text-gray-500 min-w-[100px]">Category:</span>
+                  <span className="text-gray-900 font-medium">
+                    {product.categories.map((c: any) => c.name).join(', ')}
                   </span>
                 </div>
               )}

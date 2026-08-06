@@ -20,6 +20,21 @@ export const categoriesService = {
   getCollection: async (slug) => {
     return await api.get(`/collections/${slug}`);
   },
+
+  // Create a category (Admin) — { name, slug?, group? }
+  createCategory: async (categoryData) => {
+    return await api.post('/categories', categoryData);
+  },
+
+  // Update a category (Admin)
+  updateCategory: async (id, categoryData) => {
+    return await api.put(`/categories/${id}`, categoryData);
+  },
+
+  // Delete a category (Admin)
+  deleteCategory: async (id) => {
+    return await api.delete(`/categories/${id}`);
+  },
 };
 
 export default categoriesService;

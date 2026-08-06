@@ -36,7 +36,7 @@ const products = [
     description: 'Insta Glow in Freshings. Brightening face wash with Vitamin C for all skin types. Gently cleanses while promoting a radiant, glowing complexion.',
     price: 249,
     comparePrice: 299,
-    category: { name: 'Face Wash', slug: 'face-wash' },
+    category: { name: 'Face Wash', slug: 'face-wash', group: 'SKINCARE' },
     collection: { name: 'Herbal Touch', slug: 'herbal-touch' },
     netQuantity: '200ml',
     countryOfOrigin: 'India',
@@ -51,7 +51,7 @@ const products = [
     description: 'Multi purpose use. Anti acne and pimple formula with Youth Glow Blow for all skin types. Deeply cleanses and refreshes the skin.',
     price: 229,
     comparePrice: 279,
-    category: { name: 'Face Wash', slug: 'face-wash' },
+    category: { name: 'Face Wash', slug: 'face-wash', group: 'SKINCARE' },
     collection: { name: 'Herbal Touch', slug: 'herbal-touch' },
     netQuantity: '200ml',
     countryOfOrigin: 'India',
@@ -66,7 +66,7 @@ const products = [
     description: 'Blackheads and tanning removal scrub face wash for all skin types. Gently exfoliates dead skin cells and unclogs pores.',
     price: 249,
     comparePrice: 299,
-    category: { name: 'Face Wash', slug: 'face-wash' },
+    category: { name: 'Face Wash', slug: 'face-wash', group: 'SKINCARE' },
     collection: { name: 'Herbal Touch', slug: 'herbal-touch' },
     netQuantity: '200ml',
     countryOfOrigin: 'India',
@@ -81,7 +81,7 @@ const products = [
     description: 'Glowing and refreshing tanning removal face wash for all skin types. Effectively removes tan and leaves skin bright and refreshed.',
     price: 229,
     comparePrice: 279,
-    category: { name: 'Face Wash', slug: 'face-wash' },
+    category: { name: 'Face Wash', slug: 'face-wash', group: 'SKINCARE' },
     collection: { name: 'Herbal Touch', slug: 'herbal-touch' },
     netQuantity: '200ml',
     countryOfOrigin: 'India',
@@ -96,7 +96,7 @@ const products = [
     description: 'Creamy protein shampoo enriched with almond extracts. Nourishes hair from root to tip, leaving it soft, smooth, and shiny.',
     price: 299,
     comparePrice: 349,
-    category: { name: 'Shampoo', slug: 'shampoo' },
+    category: { name: 'Shampoo', slug: 'shampoo', group: 'HAIRCARE' },
     collection: { name: 'Herbal Touch', slug: 'herbal-touch' },
     netQuantity: '300ml',
     countryOfOrigin: 'India',
@@ -111,7 +111,7 @@ const products = [
     description: 'Premium creamy protein shampoo with almond oil. Strengthens hair and prevents breakage while adding a natural shine.',
     price: 349,
     comparePrice: 399,
-    category: { name: 'Shampoo', slug: 'shampoo' },
+    category: { name: 'Shampoo', slug: 'shampoo', group: 'HAIRCARE' },
     collection: { name: 'Herbal Touch', slug: 'herbal-touch' },
     netQuantity: '300ml',
     countryOfOrigin: 'India',
@@ -126,7 +126,7 @@ const products = [
     description: 'Herbal shampoo with aloe vera and hibiscus extracts. Promotes hair growth, reduces hair fall, and adds natural volume.',
     price: 299,
     comparePrice: 349,
-    category: { name: 'Shampoo', slug: 'shampoo' },
+    category: { name: 'Shampoo', slug: 'shampoo', group: 'HAIRCARE' },
     collection: { name: 'Herbal Touch', slug: 'herbal-touch' },
     netQuantity: '300ml',
     countryOfOrigin: 'India',
@@ -141,7 +141,7 @@ const products = [
     description: 'With Niacinamide + Alpha Arbutin for instant glow. Dermatologically tested formula for 5X smoother skin texture. Instant radiance, smooth finish, supple skin.',
     price: 499,
     comparePrice: 599,
-    category: { name: 'Moisturiser', slug: 'moisturiser' },
+    category: { name: 'Moisturiser', slug: 'moisturiser', group: 'SKINCARE' },
     collection: { name: '7Days Natural', slug: '7days-natural' },
     netQuantity: '50g',
     countryOfOrigin: 'India',
@@ -157,7 +157,7 @@ const products = [
     description: 'With Titanium Dioxide + Zinc Oxide + Vitamin C. Broad spectrum protection against UVA, UVB, and IR-A. Dermatologically tested. Blue light protection with encapsulated technology.',
     price: 549,
     comparePrice: 649,
-    category: { name: 'Sunscreen', slug: 'sunscreen' },
+    category: { name: 'Sunscreen', slug: 'sunscreen', group: 'SKINCARE' },
     collection: { name: '7Days Natural', slug: '7days-natural' },
     netQuantity: '50g',
     countryOfOrigin: 'India',
@@ -173,7 +173,7 @@ const products = [
     description: 'With Limepearl AF + Willow Bark + Allantoin. For active acne — pore purifying, sebum balancing formula for all skin types.',
     price: 349,
     comparePrice: 399,
-    category: { name: 'Face Wash', slug: 'face-wash' },
+    category: { name: 'Face Wash', slug: 'face-wash', group: 'SKINCARE' },
     collection: { name: '7Days Natural', slug: '7days-natural' },
     netQuantity: '100ml',
     countryOfOrigin: 'India',
@@ -189,7 +189,7 @@ const products = [
     description: 'With Provitamin B5 + Pantolactone for skin hydration. Deep hydration and barrier protection for all skin types.',
     price: 349,
     comparePrice: 399,
-    category: { name: 'Face Wash', slug: 'face-wash' },
+    category: { name: 'Face Wash', slug: 'face-wash', group: 'SKINCARE' },
     collection: { name: '7Days Natural', slug: '7days-natural' },
     netQuantity: '100ml',
     countryOfOrigin: 'India',
@@ -205,7 +205,7 @@ const products = [
     description: 'With Ceramide + Vitamin C. Broad spectrum protection with blue light protection. Lightweight aqua gel formula that absorbs quickly without white cast.',
     price: 499,
     comparePrice: 599,
-    category: { name: 'Sunscreen', slug: 'sunscreen' },
+    category: { name: 'Sunscreen', slug: 'sunscreen', group: 'SKINCARE' },
     collection: { name: '7Days Natural', slug: '7days-natural' },
     netQuantity: '30g',
     countryOfOrigin: 'India',
@@ -221,7 +221,7 @@ const products = [
     description: 'With Neem Extract & Vitamin E for instant refreshment. Nourishes and hydrates skin. Cruelty-free formula for all skin types.',
     price: 299,
     comparePrice: 349,
-    category: { name: 'Face Wash', slug: 'face-wash' },
+    category: { name: 'Face Wash', slug: 'face-wash', group: 'SKINCARE' },
     collection: { name: '7Days Natural', slug: '7days-natural' },
     netQuantity: '100ml',
     countryOfOrigin: 'India',
@@ -237,7 +237,7 @@ const products = [
     description: 'With Orange Peel + Lemon Balm for glowing skin. Exfoliates and deep cleanses for all skin types. Brightens complexion with every wash.',
     price: 299,
     comparePrice: 349,
-    category: { name: 'Face Wash', slug: 'face-wash' },
+    category: { name: 'Face Wash', slug: 'face-wash', group: 'SKINCARE' },
     collection: { name: '7Days Natural', slug: '7days-natural' },
     netQuantity: '100ml',
     countryOfOrigin: 'India',
@@ -253,7 +253,7 @@ const products = [
     description: 'Contains 99% pure aloe vera gel with Aloevera Extract + Basil. For optimal hydration — soothes scalp and hydrates skin.',
     price: 399,
     comparePrice: 449,
-    category: { name: 'Gels & Serums', slug: 'gels-serums' },
+    category: { name: 'Gels & Serums', slug: 'gels-serums', group: 'SKINCARE' },
     collection: { name: '7Days Natural', slug: '7days-natural' },
     netQuantity: '200g',
     countryOfOrigin: 'India',
@@ -269,7 +269,7 @@ const products = [
     description: 'Made with Kesar for skin healing. Traditional Ayurvedic formulation for skin radiance and healing. Evens skin tone and reduces blemishes.',
     price: 699,
     comparePrice: 849,
-    category: { name: 'Oils', slug: 'oils' },
+    category: { name: 'Oils', slug: 'oils', group: 'SKINCARE' },
     collection: { name: '7Days Natural', slug: '7days-natural' },
     netQuantity: '30ml',
     countryOfOrigin: 'India',
@@ -285,7 +285,7 @@ const products = [
     description: 'With Kesar & Ratanjot Oil for skin radiance. Reduces fine lines and evens skin tone. Use AM or PM for all skin types.',
     price: 899,
     comparePrice: 1099,
-    category: { name: 'Oils', slug: 'oils' },
+    category: { name: 'Oils', slug: 'oils', group: 'SKINCARE' },
     collection: { name: '7Days Natural', slug: '7days-natural' },
     netQuantity: '50ml',
     countryOfOrigin: 'India',
@@ -333,10 +333,17 @@ async function uploadToCloudinary(filename) {
 async function upsertCategory(category) {
   return prisma.category.upsert({
     where: { slug: category.slug },
-    update: {},
-    create: { name: category.name, slug: category.slug },
+    // update group on re-run so existing categories get tagged too
+    update: { group: category.group || null },
+    create: { name: category.name, slug: category.slug, group: category.group || null },
   });
 }
+
+// Categories with no products yet — seeded directly so nav mega-menus
+// (Skin Care / Hair Care) have something to show ahead of stock.
+const placeholderCategories = [
+  { name: 'Conditioner', slug: 'conditioner', group: 'HAIRCARE' },
+];
 
 async function upsertCollection(collection) {
   return prisma.collection.upsert({
@@ -351,6 +358,12 @@ async function upsertCollection(collection) {
 async function main() {
   console.log('\n🌿 Vedessa Product Seed Script\n');
   console.log(`Found ${products.length} products to seed.\n`);
+
+  // Seed categories that don't have products yet (nav mega-menu placeholders)
+  for (const cat of placeholderCategories) {
+    await upsertCategory(cat);
+    console.log(`   ✅ Ensured placeholder category: ${cat.name}`);
+  }
 
   // Verify images directory exists
   if (!fs.existsSync(IMAGES_DIR)) {

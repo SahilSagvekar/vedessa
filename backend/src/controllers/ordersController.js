@@ -285,7 +285,7 @@ const getOrderById = async (req, res) => {
                 name: true,
                 image: true,
                 price: true,
-                category: {
+                categories: {
                   select: { name: true, slug: true }
                 }
               }

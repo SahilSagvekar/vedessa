@@ -11,7 +11,7 @@ const getCart = async (req, res) => {
       include: {
         product: {
           include: {
-            category: {
+            categories: {
               select: { name: true, slug: true }
             },
             collection: {
@@ -39,7 +39,7 @@ const getCart = async (req, res) => {
         quantity: item.quantity,
         item_total: (item.variant?.price ? parseFloat(item.variant.price) : parseFloat(item.product.price)) * item.quantity,
         stock: item.variant ? item.variant.stock : item.product.stock,
-        category: item.product.category?.name,
+        category: (item.product.categories || []).map(c => c.name).join(', ') || null,
         collection: item.product.collection?.name,
         variant: item.variant ? {
           id: item.variant.id,

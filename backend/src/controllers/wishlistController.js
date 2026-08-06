@@ -11,7 +11,7 @@ const getWishlist = async (req, res) => {
       include: {
         product: {
           include: {
-            category: {
+            categories: {
               select: { name: true, slug: true }
             },
             collection: {
@@ -35,7 +35,7 @@ const getWishlist = async (req, res) => {
       is_new: item.product.isNew,
       is_bestseller: item.product.isBestseller,
       stock: item.product.stock,
-      category: item.product.category?.name,
+      category: (item.product.categories || []).map(c => c.name).join(', ') || null,
       collection: item.product.collection?.name,
       added_at: item.createdAt
     }));

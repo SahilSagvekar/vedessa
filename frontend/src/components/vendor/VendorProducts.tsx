@@ -3,6 +3,7 @@ import { Loader2, Plus, Edit2, Trash2, Search, Package } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import vendorService from '@/services/vendorService';
 import productsService from '@/services/productsService';
+import categoriesService from '@/services/categoriesService';
 import ProductMediaEditor, { MediaOrderEntry } from '@/components/products/ProductMediaEditor';
 
 export default function VendorProducts() {
@@ -21,7 +22,7 @@ export default function VendorProducts() {
         price: '',
         stock: '',
         images: [],
-        categoryId: '',
+        categoryIds: [] as string[],
         collectionId: '',
         isNew: false,
         isBestseller: false,
@@ -55,8 +56,8 @@ export default function VendorProducts() {
     const fetchCategoriesAndCollections = async () => {
         try {
             const [categoriesRes, collectionsRes] = await Promise.all([
-                productsService.getCategories(),
-                productsService.getCollections()
+                categoriesService.getCategories(),
+                categoriesService.getCollections()
             ]);
             setCategories(categoriesRes.data || []);
             setCollections(collectionsRes.data || []);
@@ -77,7 +78,7 @@ export default function VendorProducts() {
             price: '',
             stock: '',
             images: [],
-            categoryId: '',
+            categoryIds: [],
             collectionId: '',
             isNew: false,
             isBestseller: false,
@@ -92,8 +93,7 @@ export default function VendorProducts() {
     const handleEditProduct = (product) => {
         console.log('=== EDIT PRODUCT CLICKED ===');
         console.log('Product object:', product);
-        console.log('Product categoryId:', product.categoryId);
-        console.log('Product category:', product.category);
+        console.log('Product categories:', product.categories);
         console.log('Product collectionId:', product.collectionId);
         console.log('Product collection:', product.collection);
 
@@ -105,8 +105,12 @@ export default function VendorProducts() {
             price: product.price.toString(),
             stock: product.stock.toString(),
             images: product.images || [],
-            // Handle both direct ID fields and nested objects
-            categoryId: product.categoryId || product.category?.id || '',
+            // A product can belong to multiple categories now — fall back to
+            // the old singular category/categoryId shape if that's what a
+            // stale cached product object still has.
+            categoryIds: Array.isArray(product.categories)
+                ? product.categories.map((c: any) => c.id)
+                : (product.categoryId || product.category?.id ? [product.categoryId || product.category.id] : []),
             collectionId: product.collectionId || product.collection?.id || '',
             isNew: product.isNew || false,
             isBestseller: product.isBestseller || false,
@@ -151,13 +155,16 @@ export default function VendorProducts() {
         try {
             const data = new FormData();
 
-            // Append all fields except image/images
+            // Append all fields except image/images/variants/categoryIds
+            // (categoryIds needs JSON.stringify, not the default toString)
             Object.keys(formData).forEach(key => {
-                if (key !== 'image' && key !== 'images' && key !== 'variants') {
+                if (key !== 'image' && key !== 'images' && key !== 'variants' && key !== 'categoryIds') {
                     console.log(`Appending ${key}:`, formData[key]);
                     data.append(key, formData[key]);
                 }
             });
+
+            data.append('categoryIds', JSON.stringify(formData.categoryIds || []));
 
             // Handle variants as JSON string
             if (formData.variants && formData.variants.length > 0) {
@@ -398,18 +405,33 @@ export default function VendorProducts() {
                                 <div className="grid md:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Category
+                                            Categories
                                         </label>
-                                        <select
-                                            value={formData.categoryId}
-                                            onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
-                                        >
-                                            <option value="">Select Category</option>
-                                            {categories.map((cat) => (
-                                                <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                            ))}
-                                        </select>
+                                        <div className="border border-gray-300 rounded-lg max-h-40 overflow-y-auto p-2 space-y-1">
+                                            {categories.length === 0 ? (
+                                                <p className="text-xs text-gray-400 px-1 py-1">No categories available</p>
+                                            ) : (
+                                                categories.map((cat: any) => (
+                                                    <label key={cat.id} className="flex items-center gap-2 text-sm px-1 py-1 cursor-pointer hover:bg-gray-50 rounded">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={formData.categoryIds.includes(cat.id)}
+                                                            onChange={(e) => {
+                                                                setFormData({
+                                                                    ...formData,
+                                                                    categoryIds: e.target.checked
+                                                                        ? [...formData.categoryIds, cat.id]
+                                                                        : formData.categoryIds.filter((id) => id !== cat.id),
+                                                                });
+                                                            }}
+                                                            className="rounded border-gray-300"
+                                                        />
+                                                        <span>{cat.name}</span>
+                                                    </label>
+                                                ))
+                                            )}
+                                        </div>
+                                        <p className="text-[10px] text-gray-500 mt-1">A product can belong to multiple categories</p>
                                     </div>
 
                                     <div>

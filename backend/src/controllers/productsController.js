@@ -5,12 +5,14 @@ const { mergeOrderedMedia, getExistingMedia, getLegacyPrimaryUrl } = require('..
 
 /**
  * Get all products with filters, sorting, and pagination
- * GET /api/products?category=skincare&collection=eladhi&isNew=true&sort=price_asc&limit=20&offset=0
+ * GET /api/products?category=face-wash&group=skincare&collection=eladhi&isNew=true&sort=price_asc&limit=20&offset=0
+ * (category filters by exact category slug; group filters by category.group — e.g. 'skincare'/'haircare' — used when category isn't specified. A product can belong to multiple categories, so either filter matches if ANY of a product's categories match.)
  */
 const getAllProducts = async (req, res) => {
   try {
     const {
       category,
+      group,
       collection,
       isNew,
       isBestseller,
@@ -27,7 +29,9 @@ const getAllProducts = async (req, res) => {
     const where = {};
 
     if (category) {
-      where.category = { slug: category };
+      where.categories = { some: { slug: category } };
+    } else if (group) {
+      where.categories = { some: { group: group.toUpperCase() } };
     }
 
     if (collection) {
@@ -62,7 +66,7 @@ const getAllProducts = async (req, res) => {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
         { description: { contains: search, mode: 'insensitive' } },
-        { category: { name: { contains: search, mode: 'insensitive' } } },
+        { categories: { some: { name: { contains: search, mode: 'insensitive' } } } },
         { collection: { name: { contains: search, mode: 'insensitive' } } }
       ];
     }
@@ -87,11 +91,12 @@ const getAllProducts = async (req, res) => {
         take: parseInt(limit),
         skip: parseInt(offset),
         include: {
-          category: {
+          categories: {
             select: {
               id: true,
               name: true,
-              slug: true
+              slug: true,
+              group: true
             }
           },
           collection: {
@@ -124,9 +129,7 @@ const getAllProducts = async (req, res) => {
       stock: product.stock,
       created_at: product.createdAt,
       updated_at: product.updatedAt,
-      category_id: product.category?.id || null,
-      category_name: product.category?.name || null,
-      category_slug: product.category?.slug || null,
+      categories: product.categories || [],
       collection_id: product.collection?.id || null,
       collection_name: product.collection?.name || null,
       collection_slug: product.collection?.slug || null,
@@ -172,7 +175,7 @@ const getProductSuggestions = async (req, res) => {
       where: {
         OR: [
           { name: { contains: q, mode: 'insensitive' } },
-          { category: { name: { contains: q, mode: 'insensitive' } } }
+          { categories: { some: { name: { contains: q, mode: 'insensitive' } } } }
         ]
       },
       take: 5,
@@ -180,7 +183,7 @@ const getProductSuggestions = async (req, res) => {
         id: true,
         name: true,
         image: true,
-        category: {
+        categories: {
           select: { name: true }
         }
       }
@@ -188,7 +191,14 @@ const getProductSuggestions = async (req, res) => {
 
     res.json({
       success: true,
-      data: products
+      // category_name kept as a single joined string here since this is a
+      // lightweight display-only suggestions dropdown, not a filterable list
+      data: products.map(p => ({
+        id: p.id,
+        name: p.name,
+        image: p.image,
+        category_name: p.categories.map(c => c.name).join(', ') || null
+      }))
     });
   } catch (error) {
     console.error('Get suggestions error:', error);
@@ -210,11 +220,12 @@ const getProductById = async (req, res) => {
     const product = await prisma.product.findUnique({
       where: { id },
       include: {
-        category: {
+        categories: {
           select: {
             id: true,
             name: true,
-            slug: true
+            slug: true,
+            group: true
           }
         },
         collection: {
@@ -253,9 +264,7 @@ const getProductById = async (req, res) => {
         stock: product.stock,
         created_at: product.createdAt,
         updated_at: product.updatedAt,
-        category_id: product.category?.id || null,
-        category_name: product.category?.name || null,
-        category_slug: product.category?.slug || null,
+        categories: product.categories || [],
         collection_id: product.collection?.id || null,
         collection_name: product.collection?.name || null,
         collection_slug: product.collection?.slug || null,
@@ -289,7 +298,6 @@ const createProduct = async (req, res) => {
       name,
       description,
       price,
-      categoryId,
       collectionId,
       rating = 4.5,
       reviews = 0,
@@ -305,8 +313,23 @@ const createProduct = async (req, res) => {
       netQuantity,
       batchNo,
     } = req.body;
-    
-    console.log('Extracted body fields:', { name, price, categoryId, collectionId });
+
+    // categoryIds arrives as a JSON string array (same pattern as `variants`
+    // and `order` — multipart form fields are all strings). Falls back to
+    // the old singular `categoryId` field if that's what's sent instead.
+    let categoryIds = [];
+    try {
+      categoryIds = req.body.categoryIds ? JSON.parse(req.body.categoryIds) : [];
+    } catch {
+      categoryIds = [];
+    }
+    if (!Array.isArray(categoryIds)) categoryIds = [];
+    if (categoryIds.length === 0 && typeof req.body.categoryId === 'string' && req.body.categoryId.trim() !== '') {
+      categoryIds = [req.body.categoryId.trim()];
+    }
+    categoryIds = categoryIds.filter(id => typeof id === 'string' && id.trim() !== '');
+
+    console.log('Extracted body fields:', { name, price, categoryIds, collectionId });
     console.log('req.files:', req.files);
     console.log('req.file:', req.file);
 
@@ -342,7 +365,9 @@ const createProduct = async (req, res) => {
       description,
       price: parseFloat(price),
       image: primaryImage,
-      categoryId: (categoryId && typeof categoryId === 'string' && categoryId.trim() !== '') ? categoryId : null,
+      categories: {
+        connect: categoryIds.map(id => ({ id }))
+      },
       collectionId: (collectionId && typeof collectionId === 'string' && collectionId.trim() !== '') ? collectionId : null,
       rating: parseFloat(rating),
       reviews: parseInt(reviews),
@@ -375,7 +400,7 @@ const createProduct = async (req, res) => {
     const product = await prisma.product.create({
       data: productData,
       include: {
-        category: true,
+        categories: true,
         collection: true,
         images: {
           orderBy: { order: 'asc' }
@@ -410,7 +435,7 @@ const updateProduct = async (req, res) => {
 
     // Build update object with only provided fields
     const allowedFields = [
-      'name', 'description', 'price', 'categoryId',
+      'name', 'description', 'price',
       'collectionId', 'rating', 'reviews', 'isNew', 'isBestseller', 'stock'
     ];
 
@@ -427,6 +452,23 @@ const updateProduct = async (req, res) => {
         }
       }
     });
+
+    // categoryIds (JSON string array) replaces the product's full set of
+    // categories when provided. Falls back to legacy singular categoryId.
+    if (req.body.categoryIds !== undefined || req.body.categoryId !== undefined) {
+      let categoryIds = [];
+      try {
+        categoryIds = req.body.categoryIds ? JSON.parse(req.body.categoryIds) : [];
+      } catch {
+        categoryIds = [];
+      }
+      if (!Array.isArray(categoryIds)) categoryIds = [];
+      if (categoryIds.length === 0 && typeof req.body.categoryId === 'string' && req.body.categoryId.trim() !== '') {
+        categoryIds = [req.body.categoryId.trim()];
+      }
+      categoryIds = categoryIds.filter(id => typeof id === 'string' && id.trim() !== '');
+      updateData.categories = { set: categoryIds.map(id => ({ id })) };
+    }
 
     let order;
     try {
@@ -483,7 +525,7 @@ const updateProduct = async (req, res) => {
       where: { id },
       data: updateData,
       include: {
-        category: true,
+        categories: true,
         collection: true,
         images: {
           orderBy: { order: 'asc' }

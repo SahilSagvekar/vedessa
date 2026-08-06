@@ -470,10 +470,18 @@ export default function ProductQuickView({ product, open, onClose }: ProductQuic
 
               {/* Product Meta Info */}
               <div className="border-t border-gray-200 pt-6 space-y-2 text-sm">
-                {product.vendor && (
+                {/* {product.vendor && (
                   <div className="flex items-start gap-2">
                     <span className="text-gray-500 min-w-[80px]">Vendor:</span>
                     <span className="text-gray-900 font-medium">{product.vendor}</span>
+                  </div>
+                )} */}
+                {product.categories && product.categories.length > 0 && (
+                  <div className="flex items-start gap-2">
+                    <span className="text-gray-500 min-w-[80px]">Category:</span>
+                    <span className="text-gray-900 font-medium">
+                      {product.categories.map((c: any) => c.name).join(', ')}
+                    </span>
                   </div>
                 )}
 
