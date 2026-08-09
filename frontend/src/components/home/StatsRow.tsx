@@ -11,7 +11,7 @@ export default function StatsRow() {
   return (
     <section className="py-12 border-t border-b border-gray-100">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+        {/* <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {stats.map((stat) => (
             <div key={stat.label} className="flex flex-col items-center text-center gap-2">
               <stat.icon className="w-7 h-7 text-kama-olive" />
@@ -19,7 +19,7 @@ export default function StatsRow() {
               <span className="text-xs text-gray-500">{stat.label}</span>
             </div>
           ))}
-        </div>
+        </div> */}
       </div>
     </section>
   );
