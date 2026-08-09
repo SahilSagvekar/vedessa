@@ -103,10 +103,7 @@ const Index = () => {
       <ScrollReveal>
         <FeaturedProductStrip title="In High Demand" items={inHighDemand} />
       </ScrollReveal>
-
-      <ScrollReveal delay={0.2}>
-        <NewLaunches />
-      </ScrollReveal>
+      
 
       <ScrollReveal>
         <ArtOfAyurveda />
@@ -128,13 +125,13 @@ const Index = () => {
         <Bestsellers />
       </ScrollReveal>
 
-      <ScrollReveal>
-        {/* <FeaturedProductStrip title="Editor's Picks" items={editorsPicks} /> */}
+      {/* <ScrollReveal>
+        <FeaturedProductStrip title="Editor's Picks" items={editorsPicks} />
       </ScrollReveal>
 
       <ScrollReveal>
         <CardGallery title="Community Favorites" viewAllHref="/products" items={communityFavorites} />
-      </ScrollReveal>
+      </ScrollReveal> */}
 
       <ScrollReveal>
         <InstagramGrid />
@@ -152,9 +149,9 @@ const Index = () => {
         <Editorials />
       </ScrollReveal>
 
-      <ScrollReveal>
+      {/* <ScrollReveal> */}
         {/* <PressLogos /> */}
-      </ScrollReveal>
+      {/* </ScrollReveal> */}
 
       <ScrollReveal>
         <NewsletterBanner />
