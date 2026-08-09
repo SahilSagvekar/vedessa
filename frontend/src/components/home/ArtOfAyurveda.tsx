@@ -51,7 +51,8 @@ export default function ArtOfAyurveda() {
                 playsInline
                 className="w-full h-full object-cover"
               >
-                <source src="/video/2.mp4" type="video/mp4" />
+                {/* <source src="/video/2.mp4" type="video/mp4" /> */}
+                <source src="https://www.pexels.com/download/video/8811127/" type="video/mp4" />
               </video>
             </div>
           </motion.div>

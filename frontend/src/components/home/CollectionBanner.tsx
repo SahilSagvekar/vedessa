@@ -1,33 +1,42 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
+const VIDEO_SRC = 'https://res.cloudinary.com/dmigevbpo/video/upload/v1786267578/v3_ptptze.mp4';
+
 const CollectionBanner = () => {
   return (
-    <section className="relative h-[500px] my-16 overflow-hidden">
-        <img
-          src="https://res.cloudinary.com/dmigevbpo/image/upload/v1783836607/vedessa/products/media-1783836607030-241493810.png"
-          alt="Featured"
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#2D5016]/90 to-transparent" />
-        <div className="absolute inset-0 flex items-center">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="max-w-xl">
-              <h2 className="text-4xl md:text-5xl font-serif text-white mb-4">
-                Bringaras Collection
-              </h2>
-              <p className="text-xl text-white/90 mb-6">
-                For healthy, lustrous hair
-              </p>
-              <Link to="/products?collection=bringaras">
-                <Button className="bg-[#C17855] hover:bg-[#A66545] text-white px-10 py-4 text-sm font-medium tracking-wider uppercase transition-colors">
-                  EXPLORE COLLECTION
-                </Button>
-              </Link>
-            </div>
+     <section className="relative h-[500px] my-16 overflow-hidden bg-black">
+      {/* Blurred, zoomed copy fills the frame so there's no empty letterbox space */}
+      <video
+        src={VIDEO_SRC}
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-60"
+      />
+      {/* Real video shown uncropped, centered on top */}
+      <video
+        src={VIDEO_SRC}
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute inset-0 w-full h-full object-contain"
+      />
+      <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/20 to-transparent" />
+      <div className="absolute inset-0 flex items-end pb-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-xl">
+            <Link to="/products?collection=bringaras">
+              <Button className="bg-[#C17855] hover:bg-[#A66545] text-white px-10 py-4 text-sm font-medium tracking-wider uppercase transition-colors">
+                EXPLORE COLLECTION
+              </Button>
+            </Link>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
     // <section className="relative h-[400px] overflow-hidden">
     //   <div className="absolute inset-0">
     //     <img

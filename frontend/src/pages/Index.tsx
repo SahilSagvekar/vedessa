@@ -44,10 +44,20 @@ const occasionBanners = [
 ];
 
 const inHighDemand = [
-  { name: 'Vitamin C Face Wash', description: 'Brightening formula for all skin types', price: 249, comparePrice: 299, image: '' },
-  { name: 'Almond Shampoo', description: 'Creamy protein shampoo for soft, shiny hair', price: 299, comparePrice: 349, image: '' },
-  { name: 'Skin Radiance Cream', description: 'Niacinamide + Alpha Arbutin glow cream', price: 499, comparePrice: 599, image: '' },
-  { name: 'Kumkumadi Oil', description: 'Traditional Ayurvedic radiance oil', price: 699, comparePrice: 849, image: '' },
+ 
+  { name: 'Skin Radiance Cream', description: 'Niacinamide + Alpha Arbutin glow cream', price: 499, comparePrice: 599, image: 'https://res.cloudinary.com/dmigevbpo/image/upload/v1786261313/H1_cdtb3t.jpg' },
+   { name: 'Skin Radiance Cream', description: 'Niacinamide + Alpha Arbutin glow cream', price: 499, comparePrice: 599, image: 'https://res.cloudinary.com/dmigevbpo/image/upload/v1786261320/h10_gg7hfu.jpg' },
+   { name: 'Skin Radiance Cream', description: 'Niacinamide + Alpha Arbutin glow cream', price: 499, comparePrice: 599, image: 'https://res.cloudinary.com/dmigevbpo/image/upload/v1786261313/h3_jt0g8b.jpg' },
+   { name: 'Skin Radiance Cream', description: 'Niacinamide + Alpha Arbutin glow cream', price: 499, comparePrice: 599, image: 'https://res.cloudinary.com/dmigevbpo/image/upload/v1786261319/h8_lmondq.jpg' },
+   { name: 'Kumkumadi Oil', description: 'Traditional Ayurvedic radiance oil', price: 699, comparePrice: 849, image: 'https://res.cloudinary.com/dmigevbpo/image/upload/v1786261313/h5_fjdq5d.jpg' },
+    { name: 'Skin Radiance Cream', description: 'Niacinamide + Alpha Arbutin glow cream', price: 499, comparePrice: 599, image: 'https://res.cloudinary.com/dmigevbpo/image/upload/v1786261319/h6_sbsugb.jpg' },
+  { name: 'Skin Radiance Cream', description: 'Niacinamide + Alpha Arbutin glow cream', price: 499, comparePrice: 599, image: 'https://res.cloudinary.com/dmigevbpo/image/upload/v1786261313/h4_j9u8tm.jpg' },
+  
+  { name: 'Skin Radiance Cream', description: 'Niacinamide + Alpha Arbutin glow cream', price: 499, comparePrice: 599, image: 'https://res.cloudinary.com/dmigevbpo/image/upload/v1786261319/h7_mojngu.jpg' },
+  
+ 
+  { name: 'Almond Shampoo', description: 'Creamy protein shampoo for soft, shiny hair', price: 299, comparePrice: 349, image: 'https://res.cloudinary.com/dmigevbpo/image/upload/v1786261313/h2_oei1n2.jpg' },
+   { name: 'Vitamin C Face Wash', description: 'Brightening formula for all skin types', price: 249, comparePrice: 299, image: 'https://res.cloudinary.com/dmigevbpo/image/upload/v1786261319/h9_abtwis.jpg' },
 ];
 
 const mustTryFormulations = [
@@ -90,12 +100,12 @@ const Index = () => {
         <BannerGrid title="Why Choose Vedessa" items={occasionBanners} />
       </ScrollReveal>
 
-      <ScrollReveal delay={0.2}>
-        <NewLaunches />
-      </ScrollReveal>
-
       <ScrollReveal>
         <FeaturedProductStrip title="In High Demand" items={inHighDemand} />
+      </ScrollReveal>
+
+      <ScrollReveal delay={0.2}>
+        <NewLaunches />
       </ScrollReveal>
 
       <ScrollReveal>
@@ -119,7 +129,7 @@ const Index = () => {
       </ScrollReveal>
 
       <ScrollReveal>
-        <FeaturedProductStrip title="Editor's Picks" items={editorsPicks} />
+        {/* <FeaturedProductStrip title="Editor's Picks" items={editorsPicks} /> */}
       </ScrollReveal>
 
       <ScrollReveal>
@@ -143,7 +153,7 @@ const Index = () => {
       </ScrollReveal>
 
       <ScrollReveal>
-        <PressLogos />
+        {/* <PressLogos /> */}
       </ScrollReveal>
 
       <ScrollReveal>

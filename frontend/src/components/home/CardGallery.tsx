@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export interface CardGalleryItem {
   title: string;
@@ -25,6 +25,10 @@ export default function CardGallery({
   showShopNow = false,
 }: CardGalleryProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+
+   const scrollPrev = () => {
+    scrollRef.current?.scrollBy({ left: -320, behavior: 'smooth' });
+  };
 
   const scrollNext = () => {
     scrollRef.current?.scrollBy({ left: 320, behavior: 'smooth' });
@@ -85,6 +89,14 @@ export default function CardGallery({
               );
             })}
           </div>
+
+          <button
+            onClick={scrollPrev}
+            aria-label={`Scroll ${title} left`}
+            className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-9 h-9 rounded-full bg-white border border-gray-200 shadow-sm items-center justify-center hover:bg-gray-50 transition-colors z-10"
+          >
+            <ChevronLeft className="w-5 h-5 text-gray-700" />
+          </button>
 
           <button
             onClick={scrollNext}

@@ -30,11 +30,11 @@ function BannerCard({ item, className = '' }: { item: BannerGridItem; className?
           <span className="text-xs text-gray-400 px-4 text-center">Image coming soon</span>
         </div>
       )}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/5 to-transparent" />
-      <div className="absolute bottom-4 left-4 right-4">
-        <span className="block text-white font-medium text-sm md:text-base">{item.title}</span>
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+      <div className="absolute bottom-4 left-4 right-4 flex justify-center">
+        <span className="block text-white font-semibold text-base md:text-lg text-center drop-shadow-md">{item.title}</span>
       </div>
-    </div>
+      </div>
   );
 
   return item.href ? (
