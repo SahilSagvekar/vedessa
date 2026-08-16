@@ -1,18 +1,15 @@
 import { Link } from 'react-router-dom';
 
-// Hardcoded for now — swap in real image URLs per concern when ready.
-// Not wired to real Category records/slugs yet, so each card links to a
-// product search for its name instead of a category filter (works
-// regardless of whether a matching category/slug exists in the DB).
+// Wired to real Concern slugs (see backend/scripts/seedProducts.js and the
+// Concern model in prisma/schema.prisma) so each card filters precisely via
+// /products?concern=<slug> — products only show up here once they've been
+// tagged with the matching concern in the admin panel's product form.
 const concerns = [
-  // { name: 'Hair Fall', image: 'https://res.cloudinary.com/dmigevbpo/image/upload/v1786274996/c1_fq6e46.jpg' },
-  { name: 'Hair Growth', image: 'https://res.cloudinary.com/dmigevbpo/image/upload/v1786274996/c1_fq6e46.jpg' },
-  { name: 'Dandruff', image: 'https://res.cloudinary.com/dmigevbpo/image/upload/v1786275312/c2_pr3jez.jpg' },
-  // { name: 'Pigmentation', image: '' },
-  { name: 'Acne', image: 'https://res.cloudinary.com/dmigevbpo/image/upload/v1786275592/c3_twoye0.jpg' },
-  { name: 'Dry Skin', image: 'https://res.cloudinary.com/dmigevbpo/image/upload/v1786275850/c4_ewkkbf.jpg' },
-  // { name: 'Anti-Ageing', image: '' },
-  { name: 'Tan Removal', image: 'https://res.cloudinary.com/dmigevbpo/image/upload/v1786276015/c5_epyvcj.jpg' },
+  { name: 'Hair Growth', slug: 'hair-growth', image: 'https://res.cloudinary.com/dmigevbpo/image/upload/v1786274996/c1_fq6e46.jpg' },
+  { name: 'Dandruff', slug: 'dandruff', image: 'https://res.cloudinary.com/dmigevbpo/image/upload/v1786275312/c2_pr3jez.jpg' },
+  { name: 'Acne', slug: 'acne', image: 'https://res.cloudinary.com/dmigevbpo/image/upload/v1786275592/c3_twoye0.jpg' },
+  { name: 'Dry Skin', slug: 'dry-skin', image: 'https://res.cloudinary.com/dmigevbpo/image/upload/v1786275850/c4_ewkkbf.jpg' },
+  { name: 'Tan Removal', slug: 'tan-removal', image: 'https://res.cloudinary.com/dmigevbpo/image/upload/v1786276015/c5_epyvcj.jpg' },
 ];
 
 export default function ShopByConcern() {
@@ -27,7 +24,7 @@ export default function ShopByConcern() {
           {concerns.map((concern) => (
             <Link
               key={concern.name}
-              to={`/products?search=${encodeURIComponent(concern.name)}`}
+              to={`/products?concern=${encodeURIComponent(concern.slug)}`}
               className="relative aspect-[3/4] rounded-xl overflow-hidden bg-gray-100 border border-gray-200 group"
             >
               {concern.image ? (

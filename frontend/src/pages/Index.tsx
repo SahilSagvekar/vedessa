@@ -145,9 +145,9 @@ const Index = () => {
         <Testimonials />
       </ScrollReveal>
 
-      <ScrollReveal>
+      {/* <ScrollReveal>
         <Editorials />
-      </ScrollReveal>
+      </ScrollReveal> */}
 
       {/* <ScrollReveal> */}
         {/* <PressLogos /> */}

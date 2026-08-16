@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, Heart } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Heart } from 'lucide-react';
 
 export interface FeaturedProductItem {
   name: string;
@@ -19,9 +19,44 @@ export default function FeaturedProductStrip({ title, items }: FeaturedProductSt
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const [liked, setLiked] = useState<Record<number, boolean>>({});
+  const isDragging = useRef(false);
+  const dragStartX = useRef(0);
+  const dragStartScrollLeft = useRef(0);
+  const didDrag = useRef(false);
+  const [isPointerDown, setIsPointerDown] = useState(false);
+
+  const scrollPrev = () => {
+    scrollRef.current?.scrollBy({ left: -280, behavior: 'smooth' });
+  };
 
   const scrollNext = () => {
     scrollRef.current?.scrollBy({ left: 280, behavior: 'smooth' });
+  };
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    isDragging.current = true;
+    didDrag.current = false;
+    dragStartX.current = e.clientX;
+    dragStartScrollLeft.current = el.scrollLeft;
+    setIsPointerDown(true);
+    el.setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const el = scrollRef.current;
+    if (!el || !isDragging.current) return;
+    const delta = e.clientX - dragStartX.current;
+    if (Math.abs(delta) > 3) didDrag.current = true;
+    el.scrollLeft = dragStartScrollLeft.current - delta;
+  };
+
+  const endDrag = (e: React.PointerEvent<HTMLDivElement>) => {
+    const el = scrollRef.current;
+    isDragging.current = false;
+    setIsPointerDown(false);
+    if (el?.hasPointerCapture(e.pointerId)) el.releasePointerCapture(e.pointerId);
   };
 
   return (
@@ -33,7 +68,13 @@ export default function FeaturedProductStrip({ title, items }: FeaturedProductSt
           <div className="relative">
             <div
               ref={scrollRef}
-              className="flex gap-5 md:gap-6 overflow-x-auto scroll-smooth pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={endDrag}
+              onPointerLeave={endDrag}
+              className={`flex gap-5 md:gap-6 overflow-x-auto scroll-smooth pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${
+                isPointerDown ? 'cursor-grabbing select-none scroll-auto' : 'cursor-grab'
+              }`}
             >
               {items.map((item, i) => {
                 const discountPct = item.comparePrice
@@ -43,7 +84,13 @@ export default function FeaturedProductStrip({ title, items }: FeaturedProductSt
                 return (
                   <div
                     key={`${item.name}-${i}`}
-                    onClick={() => navigate('/products')}
+                    onClick={() => {
+                      if (didDrag.current) {
+                        didDrag.current = false;
+                        return;
+                      }
+                      navigate('/products');
+                    }}
                     className="flex-shrink-0 w-56 md:w-64 cursor-pointer group"
                   >
                     <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-white shadow-sm">
@@ -51,6 +98,7 @@ export default function FeaturedProductStrip({ title, items }: FeaturedProductSt
                         <img
                           src={item.image}
                           alt={item.name}
+                          draggable={false}
                           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                         />
                       ) : (
@@ -88,6 +136,14 @@ export default function FeaturedProductStrip({ title, items }: FeaturedProductSt
                 );
               })}
             </div>
+
+            <button
+              onClick={scrollPrev}
+              aria-label={`Scroll ${title} left`}
+              className="hidden md:flex absolute left-2 top-[38%] -translate-y-1/2 w-10 h-10 rounded-full bg-white shadow-md items-center justify-center hover:bg-gray-50 transition-colors"
+            >
+              <ChevronLeft className="w-5 h-5 text-gray-700" />
+            </button>
 
             <button
               onClick={scrollNext}

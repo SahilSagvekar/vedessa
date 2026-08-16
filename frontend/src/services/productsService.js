@@ -7,11 +7,15 @@ export const productsService = {
     
     if (params.category) queryParams.append('category', params.category);
     if (params.group) queryParams.append('group', params.group);
+    if (params.concern) queryParams.append('concern', params.concern);
     if (params.collection) queryParams.append('collection', params.collection);
+    if (params.search) queryParams.append('search', params.search);
     if (params.isNew !== undefined) queryParams.append('isNew', params.isNew);
     if (params.isBestseller !== undefined) queryParams.append('isBestseller', params.isBestseller);
     if (params.minPrice) queryParams.append('minPrice', params.minPrice);
     if (params.maxPrice) queryParams.append('maxPrice', params.maxPrice);
+    if (params.minRating) queryParams.append('minRating', params.minRating);
+    if (params.inStock !== undefined && params.inStock !== 'all') queryParams.append('inStock', params.inStock);
     if (params.sort) queryParams.append('sort', params.sort);
     if (params.limit) queryParams.append('limit', params.limit);
     if (params.offset) queryParams.append('offset', params.offset);

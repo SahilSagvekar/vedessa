@@ -14,29 +14,29 @@ const slides = [
     // link: createPageUrl("Products")
   },
   {
-    type: "image",
-    image: "https://res.cloudinary.com/dmigevbpo/image/upload/v1783836269/vedessa/products/media-1783836267271-777821741.png",
+    type: "video",
+    video: "https://res.cloudinary.com/dmigevbpo/video/upload/v1786899546/6036033_Wedding_Person_3840x2160_dcww1a.mp4",
     title: "Eladhi Collection",
     subtitle: "Hydrating formulas for radiant skin",
     cta: "EXPLORE",
     // link: createPageUrl("Products", "collection=eladhi")
   },
   {
-    type: "image",
-    image: "https://images.unsplash.com/photo-1571875257727-256c39da42af?w=1600&q=80",
+    type: "video",
+    video: "https://res.cloudinary.com/dmigevbpo/video/upload/v1786899159/0_Hands_Mortar_3840x2160_himwgx.mp4",
     title: "Bringaras Hair Care",
     subtitle: "For healthy, lustrous hair",
     cta: "DISCOVER",
     // link: createPageUrl("Products", "collection=bringaras")
   },
-  // {
-  //   type: "image",
-  //   image: "https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=1600&q=80",
-  //   title: "Weekend Offer",
-  //   subtitle: "Complimentary minis worth up to ₹5640",
-  //   cta: "SHOP THE OFFER",
-  //   // link: createPageUrl("Products")
-  // }
+  {
+    type: "video",
+    video: "https://res.cloudinary.com/dmigevbpo/video/upload/v1786899504/5124527_Beach_Beds_1280x720_gdunlr.mp4",
+    title: "Weekend Offer",
+    subtitle: "Complimentary minis worth up to ₹5640",
+    cta: "SHOP THE OFFER",
+    // link: createPageUrl("Products")
+  }
 ];
 
 export default function HeroSection() {

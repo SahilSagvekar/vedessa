@@ -345,6 +345,26 @@ const placeholderCategories = [
   { name: 'Conditioner', slug: 'conditioner', group: 'HAIRCARE' },
 ];
 
+async function upsertConcern(concern) {
+  return prisma.concern.upsert({
+    where: { slug: concern.slug },
+    update: {},
+    create: { name: concern.name, slug: concern.slug },
+  });
+}
+
+// The 5 "Shop By Concern" homepage tiles. Seeded as bare records — no
+// products are tagged automatically since only you know which of your
+// products actually address each concern. Tag them from the admin panel's
+// product form once these exist.
+const concerns = [
+  { name: 'Hair Growth', slug: 'hair-growth' },
+  { name: 'Dandruff', slug: 'dandruff' },
+  { name: 'Acne', slug: 'acne' },
+  { name: 'Dry Skin', slug: 'dry-skin' },
+  { name: 'Tan Removal', slug: 'tan-removal' },
+];
+
 async function upsertCollection(collection) {
   return prisma.collection.upsert({
     where: { slug: collection.slug },
@@ -363,6 +383,12 @@ async function main() {
   for (const cat of placeholderCategories) {
     await upsertCategory(cat);
     console.log(`   ✅ Ensured placeholder category: ${cat.name}`);
+  }
+
+  // Seed the "Shop By Concern" homepage tiles
+  for (const concern of concerns) {
+    await upsertConcern(concern);
+    console.log(`   ✅ Ensured concern: ${concern.name}`);
   }
 
   // Verify images directory exists

@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -25,6 +25,11 @@ export default function CardGallery({
   showShopNow = false,
 }: CardGalleryProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const isDragging = useRef(false);
+  const dragStartX = useRef(0);
+  const dragStartScrollLeft = useRef(0);
+  const didDrag = useRef(false);
+  const [isPointerDown, setIsPointerDown] = useState(false);
 
    const scrollPrev = () => {
     scrollRef.current?.scrollBy({ left: -320, behavior: 'smooth' });
@@ -32,6 +37,42 @@ export default function CardGallery({
 
   const scrollNext = () => {
     scrollRef.current?.scrollBy({ left: 320, behavior: 'smooth' });
+  };
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    isDragging.current = true;
+    didDrag.current = false;
+    dragStartX.current = e.clientX;
+    dragStartScrollLeft.current = el.scrollLeft;
+    setIsPointerDown(true);
+    el.setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const el = scrollRef.current;
+    if (!el || !isDragging.current) return;
+    const delta = e.clientX - dragStartX.current;
+    if (Math.abs(delta) > 3) didDrag.current = true;
+    el.scrollLeft = dragStartScrollLeft.current - delta;
+  };
+
+  const endDrag = (e: React.PointerEvent<HTMLDivElement>) => {
+    const el = scrollRef.current;
+    isDragging.current = false;
+    setIsPointerDown(false);
+    if (el?.hasPointerCapture(e.pointerId)) el.releasePointerCapture(e.pointerId);
+  };
+
+  // Suppress the click-through navigation that would otherwise fire
+  // at the end of a drag gesture.
+  const handleClickCapture = (e: React.MouseEvent) => {
+    if (didDrag.current) {
+      e.preventDefault();
+      e.stopPropagation();
+      didDrag.current = false;
+    }
   };
 
   return (
@@ -49,7 +90,14 @@ export default function CardGallery({
         <div className="relative">
           <div
             ref={scrollRef}
-            className="flex gap-5 overflow-x-auto scroll-smooth pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={endDrag}
+            onPointerLeave={endDrag}
+            onClickCapture={handleClickCapture}
+            className={`flex gap-5 overflow-x-auto scroll-smooth pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${
+              isPointerDown ? 'cursor-grabbing select-none scroll-auto' : 'cursor-grab'
+            }`}
           >
             {items.map((item, i) => {
               const Card = (
@@ -58,6 +106,7 @@ export default function CardGallery({
                     <img
                       src={item.image}
                       alt={item.title}
+                      draggable={false}
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                   ) : (

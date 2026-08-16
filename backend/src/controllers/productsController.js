@@ -5,14 +5,15 @@ const { mergeOrderedMedia, getExistingMedia, getLegacyPrimaryUrl } = require('..
 
 /**
  * Get all products with filters, sorting, and pagination
- * GET /api/products?category=face-wash&group=skincare&collection=eladhi&isNew=true&sort=price_asc&limit=20&offset=0
- * (category filters by exact category slug; group filters by category.group — e.g. 'skincare'/'haircare' — used when category isn't specified. A product can belong to multiple categories, so either filter matches if ANY of a product's categories match.)
+ * GET /api/products?category=face-wash&group=skincare&concern=acne&collection=eladhi&isNew=true&sort=price_asc&limit=20&offset=0
+ * (category filters by exact category slug; group filters by category.group — e.g. 'skincare'/'haircare' — used when category isn't specified. concern filters by exact concern slug, independent of category/group. A product can belong to multiple categories/concerns, so either filter matches if ANY of a product's categories/concerns match.)
  */
 const getAllProducts = async (req, res) => {
   try {
     const {
       category,
       group,
+      concern,
       collection,
       isNew,
       isBestseller,
@@ -32,6 +33,10 @@ const getAllProducts = async (req, res) => {
       where.categories = { some: { slug: category } };
     } else if (group) {
       where.categories = { some: { group: group.toUpperCase() } };
+    }
+
+    if (concern) {
+      where.concerns = { some: { slug: concern } };
     }
 
     if (collection) {
@@ -67,6 +72,7 @@ const getAllProducts = async (req, res) => {
         { name: { contains: search, mode: 'insensitive' } },
         { description: { contains: search, mode: 'insensitive' } },
         { categories: { some: { name: { contains: search, mode: 'insensitive' } } } },
+        { concerns: { some: { name: { contains: search, mode: 'insensitive' } } } },
         { collection: { name: { contains: search, mode: 'insensitive' } } }
       ];
     }
@@ -97,6 +103,13 @@ const getAllProducts = async (req, res) => {
               name: true,
               slug: true,
               group: true
+            }
+          },
+          concerns: {
+            select: {
+              id: true,
+              name: true,
+              slug: true
             }
           },
           collection: {
@@ -130,6 +143,7 @@ const getAllProducts = async (req, res) => {
       created_at: product.createdAt,
       updated_at: product.updatedAt,
       categories: product.categories || [],
+      concerns: product.concerns || [],
       collection_id: product.collection?.id || null,
       collection_name: product.collection?.name || null,
       collection_slug: product.collection?.slug || null,
@@ -228,6 +242,13 @@ const getProductById = async (req, res) => {
             group: true
           }
         },
+        concerns: {
+          select: {
+            id: true,
+            name: true,
+            slug: true
+          }
+        },
         collection: {
           select: {
             id: true,
@@ -265,6 +286,7 @@ const getProductById = async (req, res) => {
         created_at: product.createdAt,
         updated_at: product.updatedAt,
         categories: product.categories || [],
+        concerns: product.concerns || [],
         collection_id: product.collection?.id || null,
         collection_name: product.collection?.name || null,
         collection_slug: product.collection?.slug || null,
@@ -329,7 +351,18 @@ const createProduct = async (req, res) => {
     }
     categoryIds = categoryIds.filter(id => typeof id === 'string' && id.trim() !== '');
 
-    console.log('Extracted body fields:', { name, price, categoryIds, collectionId });
+    // concernIds — same JSON-string-array pattern as categoryIds. No legacy
+    // singular fallback needed here since there was never a `concernId` field.
+    let concernIds = [];
+    try {
+      concernIds = req.body.concernIds ? JSON.parse(req.body.concernIds) : [];
+    } catch {
+      concernIds = [];
+    }
+    if (!Array.isArray(concernIds)) concernIds = [];
+    concernIds = concernIds.filter(id => typeof id === 'string' && id.trim() !== '');
+
+    console.log('Extracted body fields:', { name, price, categoryIds, concernIds, collectionId });
     console.log('req.files:', req.files);
     console.log('req.file:', req.file);
 
@@ -368,6 +401,9 @@ const createProduct = async (req, res) => {
       categories: {
         connect: categoryIds.map(id => ({ id }))
       },
+      concerns: {
+        connect: concernIds.map(id => ({ id }))
+      },
       collectionId: (collectionId && typeof collectionId === 'string' && collectionId.trim() !== '') ? collectionId : null,
       rating: parseFloat(rating),
       reviews: parseInt(reviews),
@@ -401,6 +437,7 @@ const createProduct = async (req, res) => {
       data: productData,
       include: {
         categories: true,
+        concerns: true,
         collection: true,
         images: {
           orderBy: { order: 'asc' }
@@ -470,6 +507,20 @@ const updateProduct = async (req, res) => {
       updateData.categories = { set: categoryIds.map(id => ({ id })) };
     }
 
+    // concernIds (JSON string array) replaces the product's full set of
+    // concerns when provided.
+    if (req.body.concernIds !== undefined) {
+      let concernIds = [];
+      try {
+        concernIds = req.body.concernIds ? JSON.parse(req.body.concernIds) : [];
+      } catch {
+        concernIds = [];
+      }
+      if (!Array.isArray(concernIds)) concernIds = [];
+      concernIds = concernIds.filter(id => typeof id === 'string' && id.trim() !== '');
+      updateData.concerns = { set: concernIds.map(id => ({ id })) };
+    }
+
     let order;
     try {
       order = req.body.order ? JSON.parse(req.body.order) : undefined;
@@ -526,6 +577,7 @@ const updateProduct = async (req, res) => {
       data: updateData,
       include: {
         categories: true,
+        concerns: true,
         collection: true,
         images: {
           orderBy: { order: 'asc' }

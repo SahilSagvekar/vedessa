@@ -27,6 +27,9 @@ const Products = () => {
   // 'group' has no sidebar control of its own — it's the entry point from the
   // Skin Care / Hair Care nav mega-menu, so we just read it once from the URL.
   const groupParam = searchParams.get('group') || '';
+  // 'concern' likewise has no sidebar control — it's the entry point from the
+  // homepage's Shop By Concern tiles.
+  const concernParam = searchParams.get('concern') || '';
   const [selectedCollection, setSelectedCollection] = useState<string>(searchParams.get('collection') || 'all');
   const [sortBy, setSortBy] = useState<string>('newest');
   const [priceRange, setPriceRange] = useState<string>('all');
@@ -64,7 +67,11 @@ const Products = () => {
   } else if (groupParam) {
     apiFilters.group = groupParam;
   }
-  
+
+  if (concernParam) {
+    apiFilters.concern = concernParam;
+  }
+
   if (selectedCollection !== 'all') {
     apiFilters.collection = selectedCollection;
   }

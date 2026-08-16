@@ -82,6 +82,21 @@ model Collection {
   @@map("collections")
 }
 
+// Concern model — "Shop By Concern" (Hair Growth, Dandruff, Acne, Dry Skin,
+// Tan Removal, etc). Deliberately a twin of Category: same shape, same
+// many-to-many relation to Product, so a product can be tagged with
+// whichever concerns it actually addresses.
+model Concern {
+  id        String    @id @default(uuid())
+  name      String
+  slug      String    @unique
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  products  Product[]
+
+  @@map("concerns")
+}
+
 // Product model
 model Product {
   id            String      @id @default(uuid())
@@ -92,6 +107,7 @@ model Product {
   images        ProductImage[]
   variants      ProductVariant[]
   categories    Category[]  // many-to-many — a product can belong to multiple categories now
+  concerns      Concern[]   // many-to-many — which skin/hair concerns this product addresses
   collectionId  String?     @map("collection_id")
   vendorId      String?     @map("vendor_id") // Link to vendor user
   rating        Decimal     @default(4.5) @db.Decimal(2, 1)

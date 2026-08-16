@@ -5,6 +5,7 @@ import Layout from '@/components/layout/Layout';
 import { useAuth } from '@/components/contexts/AuthContext';
 import productsService from '@/services/productsService';
 import categoriesService from '@/services/categoriesService';
+import concernsService from '@/services/concernsService';
 import ordersService from '@/services/ordersService';
 import vendorService from '@/services/vendorService';
 import VendorManagement from '@/components/admin/VendorManagement';
@@ -42,6 +43,7 @@ interface Product {
   image: string;
   images?: ExistingMediaItem[];
   categories: { id: string; name: string; slug: string; group?: string | null }[];
+  concerns: { id: string; name: string; slug: string }[];
   collection: string;
   isNew: boolean;
   isBestseller: boolean;
@@ -56,6 +58,7 @@ interface ProductFormData {
   price: string;
   image: string;
   categoryIds: string[];
+  concernIds: string[];
   collection: string;
   isNew: boolean;
   isBestseller: boolean;
@@ -76,6 +79,7 @@ const Admin = () => {
 
   const [productList, setProductList] = useState<Product[]>([]);
   const [categoriesList, setCategoriesList] = useState<any[]>([]);
+  const [concernsList, setConcernsList] = useState<any[]>([]);
   const [vendorList, setVendorList] = useState<any[]>([]);
   const [orderList, setOrderList] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'products' | 'categories' | 'orders' | 'vendors' | 'coupons' | 'shipping'>('products');
@@ -99,6 +103,7 @@ const Admin = () => {
     price: '',
     image: '',
     categoryIds: [],
+    concernIds: [],
     collection: 'bringaras',
     isNew: false,
     isBestseller: false,
@@ -136,6 +141,7 @@ const Admin = () => {
     if (isAdmin) {
       fetchProducts();
       fetchCategoriesList();
+      fetchConcernsList();
       fetchStats();
       fetchVendors();
       fetchOrders();
@@ -148,6 +154,15 @@ const Admin = () => {
       setCategoriesList(response.data || []);
     } catch (error) {
       console.error('Failed to fetch categories:', error);
+    }
+  };
+
+  const fetchConcernsList = async () => {
+    try {
+      const response = await concernsService.getConcerns();
+      setConcernsList(response.data || []);
+    } catch (error) {
+      console.error('Failed to fetch concerns:', error);
     }
   };
 
@@ -251,6 +266,7 @@ const Admin = () => {
       price: '',
       image: '',
       categoryIds: [],
+      concernIds: [],
       collection: 'bringaras',
       isNew: false,
       isBestseller: false,
@@ -283,6 +299,7 @@ const Admin = () => {
       price: product.price.toString(),
       image: product.image || '',
       categoryIds: Array.isArray(product.categories) ? product.categories.map((c) => c.id) : [],
+      concernIds: Array.isArray(product.concerns) ? product.concerns.map((c) => c.id) : [],
       collection: product.collection,
       isNew: product.isNew,
       isBestseller: product.isBestseller,
@@ -338,14 +355,15 @@ const Admin = () => {
     try {
       const productData = new FormData();
 
-      // Append all fields except image/categoryIds (categoryIds needs
-      // JSON.stringify, not the default array-to-string coercion)
+      // Append all fields except image/categoryIds/concernIds (these two
+      // need JSON.stringify, not the default array-to-string coercion)
       Object.keys(formData).forEach(key => {
-        if (key !== 'image' && key !== 'categoryIds') {
+        if (key !== 'image' && key !== 'categoryIds' && key !== 'concernIds') {
           productData.append(key, (formData as any)[key]);
         }
       });
       productData.append('categoryIds', JSON.stringify(formData.categoryIds || []));
+      productData.append('concernIds', JSON.stringify(formData.concernIds || []));
 
       // Handle media (images + videos) - order manifest carries both kept
       // existing items and newly uploaded files, in display order
@@ -677,6 +695,35 @@ const Admin = () => {
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">A product can belong to multiple categories</p>
+                    </div>
+
+                    <div>
+                      <Label>Concerns</Label>
+                      <div className="border border-input rounded-md max-h-40 overflow-y-auto p-2 space-y-1 mt-1">
+                        {concernsList.length === 0 ? (
+                          <p className="text-xs text-muted-foreground px-1 py-1">No concerns yet — run the seed script to add Hair Growth, Dandruff, Acne, Dry Skin, Tan Removal</p>
+                        ) : (
+                          concernsList.map((concern) => (
+                            <label key={concern.id} className="flex items-center gap-2 text-sm px-1 py-1 cursor-pointer hover:bg-muted rounded">
+                              <input
+                                type="checkbox"
+                                checked={formData.concernIds.includes(concern.id)}
+                                onChange={(e) => {
+                                  setFormData({
+                                    ...formData,
+                                    concernIds: e.target.checked
+                                      ? [...formData.concernIds, concern.id]
+                                      : formData.concernIds.filter((id) => id !== concern.id),
+                                  });
+                                }}
+                                className="rounded border-gray-300"
+                              />
+                              <span>{concern.name}</span>
+                            </label>
+                          ))
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">Which skin/hair concerns this product addresses (shown on the homepage's Shop By Concern tiles) — optional, a product can have several or none</p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
