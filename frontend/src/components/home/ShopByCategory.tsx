@@ -34,7 +34,7 @@ export default function ShopByCategory() {
         <div className="relative">
           <div
             ref={scrollRef}
-            className="flex gap-5 overflow-x-auto scroll-smooth pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+            className="flex gap-8 overflow-x-auto scroll-smooth pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
           >
             {categories.map((category) => (
               <Link
@@ -44,9 +44,9 @@ export default function ShopByCategory() {
                     ? `/products?category=${encodeURIComponent(category.slug)}`
                     : `/products?search=${encodeURIComponent(category.name)}`
                 }
-                className="flex-shrink-0 w-40 md:w-44 rounded-xl border border-gray-200 bg-white p-4 flex flex-col items-center text-center shadow-sm transition-all duration-200 ease-out hover:-translate-y-1.5 hover:shadow-lg hover:border-green-600 group"
+                className="flex flex-col items-center flex-shrink-0 group"
               >
-                <div className="w-28 h-28 md:w-32 md:h-32 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                <div className="w-36 h-36 md:w-40 md:h-40 rounded-full overflow-hidden bg-gray-100 border border-gray-200 flex items-center justify-center transition-transform group-hover:scale-105">
                   {category.image ? (
                     <img
                       src={category.image}
@@ -57,7 +57,7 @@ export default function ShopByCategory() {
                     <span className="text-xs text-gray-400 px-4 text-center">Image coming soon</span>
                   )}
                 </div>
-                <span className="mt-4 text-sm md:text-base font-medium text-gray-900 text-center transition-colors group-hover:text-green-600">
+                <span className="mt-4 text-sm md:text-base text-gray-900 text-center max-w-[9rem]">
                   {category.name}
                 </span>
               </Link>
