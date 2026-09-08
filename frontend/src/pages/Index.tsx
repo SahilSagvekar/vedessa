@@ -117,9 +117,9 @@ const Index = () => {
         <ShopByConcern />
       </ScrollReveal>
 
-      <ScrollReveal>
+      {/* <ScrollReveal>
         <CardGallery title="Must-Try Formulations" items={mustTryFormulations} showShopNow />
-      </ScrollReveal>
+      </ScrollReveal> */}
 
       <ScrollReveal>
         <Bestsellers />
