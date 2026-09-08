@@ -35,12 +35,32 @@ const Products = () => {
   const [priceRange, setPriceRange] = useState<string>('all');
   const [minRating, setMinRating] = useState<number>(0);
   const [inStock, setInStock] = useState<string>('all');
-  const [showNew, setShowNew] = useState<boolean>(false);
-  const [showBestsellers, setShowBestsellers] = useState<boolean>(false);
+  // 'filter' has no sidebar control of its own — it's the entry point from
+  // the header's BEST SELLER nav item (and future "New" entry points),
+  // same convention as 'group' and 'concern' above.
+  const filterParam = searchParams.get('filter') || '';
+  const [showNew, setShowNew] = useState<boolean>(filterParam === 'new');
+  const [showBestsellers, setShowBestsellers] = useState<boolean>(filterParam === 'bestseller');
   const [gridView, setGridView] = useState<number>(4); // 3 or 4 columns
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [categories, setCategories] = useState<any[]>([]);
   const [collections, setCollections] = useState<any[]>([]);
+
+  // selectedCategory/selectedCollection are seeded from the URL once via
+  // useState above, but React Router re-renders this same component (no
+  // remount) when you navigate from one ?category=x link to another — so
+  // without this, clicking a second category tile/nav item while already
+  // on /products silently does nothing. Re-sync whenever the URL's own
+  // category/collection param actually changes; this doesn't fight the
+  // sidebar checkboxes because those change local state without touching
+  // the URL, so this effect simply won't re-fire for them.
+  useEffect(() => {
+    setSelectedCategory(searchParams.get('category') || 'all');
+  }, [searchParams.get('category')]);
+
+  useEffect(() => {
+    setSelectedCollection(searchParams.get('collection') || 'all');
+  }, [searchParams.get('collection')]);
 
   // Fetch categories and collections
   useEffect(() => {
