@@ -66,6 +66,32 @@ jobs:
       DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
       DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
     steps:
+      # Fail immediately, with a readable message, if a secret is missing or
+      # misnamed. (An empty secret otherwise shows up as a cryptic SSH error.)
+      # Only names are printed, never values.
+      - name: Check deploy secrets
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          missing=0
+          for name in DEPLOY_HOST DEPLOY_SSH_KEY DEPLOY_KNOWN_HOSTS; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Secret $name is empty or not set. Add it under Settings -> Secrets and variables -> Actions -> the 'Secrets' tab (not 'Variables'), as a repository secret or in the 'production' environment, with exactly this name."
+              missing=1
+            fi
+          done
+          [ "$missing" -eq 0 ] || exit 1
+          if ! grep -q 'PRIVATE KEY' <<<"$DEPLOY_SSH_KEY"; then
+            echo "::error::DEPLOY_SSH_KEY does not look like a private key. Paste the whole contents of the PRIVATE key file (the one WITHOUT .pub), including the BEGIN and END lines."
+            exit 1
+          fi
+          if ! grep -qF -- "$DEPLOY_HOST" <<<"$DEPLOY_KNOWN_HOSTS"; then
+            echo "::error::DEPLOY_KNOWN_HOSTS does not mention DEPLOY_HOST. The first word of that line must be exactly the same host/IP as DEPLOY_HOST."
+            exit 1
+          fi
+          echo "All deploy secrets are present."
+
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
