@@ -9,7 +9,7 @@ const slides = [
     type: "video",
     video: "/video/1.mp4",
     title: "Discover Authentic Ayurveda",
-    subtitle: "Pure botanicals, ancient wisdom",
+    subtitle: "Pure botanicals, Ancient wisdom",
     cta: "SHOP NOW",
     // link: createPageUrl("Products")
   },
