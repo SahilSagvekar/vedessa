@@ -35,7 +35,7 @@ Server layout
    Keep `vedessa_deploy` (private) for step 6; the `.pub` goes to the server next.
 4. **Run the setup script on the server, as root** (read it first):
    ```
-   curl -fsSL https://raw.githubusercontent.com/SahilSagvekar/vedessa/ci/deploy-pipeline/deploy/server-setup.sh -o server-setup.sh
+   curl -fsSL https://raw.githubusercontent.com/SahilSagvekar/vedessa/main/deploy/server-setup.sh -o server-setup.sh
    less server-setup.sh
    bash server-setup.sh --pubkey "ssh-ed25519 AAAA... github-actions"   # paste the contents of vedessa_deploy.pub
    ```

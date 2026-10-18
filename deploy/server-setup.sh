@@ -105,6 +105,18 @@ if [ -n "$PUBKEY" ]; then
   esac
   install -d -m 700 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "$DEPLOY_HOME/.ssh"
   AK="$DEPLOY_HOME/.ssh/authorized_keys"
+  # Some servers lock authorized_keys with chattr (+i immutable / +a append-only),
+  # which blocks even root. Lift the lock only for the edit, then restore it.
+  LOCKED=""
+  if [ -e "$AK" ] && command -v lsattr >/dev/null; then
+    FLAGS="$(lsattr -d "$AK" 2>/dev/null | awk '{print $1}')"
+    case "$FLAGS" in *i*) LOCKED="${LOCKED}i" ;; esac
+    case "$FLAGS" in *a*) LOCKED="${LOCKED}a" ;; esac
+  fi
+  if [ -n "$LOCKED" ]; then
+    warn "$AK has the chattr lock flags '$LOCKED'; lifting for this edit and restoring afterwards. Existing keys are left untouched."
+    chattr -i -a "$AK"
+  fi
   touch "$AK"
   if grep -qxF "$PUBKEY" "$AK"; then
     ok "deploy key already authorised"
@@ -114,6 +126,7 @@ if [ -n "$PUBKEY" ]; then
   fi
   chown "$DEPLOY_USER:$DEPLOY_USER" "$AK"
   chmod 600 "$AK"
+  [ -z "$LOCKED" ] || chattr "+$LOCKED" "$AK"
 fi
 
 # ------------------------------------------------------------------ git state
@@ -326,8 +339,11 @@ fi
 step "6. Add these to GitHub (repo -> Settings -> Secrets and variables -> Actions)"
 SSH_PORT="22"
 command -v sshd >/dev/null && SSH_PORT="$(sshd -T 2>/dev/null | awk '/^port /{print $2; exit}')"
-HOSTKEY_FILE="/etc/ssh/ssh_host_ed25519_key.pub"
-[ -f "$HOSTKEY_FILE" ] || HOSTKEY_FILE="/etc/ssh/ssh_host_rsa_key.pub"
+HOSTKEY_FILE=""
+for t in ed25519 ecdsa rsa; do
+  [ -f "/etc/ssh/ssh_host_${t}_key.pub" ] && { HOSTKEY_FILE="/etc/ssh/ssh_host_${t}_key.pub"; break; }
+done
+[ -n "$HOSTKEY_FILE" ] || die "no /etc/ssh/ssh_host_*_key.pub found"
 HOSTKEY="$(cut -d' ' -f1,2 "$HOSTKEY_FILE")"
 if [ "$SSH_PORT" = "22" ]; then
   KH="<SERVER_IP_OR_HOSTNAME> $HOSTKEY"
