@@ -1,0 +1,5 @@
+# Credentials must never be committed
+Root password*
+*.pem
+*.key
+!*.pub

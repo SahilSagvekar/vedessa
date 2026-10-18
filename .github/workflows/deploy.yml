@@ -1,0 +1,119 @@
+name: Deploy
+
+# Ships every commit that lands on main to the Hostinger server.
+#   1. build   - builds the frontend in CI (not on the small VPS)
+#   2. deploy  - uploads the build as a new release folder, then runs
+#                deploy/deploy.sh on the server (migrate, reload API, flip the
+#                frontend symlink, health-check, auto-rollback on failure)
+#
+# Want a manual approval before each deploy? Repo Settings -> Environments ->
+# production -> "Required reviewers".
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Never run two deploys at once, and never cancel one halfway through.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install
+        working-directory: frontend
+        run: npm ci
+      - name: Build
+        working-directory: frontend
+        env:
+          # Firebase web config (public identifiers). Set under
+          # Settings -> Secrets and variables -> Actions -> Variables.
+          VITE_FIREBASE_API_KEY: ${{ vars.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ vars.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ vars.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_APP_ID: ${{ vars.VITE_FIREBASE_APP_ID }}
+        run: npm run build
+      - name: Backend syntax check (fail before touching the server)
+        working-directory: backend
+        run: find . -path ./node_modules -prune -o -name '*.js' -print0 | xargs -0 -n1 node --check
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+          if-no-files-found: error
+          retention-days: 7
+
+  deploy:
+    name: Deploy to server
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 20
+    env:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: dist
+
+      - name: Configure SSH
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          {
+            echo "Host deploy-target"
+            echo "  HostName $DEPLOY_HOST"
+            echo "  User ${DEPLOY_USER:-deploy}"
+            echo "  Port ${DEPLOY_PORT:-22}"
+            echo "  IdentityFile ~/.ssh/deploy_key"
+            echo "  IdentitiesOnly yes"
+            echo "  StrictHostKeyChecking yes"
+            echo "  ServerAliveInterval 30"
+          } > ~/.ssh/config
+          chmod 600 ~/.ssh/config
+
+      - name: Name this release
+        run: echo "RELEASE=$(date -u +%Y%m%d%H%M%S)-${GITHUB_SHA::7}" >> "$GITHUB_ENV"
+
+      - name: Upload frontend release
+        run: rsync -az --delete dist/ "deploy-target:/var/www/vedessa-frontend/releases/${RELEASE}/"
+
+      - name: Run deploy script on the server
+        run: |
+          # The script is streamed from this checkout (the commit being deployed),
+          # saved to a temp file on the server, then run with the SHA and release name.
+          # SHA and release name are hex/digits only, so quoting them here is safe.
+          REMOTE_CMD="f=\$(mktemp) && cat > \"\$f\" && bash \"\$f\" '${GITHUB_SHA}' '${RELEASE}'; rc=\$?; rm -f \"\$f\"; exit \$rc"
+          ssh deploy-target "$REMOTE_CMD" < deploy/deploy.sh
+
+      - name: Verify public site
+        run: |
+          for i in $(seq 1 10); do
+            if curl -fsS --max-time 10 https://vedessa.in/api/health | grep -q '"success":true'; then
+              echo "vedessa.in is healthy"; exit 0
+            fi
+            sleep 3
+          done
+          echo "::error::https://vedessa.in/api/health did not respond after deploy"
+          exit 1
