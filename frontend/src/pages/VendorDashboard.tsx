@@ -18,7 +18,7 @@ export default function VendorDashboard() {
 
     useEffect(() => {
         if (!authLoading && !isAuthenticated) {
-            navigate('/auth');
+            navigate('/staff-login');
             return;
         }
 

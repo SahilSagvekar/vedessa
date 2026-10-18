@@ -183,8 +183,9 @@ router.post('/verify-payment', protect, async (req, res) => {
         return null;
       });
 
-      if (user && user.email) {
-        await emailService.sendOrderConfirmationEmail(user.email, updatedOrder, user.fullName, pdfBuffer);
+      const toEmail = user?.email || updatedOrder.shippingAddress?.email;
+      if (toEmail) {
+        await emailService.sendOrderConfirmationEmail(toEmail, updatedOrder, user?.fullName, pdfBuffer);
       }
       await emailService.sendInvoiceToAdmin(updatedOrder, user?.fullName, pdfBuffer);
     } catch (emailError) {
@@ -282,8 +283,9 @@ router.post('/webhook', async (req, res) => {
             return null;
           });
 
-          if (user && user.email) {
-            await emailService.sendOrderConfirmationEmail(user.email, order, user.fullName, pdfBuffer);
+          const toEmail = user?.email || order.shippingAddress?.email;
+          if (toEmail) {
+            await emailService.sendOrderConfirmationEmail(toEmail, order, user?.fullName, pdfBuffer);
           }
           await emailService.sendInvoiceToAdmin(order, user?.fullName, pdfBuffer);
         } catch (emailError) {

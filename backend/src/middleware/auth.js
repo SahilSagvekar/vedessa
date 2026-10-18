@@ -25,6 +25,7 @@ const auth = async (req, res, next) => {
       select: {
         id: true,
         email: true,
+        phone: true,
         fullName: true,
         avatarUrl: true,
         role: true,

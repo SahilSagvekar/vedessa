@@ -76,7 +76,7 @@ export default function ForgotPassword() {
                                 Try Different Email
                             </button>
                             <Link
-                                to="/auth"
+                                to="/staff-login"
                                 className="block w-full py-3 bg-green-700 hover:bg-green-800 text-white rounded-lg font-medium transition-colors text-center"
                             >
                                 Back to Sign In
@@ -93,7 +93,7 @@ export default function ForgotPassword() {
             <div className="min-h-[60vh] flex items-center justify-center py-12 px-4">
                 <div className="max-w-md w-full">
                     <Link
-                        to="/auth"
+                        to="/staff-login"
                         className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-8"
                     >
                         <ArrowLeft className="w-4 h-4" />
@@ -144,7 +144,7 @@ export default function ForgotPassword() {
 
                     <p className="mt-8 text-center text-sm text-gray-500">
                         Remember your password?{' '}
-                        <Link to="/auth" className="text-green-700 hover:text-green-800 font-medium">
+                        <Link to="/staff-login" className="text-green-700 hover:text-green-800 font-medium">
                             Sign In
                         </Link>
                     </p>

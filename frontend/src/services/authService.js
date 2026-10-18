@@ -2,13 +2,9 @@ import api from '../lib/api';
 
 // Authentication API calls
 export const authService = {
-  // Register new user
-  register: async (email, password, fullName) => {
-    const response = await api.post('/auth/register', {
-      email,
-      password,
-      fullName,
-    });
+  // Sign in / sign up with a Firebase ID token (Google or phone OTP)
+  firebaseLogin: async (idToken, fullName) => {
+    const response = await api.post('/auth/firebase', { idToken, fullName });
 
     // Save token and user to localStorage
     if (response.data.token) {
@@ -19,7 +15,7 @@ export const authService = {
     return response;
   },
 
-  // Login user
+  // Staff login (ADMIN / VENDOR) with email + password
   login: async (email, password) => {
     const response = await api.post('/auth/login', {
       email,

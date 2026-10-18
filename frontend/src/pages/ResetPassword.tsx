@@ -83,7 +83,7 @@ export default function ResetPassword() {
 
             if (response.ok) {
                 setSuccess(true);
-                setTimeout(() => navigate('/auth'), 3000);
+                setTimeout(() => navigate('/staff-login'), 3000);
             } else {
                 toast({
                     title: 'Error',
@@ -149,7 +149,7 @@ export default function ResetPassword() {
                             Your password has been reset successfully. You'll be redirected to sign in shortly.
                         </p>
                         <Link
-                            to="/auth"
+                            to="/staff-login"
                             className="block w-full py-3 bg-green-700 hover:bg-green-800 text-white rounded-lg font-medium transition-colors text-center"
                         >
                             Sign In Now
@@ -165,7 +165,7 @@ export default function ResetPassword() {
             <div className="min-h-[60vh] flex items-center justify-center py-12 px-4">
                 <div className="max-w-md w-full">
                     <Link
-                        to="/auth"
+                        to="/staff-login"
                         className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-8"
                     >
                         <ArrowLeft className="w-4 h-4" />

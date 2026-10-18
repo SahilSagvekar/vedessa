@@ -591,7 +591,7 @@ export default function VendorRegistration() {
                         {/* Help Text */}
                         <p className="text-center text-sm text-gray-500 mt-6">
                             Already have a vendor account?{' '}
-                            <Link to="/auth" className="text-green-700 hover:underline font-medium">
+                            <Link to="/staff-login" className="text-green-700 hover:underline font-medium">
                                 Sign In
                             </Link>
                         </p>

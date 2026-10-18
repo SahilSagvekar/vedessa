@@ -221,7 +221,7 @@ const Header = () => {
                         onClick={closeMenu}
                         className="block py-3 px-4 text-foreground hover:bg-muted rounded-md transition-colors"
                       >
-                        Login / Register
+                        Login / Sign up
                       </Link>
                     )}
                   </div>

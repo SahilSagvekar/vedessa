@@ -1,9 +1,18 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import authService from "../../services/authService.js";
+import {
+  googleSignInIdToken,
+  sendPhoneOtp,
+  confirmPhoneOtp,
+  clearPhoneOtp,
+  firebaseLogout,
+  friendlyAuthError,
+} from '@/lib/firebase';
 
 interface User {
   id: string;
-  email: string;
+  email: string | null;
+  phone?: string | null;
   fullName: string | null;
   avatarUrl: string | null;
   role: 'CUSTOMER' | 'ADMIN' | 'VENDOR';
@@ -16,7 +25,13 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isAdmin: boolean;
   isVendor: boolean;
-  signUp: (email: string, password: string, fullName?: string) => Promise<{ error: Error | null }>;
+  /** Customers: Google pop-up */
+  signInWithGoogle: () => Promise<{ error: Error | null; needsName: boolean }>;
+  /** Customers: step 1 - send an SMS OTP to an E.164 number */
+  sendOtp: (phoneE164: string, recaptchaContainerId: string) => Promise<{ error: Error | null }>;
+  /** Customers: step 2 - check the OTP and sign in */
+  verifyOtp: (code: string) => Promise<{ error: Error | null; needsName: boolean }>;
+  /** Staff (ADMIN / VENDOR): email + password */
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   updateProfile: (data: any) => Promise<{ error: Error | null }>;
@@ -47,14 +62,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     initAuth();
   }, []);
 
-  const signUp = async (email: string, password: string, fullName?: string) => {
+  const completeFirebaseLogin = async (idToken: string) => {
+    const response = await authService.firebaseLogin(idToken);
+    setUser(response.data.user);
+    setIsAuthenticated(true);
+    return { needsName: !!response.data.needsName };
+  };
+
+  const signInWithGoogle = async () => {
     try {
-      const response = await authService.register(email, password, fullName || '');
-      setUser(response.data.user);
-      setIsAuthenticated(true);
+      const idToken = await googleSignInIdToken();
+      const { needsName } = await completeFirebaseLogin(idToken);
+      return { error: null, needsName };
+    } catch (error) {
+      return { error: new Error(friendlyAuthError(error)), needsName: false };
+    }
+  };
+
+  const sendOtp = async (phoneE164: string, recaptchaContainerId: string) => {
+    try {
+      await sendPhoneOtp(phoneE164, recaptchaContainerId);
       return { error: null };
     } catch (error) {
-      return { error: new Error(error as string) };
+      return { error: new Error(friendlyAuthError(error)) };
+    }
+  };
+
+  const verifyOtp = async (code: string) => {
+    try {
+      const idToken = await confirmPhoneOtp(code);
+      const { needsName } = await completeFirebaseLogin(idToken);
+      clearPhoneOtp();
+      return { error: null, needsName };
+    } catch (error) {
+      return { error: new Error(friendlyAuthError(error)), needsName: false };
     }
   };
 
@@ -73,6 +114,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       await authService.logout();
     } finally {
+      await firebaseLogout();
       setUser(null);
       setIsAuthenticated(false);
     }
@@ -113,7 +155,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     isAuthenticated,
     isAdmin: user?.role === 'ADMIN',
     isVendor: user?.role === 'VENDOR',
-    signUp,
+    signInWithGoogle,
+    sendOtp,
+    verifyOtp,
     signIn,
     signOut,
     updateProfile,

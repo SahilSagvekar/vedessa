@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const {
-  register,
+  firebaseAuth,
   login,
   getMe,
   updateProfile,
@@ -15,7 +15,10 @@ const { auth } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 
 // Public routes
-router.post('/register', register);
+// Customers: Google / phone OTP via Firebase
+router.post('/firebase', firebaseAuth);
+
+// Staff (ADMIN / VENDOR): email + password
 router.post('/login', login);
 router.post('/logout', logout);
 

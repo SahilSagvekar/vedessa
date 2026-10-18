@@ -16,8 +16,10 @@ datasource db {
 // User model
 model User {
   id           String    @id @default(uuid())
-  email        String    @unique
-  passwordHash String    @map("password_hash")
+  email        String?   @unique // optional: phone-only (OTP) customers have no email
+  passwordHash String?   @map("password_hash") // only set for staff (ADMIN/VENDOR) password logins
+  firebaseUid  String?   @unique @map("firebase_uid") // Firebase Auth uid (Google / phone OTP sign-in)
+  emailVerified Boolean  @default(false) @map("email_verified")
   fullName     String?   @map("full_name")
   avatarUrl    String?   @map("avatar_url")
   role         UserRole  @default(CUSTOMER)
@@ -42,6 +44,7 @@ model User {
   products     Product[]  // Products added by vendor
   reviews      Review[]   // Reviews written by user
 
+  @@index([phone])
   @@map("users")
 }
 

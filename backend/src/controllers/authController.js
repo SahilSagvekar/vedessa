@@ -14,94 +14,166 @@ const generateToken = (userId) => {
 };
 
 /**
- * Register new user
- * POST /api/auth/register
+ * Candidate formats a phone number may have been stored in before we
+ * standardised on E.164 (e.g. vendor sign-ups typed "9876543210").
  */
-const register = async (req, res) => {
+const phoneVariants = (e164) => {
+  const digits = e164.replace(/\D/g, '');
+  const last10 = digits.slice(-10);
+  return Array.from(new Set([e164, digits, last10, `0${last10}`, `+91${last10}`]));
+};
+
+/**
+ * Sign in / sign up with Google or phone OTP (Firebase Auth)
+ * POST /api/auth/firebase   body: { idToken, fullName? }
+ *
+ * The frontend completes the Google popup or the OTP check with Firebase and
+ * sends us the resulting ID token. We verify it server-side, find or create
+ * the matching customer, and answer with our own JWT, so every other route
+ * keeps using the same auth middleware as before.
+ */
+const firebaseAuth = async (req, res) => {
   try {
-    const { email, password, fullName } = req.body;
+    const { idToken, fullName } = req.body;
 
-    // Validation
-    if (!email || !password) {
+    if (!idToken) {
       return res.status(400).json({
         success: false,
-        message: 'Email and password are required'
+        message: 'Firebase ID token is required'
       });
     }
 
-    // Email format validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid email format'
-      });
-    }
-
-    // Password length validation
-    if (password.length < 6) {
-      return res.status(400).json({
-        success: false,
-        message: 'Password must be at least 6 characters'
-      });
-    }
-
-    // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email: email.toLowerCase() }
-    });
-
-    if (existingUser) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email already registered'
-      });
-    }
-
-    // Hash password
-    const passwordHash = await bcrypt.hash(password, 10);
-
-    // Create user
-    const user = await prisma.user.create({
-      data: {
-        email: email.toLowerCase(),
-        passwordHash,
-        fullName,
-        role: 'CUSTOMER'
-      },
-      select: {
-        id: true,
-        email: true,
-        fullName: true,
-        role: true,
-        createdAt: true
+    let decoded;
+    try {
+      const { getFirebaseAdmin } = require('../config/firebase');
+      decoded = await getFirebaseAdmin().auth().verifyIdToken(idToken);
+    } catch (error) {
+      if (/not configured/i.test(error.message)) {
+        console.error('Firebase auth error:', error.message);
+        return res.status(503).json({
+          success: false,
+          message: 'Sign-in is temporarily unavailable'
+        });
       }
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid or expired sign-in. Please try again.'
+      });
+    }
+
+    const firebaseUid = decoded.uid;
+    // Only trust an email Firebase has verified (Google always has).
+    const email = decoded.email && decoded.email_verified
+      ? decoded.email.toLowerCase()
+      : null;
+    const phone = decoded.phone_number || null; // E.164, e.g. +919876543210
+    const cleanName = (fullName || decoded.name || '').toString().trim().slice(0, 100) || null;
+
+    if (!email && !phone) {
+      return res.status(400).json({
+        success: false,
+        message: 'Your sign-in did not return a verified email or phone number'
+      });
+    }
+
+    const staffOnly = () => res.status(403).json({
+      success: false,
+      message: 'This account is a staff account. Please use the staff login.'
     });
 
-    // Generate token
-    const token = generateToken(user.id);
+    // 1. Returning Firebase user
+    let user = await prisma.user.findUnique({ where: { firebaseUid } });
+    let isNewUser = false;
 
-    res.status(201).json({
+    if (user && user.role !== 'CUSTOMER') return staffOnly();
+
+    // 2. Existing customer who signed up the old way: link by verified email / phone
+    if (!user && email) {
+      const byEmail = await prisma.user.findUnique({ where: { email } });
+      if (byEmail) {
+        if (byEmail.role !== 'CUSTOMER') return staffOnly();
+        user = byEmail;
+      }
+    }
+    if (!user && phone) {
+      const byPhone = await prisma.user.findFirst({
+        where: { phone: { in: phoneVariants(phone) }, role: 'CUSTOMER' }
+      });
+      if (byPhone) user = byPhone;
+    }
+
+    if (user) {
+      // Link / top up. Never overwrite details the customer already has.
+      const updateData = {};
+      if (user.firebaseUid !== firebaseUid) {
+        // Don't steal an account already linked to a different Firebase identity.
+        if (user.firebaseUid) {
+          return res.status(409).json({
+            success: false,
+            message: 'This account is already linked to another sign-in method'
+          });
+        }
+        updateData.firebaseUid = firebaseUid;
+      }
+      if (!user.email && email) updateData.email = email;
+      if (!user.phone && phone) updateData.phone = phone;
+      if (!user.fullName && cleanName) updateData.fullName = cleanName;
+      if (!user.avatarUrl && decoded.picture) updateData.avatarUrl = decoded.picture;
+      if (email && !user.emailVerified) updateData.emailVerified = true;
+
+      if (Object.keys(updateData).length > 0) {
+        user = await prisma.user.update({ where: { id: user.id }, data: updateData });
+      }
+    } else {
+      isNewUser = true;
+      user = await prisma.user.create({
+        data: {
+          firebaseUid,
+          email,
+          emailVerified: !!email,
+          phone,
+          fullName: cleanName,
+          avatarUrl: decoded.picture || null,
+          role: 'CUSTOMER'
+        }
+      });
+    }
+
+    const token = generateToken(user.id);
+    const safeUser = {
+      id: user.id,
+      email: user.email,
+      phone: user.phone,
+      fullName: user.fullName,
+      avatarUrl: user.avatarUrl,
+      role: user.role,
+      createdAt: user.createdAt
+    };
+
+    res.json({
       success: true,
-      message: 'User registered successfully',
+      message: isNewUser ? 'Account created' : 'Login successful',
       data: {
-        user,
-        token
+        user: safeUser,
+        token,
+        isNewUser,
+        needsName: !user.fullName
       }
     });
   } catch (error) {
-    console.error('Register error:', error);
+    console.error('Firebase auth error:', error);
     res.status(500).json({
       success: false,
-      message: 'Error registering user',
+      message: 'Error signing in',
       error: error.message
     });
   }
 };
 
 /**
- * Login user
+ * Staff login (ADMIN / VENDOR) with email + password
  * POST /api/auth/login
+ * Customers sign in with Google or phone OTP (see firebaseAuth).
  */
 const login = async (req, res) => {
   try {
@@ -127,8 +199,18 @@ const login = async (req, res) => {
       });
     }
 
+    // Customers no longer use passwords
+    if (user.role === 'CUSTOMER') {
+      return res.status(403).json({
+        success: false,
+        message: 'Please sign in with Google or your mobile number'
+      });
+    }
+
     // Check password
-    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+    const isPasswordValid = user.passwordHash
+      ? await bcrypt.compare(password, user.passwordHash)
+      : false;
 
     if (!isPasswordValid) {
       return res.status(401).json({
@@ -212,6 +294,7 @@ const updateProfile = async (req, res) => {
       select: {
         id: true,
         email: true,
+        phone: true,
         fullName: true,
         avatarUrl: true,
         role: true,
@@ -262,6 +345,13 @@ const changePassword = async (req, res) => {
     const user = await prisma.user.findUnique({
       where: { id: req.userId }
     });
+
+    if (!user.passwordHash) {
+      return res.status(400).json({
+        success: false,
+        message: 'This account does not use a password'
+      });
+    }
 
     // Verify current password
     const isPasswordValid = await bcrypt.compare(currentPassword, user.passwordHash);
@@ -328,8 +418,8 @@ const forgotPassword = async (req, res) => {
     });
 
     // Always return success to prevent email enumeration
-    // Even if user doesn't exist, we return success
-    if (!user) {
+    // Even if user doesn't exist (or is a customer, who has no password), we return success
+    if (!user || user.role === 'CUSTOMER' || !user.email) {
       return res.json({
         success: true,
         message: 'If an account exists with this email, you will receive a password reset link'
@@ -463,7 +553,7 @@ const resetPassword = async (req, res) => {
       where: { id: decoded.userId }
     });
 
-    if (!user) {
+    if (!user || user.role === 'CUSTOMER') {
       return res.status(400).json({
         success: false,
         message: 'User not found'
@@ -493,7 +583,7 @@ const resetPassword = async (req, res) => {
 };
 
 module.exports = {
-  register,
+  firebaseAuth,
   login,
   getMe,
   updateProfile,

@@ -15,14 +15,13 @@ import {
   ShoppingBag,
   Heart,
   MapPin,
-  Lock,
   Package,
   Loader2,
   LogOut
 } from 'lucide-react';
 
 const CustomerDashboard = () => {
-  const { user, signOut, updateProfile, changePassword, loading } = useAuth();
+  const { user, signOut, updateProfile, loading } = useAuth();
   const { orders = [], loading: ordersLoading } = useOrders();
   const { wishlist = [], count: wishlistCount = 0 } = useWishlist();
   const navigate = useNavigate();
@@ -42,11 +41,6 @@ const CustomerDashboard = () => {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
 
-  // Password form state
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,51 +71,6 @@ const CustomerDashboard = () => {
       }
     } finally {
       setIsUpdatingProfile(false);
-    }
-  };
-
-  const handleChangePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (newPassword !== confirmPassword) {
-      toast({
-        title: 'Passwords do not match',
-        description: 'Please make sure your passwords match.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      toast({
-        title: 'Password too short',
-        description: 'Password must be at least 6 characters.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setIsChangingPassword(true);
-
-    try {
-      const { error } = await changePassword(currentPassword, newPassword);
-      if (error) {
-        toast({
-          title: 'Password Change Failed',
-          description: error.message,
-          variant: 'destructive',
-        });
-      } else {
-        toast({
-          title: 'Password Changed',
-          description: 'Your password has been changed successfully.',
-        });
-        setCurrentPassword('');
-        setNewPassword('');
-        setConfirmPassword('');
-      }
-    } finally {
-      setIsChangingPassword(false);
     }
   };
 
@@ -169,7 +118,7 @@ const CustomerDashboard = () => {
                   </div>
                   <div>
                     <p className="font-medium text-foreground">{user?.fullName}</p>
-                    <p className="text-sm text-muted-foreground">{user?.email}</p>
+                    <p className="text-sm text-muted-foreground">{user?.email || user?.phone}</p>
                   </div>
                 </div>
 
@@ -206,7 +155,7 @@ const CustomerDashboard = () => {
           {/* Main Content */}
           <div className="lg:col-span-3">
             <Tabs defaultValue="orders" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="orders">
                   <Package className="w-4 h-4 mr-2" />
                   Orders
@@ -214,10 +163,6 @@ const CustomerDashboard = () => {
                 <TabsTrigger value="profile">
                   <User className="w-4 h-4 mr-2" />
                   Profile
-                </TabsTrigger>
-                <TabsTrigger value="password">
-                  <Lock className="w-4 h-4 mr-2" />
-                  Password
                 </TabsTrigger>
               </TabsList>
 
@@ -303,7 +248,7 @@ const CustomerDashboard = () => {
                         <Input
                           id="email"
                           type="email"
-                          value={user?.email}
+                          value={user?.email ?? ''}
                           disabled
                           className="bg-muted"
                         />
@@ -366,65 +311,6 @@ const CustomerDashboard = () => {
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                         )}
                         Update Profile
-                      </Button>
-                    </form>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Password Tab */}
-              <TabsContent value="password">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Change Password</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <form onSubmit={handleChangePassword} className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="currentPassword">Current Password</Label>
-                        <Input
-                          id="currentPassword"
-                          type="password"
-                          value={currentPassword}
-                          onChange={(e) => setCurrentPassword(e.target.value)}
-                          placeholder="Enter current password"
-                          required
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="newPassword">New Password</Label>
-                        <Input
-                          id="newPassword"
-                          type="password"
-                          value={newPassword}
-                          onChange={(e) => setNewPassword(e.target.value)}
-                          placeholder="Enter new password"
-                          required
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                        <Input
-                          id="confirmPassword"
-                          type="password"
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          placeholder="Confirm new password"
-                          required
-                        />
-                      </div>
-
-                      <Button
-                        type="submit"
-                        disabled={isChangingPassword}
-                        className="w-full"
-                      >
-                        {isChangingPassword && (
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        )}
-                        Change Password
                       </Button>
                     </form>
                   </CardContent>

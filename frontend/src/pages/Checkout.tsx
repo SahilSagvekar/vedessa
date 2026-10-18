@@ -23,7 +23,7 @@ const Checkout = () => {
   const [shippingAddress, setShippingAddress] = useState({
     fullName: user?.fullName || '',
     email: user?.email || '',
-    phone: '',
+    phone: (user?.phone || '').replace(/\D/g, '').slice(-10),
     address: '',
     city: '',
     state: '',
@@ -186,7 +186,7 @@ const Checkout = () => {
       discountAmount,
       couponId: appliedCoupon?.id,
       shippingAddress,
-      userEmail: user.email,
+      userEmail: user.email || shippingAddress.email,
       items: cart.items.map(item => ({
         productId: item.product_id,
         productName: item.product_name,

@@ -1,110 +1,138 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { z } from 'zod';
 import { useAuth } from '@/components/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
-const emailSchema = z.string().email('Please enter a valid email address');
-const passwordSchema = z.string().min(6, 'Password must be at least 6 characters');
+type Step = 'choose' | 'otp' | 'name';
+
+const RESEND_SECONDS = 30;
+const RECAPTCHA_ID = 'recaptcha-container';
+
+const GoogleIcon = () => (
+  <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
+    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z" />
+    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z" />
+    <path fill="#FBBC05" d="M5.84 14.1a6.6 6.6 0 0 1 0-4.2V7.06H2.18a11 11 0 0 0 0 9.88l3.66-2.84z" />
+    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.06l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z" />
+  </svg>
+);
 
 const Auth = () => {
-  const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [step, setStep] = useState<Step>('choose');
+  const [mobile, setMobile] = useState(''); // 10 digits, +91 is added on send
+  const [otp, setOtp] = useState('');
   const [fullName, setFullName] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string; fullName?: string; consent?: string }>({});
-  const [consentAccepted, setConsentAccepted] = useState(false);
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState<'google' | 'otp' | 'verify' | 'name' | null>(null);
+  const [resendIn, setResendIn] = useState(0);
 
-  const { signIn, signUp, user, isAuthenticated, loading } = useAuth();
+  const { signInWithGoogle, sendOtp, verifyOtp, updateProfile, isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  // True from the moment a sign-in starts until we navigate ourselves, so the
+  // "already logged in" redirect below can't race the name step.
+  const handlingLogin = useRef(false);
 
-  // Redirect if already logged in
+  // Already logged in -> home
   useEffect(() => {
-    if (!loading && isAuthenticated) {
+    if (!loading && isAuthenticated && !handlingLogin.current) {
       navigate('/');
     }
   }, [isAuthenticated, loading, navigate]);
 
-  const validateForm = () => {
-    const newErrors: { email?: string; password?: string; fullName?: string } = {};
+  // Resend countdown
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const t = setTimeout(() => setResendIn((n) => n - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendIn]);
 
-    const emailResult = emailSchema.safeParse(email);
-    if (!emailResult.success) {
-      newErrors.email = emailResult.error.errors[0].message;
+  const afterSignIn = (needsName: boolean) => {
+    if (needsName) {
+      setStep('name');
+    } else {
+      handlingLogin.current = false;
+      toast({ title: 'Welcome to Vedessa!', description: 'You are now signed in.' });
+      navigate('/');
     }
-
-    const passwordResult = passwordSchema.safeParse(password);
-    if (!passwordResult.success) {
-      newErrors.password = passwordResult.error.errors[0].message;
-    }
-
-    if (!isLogin && !fullName.trim()) {
-      newErrors.fullName = 'Full name is required';
-    }
-
-    if (!isLogin && !consentAccepted) {
-      newErrors.consent = 'You must agree to the Terms & Conditions and Privacy Policy to create an account.';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validateForm()) return;
-
-    setIsSubmitting(true);
-
-    try {
-      if (isLogin) {
-        const { error } = await signIn(email, password);
-        if (error) {
-          toast({
-            title: 'Login Failed',
-            description: error.message || 'Invalid email or password. Please try again.',
-            variant: 'destructive',
-          });
-        } else {
-          toast({
-            title: 'Welcome back!',
-            description: 'You have successfully logged in.',
-          });
-          navigate('/');
-        }
-      } else {
-        const { error } = await signUp(email, password, fullName);
-        if (error) {
-          toast({
-            title: 'Signup Failed',
-            description: error.message || 'Could not create account. Please try again.',
-            variant: 'destructive',
-          });
-        } else {
-          toast({
-            title: 'Account Created!',
-            description: 'Welcome to Vedessa!',
-          });
-          navigate('/');
-        }
-      }
-    } catch (err) {
-      toast({
-        title: 'Error',
-        description: 'Something went wrong. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSubmitting(false);
+  const handleGoogle = async () => {
+    setError('');
+    setBusy('google');
+    handlingLogin.current = true;
+    const { error: err, needsName } = await signInWithGoogle();
+    setBusy(null);
+    if (err) {
+      handlingLogin.current = false;
+      setError(err.message);
+      return;
     }
+    afterSignIn(needsName);
+  };
+
+  const handleSendOtp = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    setError('');
+    if (!/^[6-9]\d{9}$/.test(mobile)) {
+      setError('Please enter a valid 10-digit mobile number.');
+      return;
+    }
+    setBusy('otp');
+    const { error: err } = await sendOtp(`+91${mobile}`, RECAPTCHA_ID);
+    setBusy(null);
+    if (err) {
+      setError(err.message);
+      return;
+    }
+    setOtp('');
+    setResendIn(RESEND_SECONDS);
+    setStep('otp');
+  };
+
+  const handleVerify = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    setError('');
+    if (otp.length !== 6) {
+      setError('Please enter the 6-digit OTP.');
+      return;
+    }
+    setBusy('verify');
+    handlingLogin.current = true;
+    const { error: err, needsName } = await verifyOtp(otp);
+    setBusy(null);
+    if (err) {
+      handlingLogin.current = false;
+      setError(err.message);
+      setOtp('');
+      return;
+    }
+    afterSignIn(needsName);
+  };
+
+  const handleSaveName = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    const name = fullName.trim();
+    if (!name) {
+      setError('Please tell us your name.');
+      return;
+    }
+    setBusy('name');
+    const { error: err } = await updateProfile({ fullName: name });
+    setBusy(null);
+    if (err) {
+      setError(err.message || 'Could not save your name. Please try again.');
+      return;
+    }
+    handlingLogin.current = false;
+    toast({ title: `Welcome, ${name.split(' ')[0]}!`, description: 'You are now signed in.' });
+    navigate('/');
   };
 
   if (loading) {
@@ -125,127 +153,160 @@ const Auth = () => {
             <p className="text-xs tracking-[0.3em] text-primary/80 mt-1">AYURVEDA</p>
           </div>
 
-          {/* Title */}
-          <h2 className="text-2xl font-serif text-primary text-center mb-6">
-            {isLogin ? 'Welcome Back' : 'Create Account'}
-          </h2>
+          {step === 'choose' && (
+            <>
+              <h2 className="text-2xl font-serif text-primary text-center mb-1">Welcome</h2>
+              <p className="text-sm text-muted-foreground text-center mb-6">
+                Sign in or create an account in seconds.
+              </p>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {!isLogin && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleGoogle}
+                disabled={busy !== null}
+                className="w-full py-6 border-primary/30 text-primary hover:bg-primary/5"
+              >
+                {busy === 'google' ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <GoogleIcon />}
+                <span className="ml-2">Continue with Google</span>
+              </Button>
+
+              <div className="flex items-center gap-3 my-6">
+                <div className="h-px flex-1 bg-primary/15" />
+                <span className="text-xs uppercase tracking-wider text-muted-foreground">or</span>
+                <div className="h-px flex-1 bg-primary/15" />
+              </div>
+
+              <form onSubmit={handleSendOtp} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="mobile" className="text-primary">Mobile number</Label>
+                  <div className="flex">
+                    <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-primary/20 bg-muted text-sm text-primary">
+                      +91
+                    </span>
+                    <Input
+                      id="mobile"
+                      type="tel"
+                      inputMode="numeric"
+                      autoComplete="tel-national"
+                      maxLength={10}
+                      value={mobile}
+                      onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))}
+                      placeholder="10-digit mobile number"
+                      className="rounded-l-none border-primary/20 focus:border-primary"
+                    />
+                  </div>
+                </div>
+
+                <Button
+                  type="submit"
+                  disabled={busy !== null}
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-6"
+                >
+                  {busy === 'otp' && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                  Send OTP
+                </Button>
+              </form>
+            </>
+          )}
+
+          {step === 'otp' && (
+            <form onSubmit={handleVerify} className="space-y-6">
+              <div className="text-center">
+                <h2 className="text-2xl font-serif text-primary mb-1">Enter OTP</h2>
+                <p className="text-sm text-muted-foreground">
+                  We sent a 6-digit code to +91 {mobile}.{' '}
+                  <button
+                    type="button"
+                    onClick={() => { setStep('choose'); setError(''); setOtp(''); }}
+                    className="text-primary hover:underline"
+                  >
+                    Change
+                  </button>
+                </p>
+              </div>
+
+              <div className="flex justify-center">
+                <InputOTP maxLength={6} value={otp} onChange={setOtp} onComplete={() => handleVerify()}>
+                  <InputOTPGroup>
+                    {[0, 1, 2, 3, 4, 5].map((i) => (
+                      <InputOTPSlot key={i} index={i} />
+                    ))}
+                  </InputOTPGroup>
+                </InputOTP>
+              </div>
+
+              <Button
+                type="submit"
+                disabled={busy !== null || otp.length !== 6}
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-6"
+              >
+                {busy === 'verify' && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                Verify &amp; Continue
+              </Button>
+
+              <p className="text-center text-sm text-muted-foreground">
+                {resendIn > 0 ? (
+                  <>Resend OTP in {resendIn}s</>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => handleSendOtp()}
+                    disabled={busy !== null}
+                    className="text-primary hover:underline font-medium"
+                  >
+                    Resend OTP
+                  </button>
+                )}
+              </p>
+            </form>
+          )}
+
+          {step === 'name' && (
+            <form onSubmit={handleSaveName} className="space-y-5">
+              <div className="text-center">
+                <h2 className="text-2xl font-serif text-primary mb-1">One last thing</h2>
+                <p className="text-sm text-muted-foreground">What should we call you?</p>
+              </div>
               <div className="space-y-2">
-                <Label htmlFor="fullName" className="text-primary">Full Name</Label>
+                <Label htmlFor="fullName" className="text-primary">Full name</Label>
                 <Input
                   id="fullName"
                   type="text"
+                  autoFocus
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="Enter your full name"
                   className="border-primary/20 focus:border-primary"
                 />
-                {errors.fullName && (
-                  <p className="text-sm text-destructive">{errors.fullName}</p>
-                )}
               </div>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-primary">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
-                className="border-primary/20 focus:border-primary"
-              />
-              {errors.email && (
-                <p className="text-sm text-destructive">{errors.email}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-primary">Password</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  className="border-primary/20 focus:border-primary pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-primary/60 hover:text-primary"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-              {errors.password && (
-                <p className="text-sm text-destructive">{errors.password}</p>
-              )}
-              {isLogin && (
-                <div className="text-right">
-                  <Link to="/forgot-password" className="text-sm text-primary hover:underline">
-                    Forgot Password?
-                  </Link>
-                </div>
-              )}
-            </div>
-
-            {!isLogin && (
-              <div className="space-y-1">
-                <div className="flex items-start gap-2">
-                  <input
-                    id="consent"
-                    type="checkbox"
-                    checked={consentAccepted}
-                    onChange={(e) => setConsentAccepted(e.target.checked)}
-                    className="mt-1 h-4 w-4 rounded border-primary/30 accent-primary cursor-pointer"
-                  />
-                  <label htmlFor="consent" className="text-sm text-muted-foreground leading-snug cursor-pointer">
-                    I have read and agree to the{' '}
-                    <Link to="/terms" className="text-primary underline hover:text-primary/80" target="_blank">Terms & Conditions</Link>
-                    {' '}and{' '}
-                    <Link to="/privacy" className="text-primary underline hover:text-primary/80" target="_blank">Privacy Policy</Link>.
-                  </label>
-                </div>
-                {errors.consent && (
-                  <p className="text-sm text-destructive">{errors.consent}</p>
-                )}
-              </div>
-            )}
-
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-6"
-            >
-              {isSubmitting ? (
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-              ) : null}
-              {isLogin ? 'Login' : 'Create Account'}
-            </Button>
-          </form>
-
-          <div className="mt-6 text-center">
-            <p className="text-sm text-muted-foreground">
-              {isLogin ? "Don't have an account?" : 'Already have an account?'}
-              <button
-                type="button"
-                onClick={() => {
-                  setIsLogin(!isLogin);
-                  setErrors({});
-                }}
-                className="ml-1 text-primary hover:underline font-medium"
+              <Button
+                type="submit"
+                disabled={busy !== null}
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-6"
               >
-                {isLogin ? 'Sign up' : 'Login'}
-              </button>
-            </p>
-          </div>
+                {busy === 'name' && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                Continue
+              </Button>
+            </form>
+          )}
 
-          {/* Back to home */}
+          {error && (
+            <p role="alert" className="mt-4 text-sm text-destructive text-center">{error}</p>
+          )}
+
+          {/* Invisible reCAPTCHA host for Firebase phone auth */}
+          <div id={RECAPTCHA_ID} />
+
+          {step !== 'name' && (
+            <p className="mt-6 text-xs text-muted-foreground text-center leading-snug">
+              By continuing, you agree to our{' '}
+              <Link to="/terms" className="text-primary underline" target="_blank">Terms &amp; Conditions</Link>
+              {' '}and{' '}
+              <Link to="/privacy" className="text-primary underline" target="_blank">Privacy Policy</Link>.
+            </p>
+          )}
+
           <div className="mt-4 text-center">
             <button
               type="button"
