@@ -70,7 +70,7 @@ const App = () => (
                   <Route path="/track-order" element={<TrackOrder />} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/reset-password" element={<ResetPassword />} />
-                  {/* Vendor Routes */}
+                  {/* Vendor Routes test*/}
                   <Route path="/vendor/register" element={<VendorRegistration />} />
                   <Route path="/vendor/dashboard" element={<VendorDashboard />} />
                   <Route path="*" element={<NotFound />} />
